@@ -64,6 +64,7 @@ fun WorkoutDetailScreen(
 ) {
 	val workoutRepository = remember {
 		WorkoutRepository(
+			app.database,
 			app.database.workoutDao(),
 			app.database.workoutExerciseDao(),
 			app.database.workoutSetDao()

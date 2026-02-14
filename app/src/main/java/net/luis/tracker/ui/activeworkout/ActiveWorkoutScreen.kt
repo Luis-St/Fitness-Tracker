@@ -79,6 +79,7 @@ fun ActiveWorkoutScreen(
 		factory = ActiveWorkoutViewModel.Factory(
 			ExerciseRepository(app.database.exerciseDao()),
 			WorkoutRepository(
+				app.database,
 				app.database.workoutDao(),
 				app.database.workoutExerciseDao(),
 				app.database.workoutSetDao()

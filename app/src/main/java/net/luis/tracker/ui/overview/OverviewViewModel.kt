@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.luis.tracker.data.local.dao.ExerciseProgress
 import net.luis.tracker.data.repository.ExerciseRepository
 import net.luis.tracker.data.repository.StatsRepository
@@ -84,31 +86,35 @@ class OverviewViewModel(
 			val weekStartMillis = weekStart.atStartOfDay(zone).toInstant().toEpochMilli()
 			val weekEndMillis = weekEnd.atStartOfDay(zone).toInstant().toEpochMilli()
 
-			// Workout days in the current month
-			val workoutDates = statsRepository.getWorkoutDatesInRange(monthStart, monthEnd).first()
-			val workoutDays = workoutDates.map { millis ->
-				Instant.ofEpochMilli(millis).atZone(zone).toLocalDate().dayOfMonth
-			}.toSet()
+			data class MonthData(
+				val workoutDays: Set<Int>,
+				val workoutsThisMonth: Int,
+				val workoutsThisWeek: Int,
+				val averageDuration: Double?,
+				val currentStreak: Int
+			)
 
-			// Workouts this month
-			val workoutsThisMonth = statsRepository.getWorkoutCount(monthStart, monthEnd).first()
+			val data = withContext(Dispatchers.IO) {
+				val workoutDates = statsRepository.getWorkoutDatesInRange(monthStart, monthEnd).first()
+				val workoutDays = workoutDates.map { millis ->
+					Instant.ofEpochMilli(millis).atZone(zone).toLocalDate().dayOfMonth
+				}.toSet()
 
-			// Workouts this week
-			val workoutsThisWeek = statsRepository.getWorkoutCount(weekStartMillis, weekEndMillis).first()
+				val workoutsThisMonth = statsRepository.getWorkoutCount(monthStart, monthEnd).first()
+				val workoutsThisWeek = statsRepository.getWorkoutCount(weekStartMillis, weekEndMillis).first()
+				val averageDuration = statsRepository.getAverageDuration(monthStart, monthEnd).first()
+				val currentStreak = calculateStreak(zone)
 
-			// Average duration for the current month
-			val averageDuration = statsRepository.getAverageDuration(monthStart, monthEnd).first()
-
-			// Current streak calculation
-			val currentStreak = calculateStreak(zone)
+				MonthData(workoutDays, workoutsThisMonth, workoutsThisWeek, averageDuration, currentStreak)
+			}
 
 			_uiState.update {
 				it.copy(
-					workoutDays = workoutDays,
-					workoutsThisWeek = workoutsThisWeek,
-					workoutsThisMonth = workoutsThisMonth,
-					currentStreak = currentStreak,
-					averageDuration = averageDuration,
+					workoutDays = data.workoutDays,
+					workoutsThisWeek = data.workoutsThisWeek,
+					workoutsThisMonth = data.workoutsThisMonth,
+					currentStreak = data.currentStreak,
+					averageDuration = data.averageDuration,
 					isLoading = false
 				)
 			}

@@ -53,8 +53,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.R
 import net.luis.tracker.data.repository.ExerciseRepository
@@ -82,6 +84,7 @@ fun EditWorkoutScreen(
 ) {
 	val workoutRepository = remember {
 		WorkoutRepository(
+			app.database,
 			app.database.workoutDao(),
 			app.database.workoutExerciseDao(),
 			app.database.workoutSetDao()
@@ -104,8 +107,11 @@ fun EditWorkoutScreen(
 	val scope = rememberCoroutineScope()
 
 	LaunchedEffect(workoutId) {
-		val workout = workoutRepository.getByIdWithExercises(workoutId)
-		val allExercises = exerciseRepository.getAllActive().first()
+		val (workout, allExercises) = withContext(Dispatchers.IO) {
+			val w = workoutRepository.getByIdWithExercises(workoutId)
+			val e = exerciseRepository.getAllActive().first()
+			Pair(w, e)
+		}
 		availableExercises = allExercises
 
 		if (workout != null) {

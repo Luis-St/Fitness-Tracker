@@ -20,8 +20,8 @@ data class BottomNavItem(
 )
 
 val bottomNavItems = listOf(
-	BottomNavItem(OverviewRoute, R.string.nav_overview, Icons.Default.Dashboard),
 	BottomNavItem(ExercisesRoute, R.string.nav_exercises, Icons.Default.FitnessCenter),
+	BottomNavItem(OverviewRoute, R.string.nav_overview, Icons.Default.Dashboard),
 	BottomNavItem(WorkoutsRoute, R.string.nav_workouts, Icons.Default.History)
 )
 

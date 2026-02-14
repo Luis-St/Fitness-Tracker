@@ -67,6 +67,7 @@ fun WorkoutsScreen(
 	val viewModel: WorkoutsViewModel = viewModel(
 		factory = WorkoutsViewModel.Factory(
 			workoutRepository = WorkoutRepository(
+				app.database,
 				app.database.workoutDao(),
 				app.database.workoutExerciseDao(),
 				app.database.workoutSetDao()
