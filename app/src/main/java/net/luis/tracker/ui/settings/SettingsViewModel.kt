@@ -1,0 +1,84 @@
+package net.luis.tracker.ui.settings
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import net.luis.tracker.data.repository.SettingsRepository
+import net.luis.tracker.domain.model.ThemeMode
+import net.luis.tracker.domain.model.WeightUnit
+
+data class SettingsUiState(
+	val themeMode: ThemeMode = ThemeMode.SYSTEM,
+	val dynamicColors: Boolean = true,
+	val weightUnit: WeightUnit = WeightUnit.KG,
+	val restTimerSeconds: Int = 90
+)
+
+class SettingsViewModel(
+	private val settingsRepository: SettingsRepository
+) : ViewModel() {
+
+	private val _uiState = MutableStateFlow(SettingsUiState())
+	val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+	init {
+		viewModelScope.launch {
+			settingsRepository.themeMode.collect { mode ->
+				_uiState.update { it.copy(themeMode = mode) }
+			}
+		}
+		viewModelScope.launch {
+			settingsRepository.dynamicColors.collect { enabled ->
+				_uiState.update { it.copy(dynamicColors = enabled) }
+			}
+		}
+		viewModelScope.launch {
+			settingsRepository.weightUnit.collect { unit ->
+				_uiState.update { it.copy(weightUnit = unit) }
+			}
+		}
+		viewModelScope.launch {
+			settingsRepository.restTimerSeconds.collect { seconds ->
+				_uiState.update { it.copy(restTimerSeconds = seconds) }
+			}
+		}
+	}
+
+	fun setThemeMode(mode: ThemeMode) {
+		viewModelScope.launch {
+			settingsRepository.setThemeMode(mode)
+		}
+	}
+
+	fun setDynamicColors(enabled: Boolean) {
+		viewModelScope.launch {
+			settingsRepository.setDynamicColors(enabled)
+		}
+	}
+
+	fun setWeightUnit(unit: WeightUnit) {
+		viewModelScope.launch {
+			settingsRepository.setWeightUnit(unit)
+		}
+	}
+
+	fun setRestTimerSeconds(seconds: Int) {
+		viewModelScope.launch {
+			settingsRepository.setRestTimerSeconds(seconds)
+		}
+	}
+
+	class Factory(
+		private val settingsRepository: SettingsRepository
+	) : ViewModelProvider.Factory {
+		@Suppress("UNCHECKED_CAST")
+		override fun <T : ViewModel> create(modelClass: Class<T>): T {
+			return SettingsViewModel(settingsRepository) as T
+		}
+	}
+}

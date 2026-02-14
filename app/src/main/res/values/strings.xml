@@ -1,0 +1,111 @@
+<resources>
+	<string name="app_name">Fitness Tracker</string>
+
+	<!-- Common -->
+	<string name="back">Back</string>
+	<string name="save">Save</string>
+	<string name="edit">Edit</string>
+	<string name="delete">Delete</string>
+	<string name="cancel">Cancel</string>
+	<string name="remove">Remove</string>
+	<string name="close">Close</string>
+	<string name="settings">Settings</string>
+
+	<!-- Navigation -->
+	<string name="nav_overview">Overview</string>
+	<string name="nav_exercises">Exercises</string>
+	<string name="nav_workouts">Workouts</string>
+
+	<!-- Exercises -->
+	<string name="exercises_title">Exercises</string>
+	<string name="add_exercise">Add Exercise</string>
+	<string name="no_exercises">No exercises yet</string>
+	<string name="delete_exercise">Delete Exercise</string>
+	<string name="delete_exercise_confirmation">Are you sure you want to delete this exercise?</string>
+	<string name="exercise_title">Title</string>
+	<string name="exercise_notes">Notes</string>
+	<string name="exercise_detail">Exercise Detail</string>
+	<string name="exercise_not_found">Exercise not found</string>
+	<string name="has_weight">Has weight</string>
+	<string name="field_required">This field is required</string>
+	<string name="category">Category</string>
+	<string name="no_category">No category</string>
+	<string name="all_categories">All</string>
+	<string name="manage_categories">Manage Categories</string>
+	<string name="new_category">New category</string>
+	<string name="add_category">Add Category</string>
+	<string name="no_categories">No categories</string>
+	<string name="delete_category">Delete Category</string>
+	<string name="delete_category_confirmation">Delete category \"%1$s\"? Exercises in this category will not be deleted.</string>
+	<string name="select_exercise">Select Exercise</string>
+	<string name="search_exercises">Search exercises</string>
+
+	<!-- Active Workout -->
+	<string name="active_workout">Active Workout</string>
+	<string name="add_exercise_to_workout">Add Exercise</string>
+	<string name="finish_workout">Finish</string>
+	<string name="discard_workout">Discard Workout</string>
+	<string name="discard_workout_message">Are you sure you want to discard this workout? All progress will be lost.</string>
+	<string name="discard">Discard</string>
+	<string name="pause">Pause</string>
+	<string name="resume">Resume</string>
+	<string name="reps">reps</string>
+	<string name="set_number">#%1$d</string>
+	<string name="add_set">Add Set</string>
+	<string name="no_sets_yet">No sets yet</string>
+
+	<!-- Workouts History -->
+	<string name="workouts_title">Workouts</string>
+	<string name="no_workouts">No workouts yet</string>
+	<string name="start_workout">Start Workout</string>
+	<string name="delete_workout">Delete Workout</string>
+	<string name="delete_workout_confirmation">Are you sure you want to delete this workout?</string>
+	<string name="exercises_count">%1$d exercises</string>
+	<string name="total_volume">Volume: %1$s</string>
+	<string name="duration_format">%1$d min</string>
+	<string name="workout_detail">Workout Detail</string>
+	<string name="workout_not_found">Workout not found</string>
+	<string name="notes">Notes</string>
+	<string name="set_label">Set</string>
+	<string name="weight">Weight</string>
+	<string name="edit_workout">Edit Workout</string>
+
+	<!-- Overview / Statistics -->
+	<string name="stats_summary">Summary</string>
+	<string name="this_week">This Week</string>
+	<string name="this_month">This Month</string>
+	<string name="current_streak">Current Streak</string>
+	<string name="avg_duration">Avg. Duration</string>
+	<string name="days">days</string>
+	<string name="minutes_short">min</string>
+	<string name="progress">Progress</string>
+	<string name="all_exercises">All Exercises</string>
+	<string name="no_data_yet">No data yet</string>
+	<string name="metric_max_weight">Max Weight</string>
+	<string name="metric_total_volume">Total Volume</string>
+	<string name="metric_max_reps">Max Reps</string>
+	<string name="metric_set_count">Set Count</string>
+
+	<!-- Settings -->
+	<string name="appearance">Appearance</string>
+	<string name="theme">Theme</string>
+	<string name="light">Light</string>
+	<string name="dark">Dark</string>
+	<string name="system_default">System</string>
+	<string name="dynamic_colors">Dynamic Colors</string>
+	<string name="dynamic_colors_desc">Use colors from your wallpaper (Android 12+)</string>
+	<string name="units">Units</string>
+	<string name="weight_unit">Weight Unit</string>
+	<string name="workout_settings">Workout</string>
+	<string name="default_rest_timer">Default Rest Timer</string>
+	<string name="rest_timer_format">%1$d:%2$02d</string>
+	<string name="data">Data</string>
+	<string name="export_data">Export Data</string>
+	<string name="import_data">Import Data</string>
+	<string name="about">About</string>
+	<string name="app_version">App Version</string>
+	<string name="export_success">Data exported successfully</string>
+	<string name="import_success">Data imported successfully</string>
+	<string name="export_error">Failed to export data</string>
+	<string name="import_error">Failed to import data</string>
+</resources>

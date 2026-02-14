@@ -1,0 +1,111 @@
+<resources>
+	<string name="app_name">Fitness Tracker</string>
+
+	<!-- Common -->
+	<string name="back">Zurück</string>
+	<string name="save">Speichern</string>
+	<string name="edit">Bearbeiten</string>
+	<string name="delete">Löschen</string>
+	<string name="cancel">Abbrechen</string>
+	<string name="remove">Entfernen</string>
+	<string name="close">Schließen</string>
+	<string name="settings">Einstellungen</string>
+
+	<!-- Navigation -->
+	<string name="nav_overview">Übersicht</string>
+	<string name="nav_exercises">Übungen</string>
+	<string name="nav_workouts">Workouts</string>
+
+	<!-- Exercises -->
+	<string name="exercises_title">Übungen</string>
+	<string name="add_exercise">Übung hinzufügen</string>
+	<string name="no_exercises">Noch keine Übungen</string>
+	<string name="delete_exercise">Übung löschen</string>
+	<string name="delete_exercise_confirmation">Möchtest du diese Übung wirklich löschen?</string>
+	<string name="exercise_title">Titel</string>
+	<string name="exercise_notes">Notizen</string>
+	<string name="exercise_detail">Übungsdetails</string>
+	<string name="exercise_not_found">Übung nicht gefunden</string>
+	<string name="has_weight">Mit Gewicht</string>
+	<string name="field_required">Dieses Feld ist erforderlich</string>
+	<string name="category">Kategorie</string>
+	<string name="no_category">Keine Kategorie</string>
+	<string name="all_categories">Alle</string>
+	<string name="manage_categories">Kategorien verwalten</string>
+	<string name="new_category">Neue Kategorie</string>
+	<string name="add_category">Kategorie hinzufügen</string>
+	<string name="no_categories">Keine Kategorien</string>
+	<string name="delete_category">Kategorie löschen</string>
+	<string name="delete_category_confirmation">Kategorie \"%1$s\" löschen? Übungen in dieser Kategorie werden nicht gelöscht.</string>
+	<string name="select_exercise">Übung auswählen</string>
+	<string name="search_exercises">Übungen suchen</string>
+
+	<!-- Active Workout -->
+	<string name="active_workout">Aktives Workout</string>
+	<string name="add_exercise_to_workout">Übung hinzufügen</string>
+	<string name="finish_workout">Beenden</string>
+	<string name="discard_workout">Workout verwerfen</string>
+	<string name="discard_workout_message">Möchtest du dieses Workout wirklich verwerfen? Alle Fortschritte gehen verloren.</string>
+	<string name="discard">Verwerfen</string>
+	<string name="pause">Pause</string>
+	<string name="resume">Fortsetzen</string>
+	<string name="reps">Wdh.</string>
+	<string name="set_number">#%1$d</string>
+	<string name="add_set">Satz hinzufügen</string>
+	<string name="no_sets_yet">Noch keine Sätze</string>
+
+	<!-- Workouts History -->
+	<string name="workouts_title">Workouts</string>
+	<string name="no_workouts">Noch keine Workouts</string>
+	<string name="start_workout">Workout starten</string>
+	<string name="delete_workout">Workout löschen</string>
+	<string name="delete_workout_confirmation">Möchtest du dieses Workout wirklich löschen?</string>
+	<string name="exercises_count">%1$d Übungen</string>
+	<string name="total_volume">Volumen: %1$s</string>
+	<string name="duration_format">%1$d Min.</string>
+	<string name="workout_detail">Workout-Details</string>
+	<string name="workout_not_found">Workout nicht gefunden</string>
+	<string name="notes">Notizen</string>
+	<string name="set_label">Satz</string>
+	<string name="weight">Gewicht</string>
+	<string name="edit_workout">Workout bearbeiten</string>
+
+	<!-- Overview / Statistics -->
+	<string name="stats_summary">Zusammenfassung</string>
+	<string name="this_week">Diese Woche</string>
+	<string name="this_month">Dieser Monat</string>
+	<string name="current_streak">Aktuelle Serie</string>
+	<string name="avg_duration">Ø Dauer</string>
+	<string name="days">Tage</string>
+	<string name="minutes_short">Min.</string>
+	<string name="progress">Fortschritt</string>
+	<string name="all_exercises">Alle Übungen</string>
+	<string name="no_data_yet">Noch keine Daten</string>
+	<string name="metric_max_weight">Max. Gewicht</string>
+	<string name="metric_total_volume">Gesamtvolumen</string>
+	<string name="metric_max_reps">Max. Wdh.</string>
+	<string name="metric_set_count">Anzahl Sätze</string>
+
+	<!-- Settings -->
+	<string name="appearance">Darstellung</string>
+	<string name="theme">Design</string>
+	<string name="light">Hell</string>
+	<string name="dark">Dunkel</string>
+	<string name="system_default">System</string>
+	<string name="dynamic_colors">Dynamische Farben</string>
+	<string name="dynamic_colors_desc">Farben aus dem Hintergrundbild verwenden (Android 12+)</string>
+	<string name="units">Einheiten</string>
+	<string name="weight_unit">Gewichtseinheit</string>
+	<string name="workout_settings">Workout</string>
+	<string name="default_rest_timer">Standard-Pausenzeit</string>
+	<string name="rest_timer_format">%1$d:%2$02d</string>
+	<string name="data">Daten</string>
+	<string name="export_data">Daten exportieren</string>
+	<string name="import_data">Daten importieren</string>
+	<string name="about">Über</string>
+	<string name="app_version">App-Version</string>
+	<string name="export_success">Daten erfolgreich exportiert</string>
+	<string name="import_success">Daten erfolgreich importiert</string>
+	<string name="export_error">Datenexport fehlgeschlagen</string>
+	<string name="import_error">Datenimport fehlgeschlagen</string>
+</resources>
