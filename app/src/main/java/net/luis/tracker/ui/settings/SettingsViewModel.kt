@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.luis.tracker.data.repository.SettingsRepository
@@ -28,23 +29,20 @@ class SettingsViewModel(
 
 	init {
 		viewModelScope.launch {
-			settingsRepository.themeMode.collect { mode ->
-				_uiState.update { it.copy(themeMode = mode) }
-			}
-		}
-		viewModelScope.launch {
-			settingsRepository.dynamicColors.collect { enabled ->
-				_uiState.update { it.copy(dynamicColors = enabled) }
-			}
-		}
-		viewModelScope.launch {
-			settingsRepository.weightUnit.collect { unit ->
-				_uiState.update { it.copy(weightUnit = unit) }
-			}
-		}
-		viewModelScope.launch {
-			settingsRepository.restTimerSeconds.collect { seconds ->
-				_uiState.update { it.copy(restTimerSeconds = seconds) }
+			combine(
+				settingsRepository.themeMode,
+				settingsRepository.dynamicColors,
+				settingsRepository.weightUnit,
+				settingsRepository.restTimerSeconds
+			) { mode, dynamicColors, unit, seconds ->
+				SettingsUiState(
+					themeMode = mode,
+					dynamicColors = dynamicColors,
+					weightUnit = unit,
+					restTimerSeconds = seconds
+				)
+			}.collect { state ->
+				_uiState.value = state
 			}
 		}
 	}

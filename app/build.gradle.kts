@@ -68,6 +68,7 @@ dependencies {
 
 	// Lifecycle ViewModel Compose
 	implementation(libs.androidx.lifecycle.viewmodel.compose)
+	implementation(libs.androidx.lifecycle.runtime.compose)
 
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.junit)

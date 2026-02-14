@@ -22,6 +22,9 @@ interface WorkoutExerciseDao {
 	@Query("SELECT * FROM workout_exercises WHERE workoutId = :workoutId ORDER BY orderIndex ASC")
 	suspend fun getByWorkoutId(workoutId: Long): List<WorkoutExerciseEntity>
 
+	@Query("SELECT * FROM workout_exercises ORDER BY workoutId, orderIndex ASC")
+	suspend fun getAll(): List<WorkoutExerciseEntity>
+
 	@Query("DELETE FROM workout_exercises WHERE workoutId = :workoutId")
 	suspend fun deleteByWorkoutId(workoutId: Long)
 }

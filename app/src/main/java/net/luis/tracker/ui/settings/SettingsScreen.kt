@@ -61,11 +61,12 @@ fun SettingsScreen(
 	app: FitnessTrackerApp,
 	onNavigateBack: () -> Unit
 ) {
-	val viewModel: SettingsViewModel = viewModel(
-		factory = SettingsViewModel.Factory(
+	val factory = remember {
+		SettingsViewModel.Factory(
 			settingsRepository = SettingsRepository(app)
 		)
-	)
+	}
+	val viewModel: SettingsViewModel = viewModel(factory = factory)
 
 	val uiState by viewModel.uiState.collectAsState()
 	val context = LocalContext.current

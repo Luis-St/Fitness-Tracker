@@ -56,12 +56,13 @@ fun OverviewScreen(
 	weightUnit: WeightUnit,
 	onOpenSettings: () -> Unit = {}
 ) {
-	val viewModel: OverviewViewModel = viewModel(
-		factory = OverviewViewModel.Factory(
+	val factory = remember {
+		OverviewViewModel.Factory(
 			statsRepository = StatsRepository(app.database.statsDao()),
 			exerciseRepository = ExerciseRepository(app.database.exerciseDao())
 		)
-	)
+	}
+	val viewModel: OverviewViewModel = viewModel(factory = factory)
 
 	val uiState by viewModel.uiState.collectAsState()
 

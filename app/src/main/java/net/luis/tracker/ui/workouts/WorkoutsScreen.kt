@@ -64,8 +64,8 @@ fun WorkoutsScreen(
 	onWorkoutClick: (Long) -> Unit,
 	onOpenSettings: () -> Unit = {}
 ) {
-	val viewModel: WorkoutsViewModel = viewModel(
-		factory = WorkoutsViewModel.Factory(
+	val factory = remember {
+		WorkoutsViewModel.Factory(
 			workoutRepository = WorkoutRepository(
 				app.database,
 				app.database.workoutDao(),
@@ -73,7 +73,8 @@ fun WorkoutsScreen(
 				app.database.workoutSetDao()
 			)
 		)
-	)
+	}
+	val viewModel: WorkoutsViewModel = viewModel(factory = factory)
 
 	val uiState by viewModel.uiState.collectAsState()
 	var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
@@ -236,13 +237,6 @@ private fun WorkoutCard(
 				}
 			}
 
-			Spacer(modifier = Modifier.height(4.dp))
-
-			Text(
-				text = stringResource(R.string.total_volume, weightUnit.formatWeight(workout.totalVolume)),
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.primary
-			)
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package net.luis.tracker.ui.workouts
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,15 +15,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,8 +45,8 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -101,8 +105,9 @@ fun EditWorkoutScreen(
 	var isSaving by remember { mutableStateOf(false) }
 	var availableExercises by remember { mutableStateOf<List<Exercise>>(emptyList()) }
 	var showExerciseSelector by remember { mutableStateOf(false) }
-	var editingEntryId by remember { mutableStateOf<Long?>(null) }
 	var entryIdCounter by remember { mutableStateOf(0L) }
+	val expandedEntries = remember { mutableStateMapOf<Long, Boolean>() }
+	val lazyListState = rememberLazyListState()
 
 	val scope = rememberCoroutineScope()
 
@@ -178,7 +183,6 @@ fun EditWorkoutScreen(
 		floatingActionButton = {
 			if (!isLoading && originalWorkout != null) {
 				FloatingActionButton(onClick = {
-					editingEntryId = null
 					showExerciseSelector = true
 				}) {
 					Icon(
@@ -216,6 +220,7 @@ fun EditWorkoutScreen(
 			}
 			else -> {
 				LazyColumn(
+					state = lazyListState,
 					contentPadding = PaddingValues(
 						start = 16.dp,
 						end = 16.dp,
@@ -239,12 +244,13 @@ fun EditWorkoutScreen(
 
 					// Exercise cards
 					items(exercises, key = { it.id }) { entry ->
+						val isExpanded = expandedEntries[entry.id] ?: false
 						EditExerciseCard(
 							entry = entry,
 							weightUnit = weightUnit,
-							onChangeExercise = {
-								editingEntryId = entry.id
-								showExerciseSelector = true
+							isExpanded = isExpanded,
+							onToggleExpanded = {
+								expandedEntries[entry.id] = !isExpanded
 							},
 							onRemoveExercise = {
 								exercises = exercises.filter { it.id != entry.id }
@@ -288,24 +294,21 @@ fun EditWorkoutScreen(
 		EditExerciseSelectSheet(
 			exercises = availableExercises,
 			onSelect = { exercise ->
-				val currentEditId = editingEntryId
-				if (currentEditId != null) {
-					exercises = exercises.map { entry ->
-						if (entry.id == currentEditId) entry.copy(exercise = exercise) else entry
-					}
-				} else {
-					entryIdCounter++
-					val newEntry = EditExerciseEntry(
-						id = entryIdCounter,
-						exercise = exercise
-					)
-					exercises = exercises + newEntry
-				}
-				editingEntryId = null
+				entryIdCounter++
+				val newId = entryIdCounter
+				val newEntry = EditExerciseEntry(
+					id = newId,
+					exercise = exercise
+				)
+				exercises = exercises + newEntry
+				expandedEntries[newId] = true
 				showExerciseSelector = false
+				scope.launch {
+					val index = exercises.size // notes item is at 0, so exercises start at 1
+					lazyListState.animateScrollToItem(index)
+				}
 			},
 			onDismiss = {
-				editingEntryId = null
 				showExerciseSelector = false
 			}
 		)
@@ -316,36 +319,43 @@ fun EditWorkoutScreen(
 private fun EditExerciseCard(
 	entry: EditExerciseEntry,
 	weightUnit: WeightUnit,
-	onChangeExercise: () -> Unit,
+	isExpanded: Boolean,
+	onToggleExpanded: () -> Unit,
 	onRemoveExercise: () -> Unit,
 	onAddSet: (weightKg: Double, reps: Int) -> Unit,
 	onRemoveSet: (setIndex: Int) -> Unit
 ) {
-	var newWeightKg by remember { mutableDoubleStateOf(0.0) }
+	var weightText by remember { mutableStateOf("") }
 	var newReps by remember { mutableIntStateOf(0) }
 	var repsText by remember { mutableStateOf("") }
 
 	Card(
-		modifier = Modifier.fillMaxWidth(),
+		modifier = Modifier
+			.fillMaxWidth()
+			.animateContentSize(),
 		elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
 	) {
 		Column(modifier = Modifier.padding(16.dp)) {
-			// Exercise header
+			// Exercise header — clickable to toggle expand/collapse
 			Row(
-				modifier = Modifier.fillMaxWidth(),
+				modifier = Modifier
+					.fillMaxWidth()
+					.clickable(onClick = onToggleExpanded),
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Text(
-					text = entry.exercise.title,
-					style = MaterialTheme.typography.titleMedium,
-					fontWeight = FontWeight.Bold,
-					modifier = Modifier.weight(1f)
-				)
-				IconButton(onClick = onChangeExercise) {
-					Icon(
-						imageVector = Icons.Default.SwapHoriz,
-						contentDescription = stringResource(R.string.select_exercise)
+				Column(modifier = Modifier.weight(1f)) {
+					Text(
+						text = entry.exercise.title,
+						style = MaterialTheme.typography.titleMedium,
+						fontWeight = FontWeight.Bold
 					)
+					if (!isExpanded) {
+						Text(
+							text = stringResource(R.string.n_sets, entry.sets.size),
+							style = MaterialTheme.typography.bodyMedium,
+							color = MaterialTheme.colorScheme.onSurfaceVariant
+						)
+					}
 				}
 				IconButton(onClick = onRemoveExercise) {
 					Icon(
@@ -354,88 +364,100 @@ private fun EditExerciseCard(
 						tint = MaterialTheme.colorScheme.error
 					)
 				}
-			}
-
-			// Sets list
-			if (entry.sets.isEmpty()) {
-				Text(
-					text = stringResource(R.string.no_sets_yet),
-					style = MaterialTheme.typography.bodyMedium,
-					color = MaterialTheme.colorScheme.onSurfaceVariant,
-					modifier = Modifier.padding(vertical = 8.dp)
-				)
-			} else {
-				entry.sets.forEachIndexed { index, set ->
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(vertical = 4.dp),
-						verticalAlignment = Alignment.CenterVertically
-					) {
-						Text(
-							text = stringResource(R.string.set_number, set.setNumber),
-							style = MaterialTheme.typography.bodyMedium,
-							modifier = Modifier.width(48.dp)
+				IconButton(onClick = onToggleExpanded) {
+					Icon(
+						imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp
+							else Icons.Default.KeyboardArrowDown,
+						contentDescription = stringResource(
+							if (isExpanded) R.string.collapse else R.string.expand
 						)
-						Text(
-							text = weightUnit.formatWeight(set.weightKg),
-							style = MaterialTheme.typography.bodyMedium,
-							modifier = Modifier.weight(1f)
-						)
-						Text(
-							text = "${set.reps} ${stringResource(R.string.reps)}",
-							style = MaterialTheme.typography.bodyMedium
-						)
-						IconButton(onClick = { onRemoveSet(index) }) {
-							Icon(
-								imageVector = Icons.Default.Delete,
-								contentDescription = stringResource(R.string.remove),
-								tint = MaterialTheme.colorScheme.error
-							)
-						}
-					}
+					)
 				}
 			}
 
-			HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-			// Add set row
-			Row(
-				modifier = Modifier.fillMaxWidth(),
-				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.spacedBy(8.dp)
-			) {
-				WeightInput(
-					weightKg = newWeightKg,
-					onWeightChange = { newWeightKg = it },
-					weightUnit = weightUnit,
-					modifier = Modifier.weight(1f)
-				)
-				OutlinedTextField(
-					value = repsText,
-					onValueChange = { text ->
-						repsText = text
-						newReps = text.toIntOrNull() ?: 0
-					},
-					label = { Text(stringResource(R.string.reps)) },
-					modifier = Modifier.width(80.dp),
-					singleLine = true,
-					keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-				)
-				IconButton(
-					onClick = {
-						if (newReps > 0) {
-							onAddSet(newWeightKg, newReps)
-							newWeightKg = 0.0
-							newReps = 0
-							repsText = ""
+			if (isExpanded) {
+				// Sets list
+				if (entry.sets.isEmpty()) {
+					Text(
+						text = stringResource(R.string.no_sets_yet),
+						style = MaterialTheme.typography.bodyMedium,
+						color = MaterialTheme.colorScheme.onSurfaceVariant,
+						modifier = Modifier.padding(vertical = 8.dp)
+					)
+				} else {
+					entry.sets.forEachIndexed { index, set ->
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(vertical = 4.dp),
+							verticalAlignment = Alignment.CenterVertically
+						) {
+							Text(
+								text = stringResource(R.string.set_number, set.setNumber),
+								style = MaterialTheme.typography.bodyMedium,
+								modifier = Modifier.width(48.dp)
+							)
+							Text(
+								text = weightUnit.formatWeight(set.weightKg),
+								style = MaterialTheme.typography.bodyMedium,
+								modifier = Modifier.weight(1f)
+							)
+							Text(
+								text = "${set.reps} ${stringResource(R.string.reps)}",
+								style = MaterialTheme.typography.bodyMedium
+							)
+							IconButton(onClick = { onRemoveSet(index) }) {
+								Icon(
+									imageVector = Icons.Default.Delete,
+									contentDescription = stringResource(R.string.remove),
+									tint = MaterialTheme.colorScheme.error
+								)
+							}
 						}
 					}
+				}
+
+				HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+				// Add set row
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
-					Icon(
-						imageVector = Icons.Default.Add,
-						contentDescription = stringResource(R.string.add_set)
+					WeightInput(
+						text = weightText,
+						onTextChange = { weightText = it },
+						weightUnit = weightUnit,
+						modifier = Modifier.weight(1f)
 					)
+					OutlinedTextField(
+						value = repsText,
+						onValueChange = { text ->
+							repsText = text
+							newReps = text.toIntOrNull() ?: 0
+						},
+						label = { Text(stringResource(R.string.reps)) },
+						modifier = Modifier.width(80.dp),
+						singleLine = true,
+						keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+					)
+					IconButton(
+						onClick = {
+							if (newReps > 0) {
+								val weightKg = weightUnit.convertToKg(weightText.toDoubleOrNull() ?: 0.0)
+								onAddSet(weightKg, newReps)
+								weightText = ""
+								newReps = 0
+								repsText = ""
+							}
+						}
+					) {
+						Icon(
+							imageVector = Icons.Default.Add,
+							contentDescription = stringResource(R.string.add_set)
+						)
+					}
 				}
 			}
 		}

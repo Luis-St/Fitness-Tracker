@@ -6,7 +6,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,6 +47,8 @@ class OverviewViewModel(
 
 	private val _uiState = MutableStateFlow(OverviewUiState())
 	val uiState: StateFlow<OverviewUiState> = _uiState.asStateFlow()
+
+	private var progressJob: Job? = null
 
 	init {
 		viewModelScope.launch {
@@ -95,17 +100,25 @@ class OverviewViewModel(
 			)
 
 			val data = withContext(Dispatchers.IO) {
-				val workoutDates = statsRepository.getWorkoutDatesInRange(monthStart, monthEnd).first()
-				val workoutDays = workoutDates.map { millis ->
-					Instant.ofEpochMilli(millis).atZone(zone).toLocalDate().dayOfMonth
-				}.toSet()
+				coroutineScope {
+					val workoutDatesDeferred = async { statsRepository.getWorkoutDatesInRange(monthStart, monthEnd).first() }
+					val workoutsThisMonthDeferred = async { statsRepository.getWorkoutCount(monthStart, monthEnd).first() }
+					val workoutsThisWeekDeferred = async { statsRepository.getWorkoutCount(weekStartMillis, weekEndMillis).first() }
+					val averageDurationDeferred = async { statsRepository.getAverageDuration(monthStart, monthEnd).first() }
+					val currentStreakDeferred = async { calculateStreak(zone) }
 
-				val workoutsThisMonth = statsRepository.getWorkoutCount(monthStart, monthEnd).first()
-				val workoutsThisWeek = statsRepository.getWorkoutCount(weekStartMillis, weekEndMillis).first()
-				val averageDuration = statsRepository.getAverageDuration(monthStart, monthEnd).first()
-				val currentStreak = calculateStreak(zone)
+					val workoutDays = workoutDatesDeferred.await().map { millis ->
+						Instant.ofEpochMilli(millis).atZone(zone).toLocalDate().dayOfMonth
+					}.toSet()
 
-				MonthData(workoutDays, workoutsThisMonth, workoutsThisWeek, averageDuration, currentStreak)
+					MonthData(
+						workoutDays,
+						workoutsThisMonthDeferred.await(),
+						workoutsThisWeekDeferred.await(),
+						averageDurationDeferred.await(),
+						currentStreakDeferred.await()
+					)
+				}
 			}
 
 			_uiState.update {
@@ -148,7 +161,8 @@ class OverviewViewModel(
 	}
 
 	private fun loadProgressData() {
-		viewModelScope.launch {
+		progressJob?.cancel()
+		progressJob = viewModelScope.launch {
 			val exerciseId = _uiState.value.selectedExerciseId
 			val progressFlow = if (exerciseId != null) {
 				statsRepository.getExerciseProgress(exerciseId)

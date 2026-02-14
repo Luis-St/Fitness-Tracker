@@ -6,12 +6,8 @@ import net.luis.tracker.data.local.AppDatabase
 
 class FitnessTrackerApp : Application() {
 
-	lateinit var database: AppDatabase
-		private set
-
-	override fun onCreate() {
-		super.onCreate()
-		database = Room.databaseBuilder(
+	val database: AppDatabase by lazy {
+		Room.databaseBuilder(
 			applicationContext,
 			AppDatabase::class.java,
 			"fitness_tracker_db"

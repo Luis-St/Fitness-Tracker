@@ -28,7 +28,7 @@ class WorkoutsViewModel(
 			workoutRepository.getAllWithExercises().collect { workouts ->
 				_uiState.update {
 					it.copy(
-						workouts = workouts.sortedByDescending { w -> w.startTime },
+						workouts = workouts,
 						isLoading = false
 					)
 				}

@@ -21,7 +21,16 @@ object AddExerciseRoute
 data class ExerciseDetailRoute(val exerciseId: Long)
 
 @Serializable
+object ActiveWorkoutGraphRoute
+
+@Serializable
 object ActiveWorkoutRoute
+
+@Serializable
+object SelectExerciseForWorkoutRoute
+
+@Serializable
+data class ActiveWorkoutExerciseRoute(val entryId: Long)
 
 @Serializable
 data class WorkoutDetailRoute(val workoutId: Long)

@@ -25,6 +25,9 @@ interface WorkoutSetDao {
 	@Query("SELECT * FROM workout_sets WHERE workoutExerciseId = :workoutExerciseId ORDER BY setNumber ASC")
 	suspend fun getByWorkoutExerciseId(workoutExerciseId: Long): List<WorkoutSetEntity>
 
+	@Query("SELECT * FROM workout_sets ORDER BY workoutExerciseId, setNumber ASC")
+	suspend fun getAll(): List<WorkoutSetEntity>
+
 	@Query("DELETE FROM workout_sets WHERE workoutExerciseId = :workoutExerciseId")
 	suspend fun deleteByWorkoutExerciseId(workoutExerciseId: Long)
 }

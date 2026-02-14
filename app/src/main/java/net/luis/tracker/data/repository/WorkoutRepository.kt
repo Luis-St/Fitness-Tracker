@@ -3,6 +3,7 @@ package net.luis.tracker.data.repository
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import net.luis.tracker.data.local.AppDatabase
@@ -23,7 +24,9 @@ class WorkoutRepository(
 ) {
 
 	fun getAllWithExercises(): Flow<List<Workout>> =
-		workoutDao.getAllWithExercises().map { list -> list.map { it.toDomain() } }
+		workoutDao.getAllWithExercises()
+			.map { list -> list.map { it.toDomain() } }
+			.flowOn(Dispatchers.Default)
 
 	suspend fun getByIdWithExercises(id: Long): Workout? =
 		workoutDao.getByIdWithExercises(id)?.toDomain()

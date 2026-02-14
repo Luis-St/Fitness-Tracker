@@ -86,12 +86,18 @@ object DataExporter {
 			)
 		}
 
-		// Export all workouts with their exercises and sets
+		// Export all workouts with their exercises and sets (bulk queries)
 		val workoutEntities = workoutDao.getAllOnce()
+		val allWorkoutExercises = workoutExerciseDao.getAll()
+		val allWorkoutSets = workoutSetDao.getAll()
+
+		val exercisesByWorkout = allWorkoutExercises.groupBy { it.workoutId }
+		val setsByExercise = allWorkoutSets.groupBy { it.workoutExerciseId }
+
 		val workouts = workoutEntities.map { workoutEntity ->
-			val workoutExercises = workoutExerciseDao.getByWorkoutId(workoutEntity.id)
+			val workoutExercises = exercisesByWorkout[workoutEntity.id].orEmpty()
 			val exportExercises = workoutExercises.map { weEntity ->
-				val sets = workoutSetDao.getByWorkoutExerciseId(weEntity.id)
+				val sets = setsByExercise[weEntity.id].orEmpty()
 				ExportWorkoutExercise(
 					exerciseId = weEntity.exerciseId,
 					orderIndex = weEntity.orderIndex,

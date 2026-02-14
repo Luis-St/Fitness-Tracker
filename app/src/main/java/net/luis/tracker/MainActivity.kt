@@ -9,13 +9,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import kotlinx.coroutines.flow.combine
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.WeightUnit
+import net.luis.tracker.ui.navigation.ActiveWorkoutExerciseRoute
 import net.luis.tracker.ui.navigation.ActiveWorkoutRoute
+import net.luis.tracker.ui.navigation.SelectExerciseForWorkoutRoute
 import net.luis.tracker.ui.navigation.AppNavHost
 import net.luis.tracker.ui.navigation.BottomNavBar
 import net.luis.tracker.ui.navigation.bottomNavItems
@@ -30,11 +34,24 @@ class MainActivity : ComponentActivity() {
 		val settingsRepo = SettingsRepository(applicationContext)
 
 		setContent {
-			val themeMode by settingsRepo.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
-			val dynamicColors by settingsRepo.dynamicColors.collectAsState(initial = true)
-			val weightUnit by settingsRepo.weightUnit.collectAsState(initial = WeightUnit.KG)
+			data class AppSettings(
+				val themeMode: ThemeMode = ThemeMode.SYSTEM,
+				val dynamicColors: Boolean = true,
+				val weightUnit: WeightUnit = WeightUnit.KG
+			)
 
-			val darkTheme = when (themeMode) {
+			val settingsFlow = remember {
+				combine(
+					settingsRepo.themeMode,
+					settingsRepo.dynamicColors,
+					settingsRepo.weightUnit
+				) { theme, dynamic, unit ->
+					AppSettings(theme, dynamic, unit)
+				}
+			}
+			val settings by settingsFlow.collectAsState(initial = AppSettings())
+
+			val darkTheme = when (settings.themeMode) {
 				ThemeMode.LIGHT -> false
 				ThemeMode.DARK -> true
 				ThemeMode.SYSTEM -> null
@@ -42,14 +59,16 @@ class MainActivity : ComponentActivity() {
 
 			FitnessTrackerTheme(
 				darkTheme = darkTheme ?: isSystemInDarkTheme(),
-				dynamicColor = dynamicColors
+				dynamicColor = settings.dynamicColors
 			) {
 				val navController = rememberNavController()
 				val navBackStackEntry by navController.currentBackStackEntryAsState()
 				val currentRoute = navBackStackEntry?.destination?.route
 
 				val isBottomNavRoute = bottomNavItems.any { it.route::class.qualifiedName == currentRoute }
-				val isActiveWorkout = currentRoute == ActiveWorkoutRoute::class.qualifiedName
+				val isActiveWorkout = currentRoute == ActiveWorkoutRoute::class.qualifiedName ||
+				currentRoute == ActiveWorkoutExerciseRoute::class.qualifiedName ||
+				currentRoute == SelectExerciseForWorkoutRoute::class.qualifiedName
 
 				Scaffold(
 					bottomBar = {
@@ -72,7 +91,7 @@ class MainActivity : ComponentActivity() {
 					AppNavHost(
 						navController = navController,
 						app = app,
-						weightUnit = weightUnit,
+						weightUnit = settings.weightUnit,
 						modifier = if (!isActiveWorkout) Modifier.padding(innerPadding) else Modifier
 					)
 				}

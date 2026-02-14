@@ -1,5 +1,6 @@
 package net.luis.tracker.ui.activeworkout
 
+import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -27,11 +28,7 @@ data class ActiveExerciseEntry(
 data class ActiveWorkoutUiState(
 	val isRunning: Boolean = false,
 	val isPaused: Boolean = false,
-	val elapsedSeconds: Long = 0,
-	val exercises: List<ActiveExerciseEntry> = emptyList(),
-	val availableExercises: List<Exercise> = emptyList(),
-	val showSelectExercise: Boolean = false,
-	val showDiscardDialog: Boolean = false
+	val exercises: List<ActiveExerciseEntry> = emptyList()
 )
 
 class ActiveWorkoutViewModel(
@@ -42,18 +39,25 @@ class ActiveWorkoutViewModel(
 	private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
 	val uiState: StateFlow<ActiveWorkoutUiState> = _uiState.asStateFlow()
 
+	private val _elapsedMillis = MutableStateFlow(0L)
+	val elapsedMillis: StateFlow<Long> = _elapsedMillis.asStateFlow()
+
+	private val _showDiscardDialog = MutableStateFlow(false)
+	val showDiscardDialog: StateFlow<Boolean> = _showDiscardDialog.asStateFlow()
+
+	private val _availableExercises = MutableStateFlow<List<Exercise>?>(null)
+	val availableExercises: StateFlow<List<Exercise>?> = _availableExercises.asStateFlow()
+
 	private var timerJob: Job? = null
 	private var startTimeMillis: Long = 0L
+	private var timerBaseElapsed: Long = 0L
+	private var timerResumedAt: Long = 0L
 	private var entryIdCounter: Long = 0L
-
-	/** The entry ID currently being edited when the exercise selector is open for swapping. */
-	var editingEntryId: Long? = null
-		private set
 
 	init {
 		viewModelScope.launch {
 			exerciseRepository.getAllActive().collect { exercises ->
-				_uiState.update { it.copy(availableExercises = exercises) }
+				_availableExercises.value = exercises
 			}
 		}
 	}
@@ -61,6 +65,7 @@ class ActiveWorkoutViewModel(
 	fun startWorkout() {
 		if (_uiState.value.isRunning) return
 		startTimeMillis = System.currentTimeMillis()
+		timerBaseElapsed = 0L
 		_uiState.update { it.copy(isRunning = true, isPaused = false) }
 		startTimer()
 	}
@@ -72,6 +77,7 @@ class ActiveWorkoutViewModel(
 			_uiState.update { it.copy(isPaused = false) }
 			startTimer()
 		} else {
+			timerBaseElapsed += SystemClock.elapsedRealtime() - timerResumedAt
 			_uiState.update { it.copy(isPaused = true) }
 			timerJob?.cancel()
 		}
@@ -79,52 +85,41 @@ class ActiveWorkoutViewModel(
 
 	private fun startTimer() {
 		timerJob?.cancel()
+		timerResumedAt = SystemClock.elapsedRealtime()
 		timerJob = viewModelScope.launch {
 			while (isActive) {
-				delay(1000)
-				_uiState.update { it.copy(elapsedSeconds = it.elapsedSeconds + 1) }
+				val now = SystemClock.elapsedRealtime()
+				_elapsedMillis.value = timerBaseElapsed + (now - timerResumedAt)
+				delay(250)
 			}
 		}
 	}
 
-	fun showExerciseSelector(forEntryId: Long? = null) {
-		editingEntryId = forEntryId
-		_uiState.update { it.copy(showSelectExercise = true) }
-	}
-
-	fun hideExerciseSelector() {
-		editingEntryId = null
-		_uiState.update { it.copy(showSelectExercise = false) }
-	}
-
-	fun addExercise(exercise: Exercise) {
+	fun addExercise(exercise: Exercise): Long {
+		val newId = ++entryIdCounter
 		val newEntry = ActiveExerciseEntry(
-			id = ++entryIdCounter,
+			id = newId,
 			exercise = exercise
 		)
-		_uiState.update { it.copy(
-			exercises = it.exercises + newEntry,
-			showSelectExercise = false
-		) }
-		editingEntryId = null
+		_uiState.update { it.copy(exercises = it.exercises + newEntry) }
+		return newId
+	}
+
+	fun removeExerciseIfEmpty(entryId: Long) {
+		_uiState.update { state ->
+			val entry = state.exercises.find { it.id == entryId }
+			if (entry != null && entry.sets.isEmpty()) {
+				state.copy(exercises = state.exercises.filter { it.id != entryId })
+			} else {
+				state
+			}
+		}
 	}
 
 	fun removeExercise(entryId: Long) {
 		_uiState.update { state ->
 			state.copy(exercises = state.exercises.filter { it.id != entryId })
 		}
-	}
-
-	fun updateExerciseSelection(entryId: Long, exercise: Exercise) {
-		_uiState.update { state ->
-			state.copy(
-				exercises = state.exercises.map { entry ->
-					if (entry.id == entryId) entry.copy(exercise = exercise) else entry
-				},
-				showSelectExercise = false
-			)
-		}
-		editingEntryId = null
 	}
 
 	fun addSet(entryId: Long, weightKg: Double, reps: Int) {
@@ -165,16 +160,19 @@ class ActiveWorkoutViewModel(
 	}
 
 	fun requestDiscard() {
-		_uiState.update { it.copy(showDiscardDialog = true) }
+		_showDiscardDialog.value = true
 	}
 
 	fun cancelDiscard() {
-		_uiState.update { it.copy(showDiscardDialog = false) }
+		_showDiscardDialog.value = false
 	}
 
 	fun confirmDiscard(onDiscarded: () -> Unit) {
 		timerJob?.cancel()
+		_showDiscardDialog.value = false
 		_uiState.update { ActiveWorkoutUiState() }
+		_elapsedMillis.value = 0L
+		timerBaseElapsed = 0L
 		onDiscarded()
 	}
 
@@ -182,20 +180,29 @@ class ActiveWorkoutViewModel(
 		val state = _uiState.value
 		timerJob?.cancel()
 
+		if (state.exercises.isEmpty() || state.exercises.all { it.sets.isEmpty() }) {
+			_uiState.update { ActiveWorkoutUiState() }
+			_elapsedMillis.value = 0
+			onFinished()
+			return
+		}
+
 		val endTimeMillis = System.currentTimeMillis()
 
-		val workoutExercises = state.exercises.mapIndexed { index, entry ->
-			WorkoutExercise(
-				exercise = entry.exercise,
-				orderIndex = index,
-				sets = entry.sets
-			)
-		}
+		val workoutExercises = state.exercises
+			.filter { it.sets.isNotEmpty() }
+			.mapIndexed { index, entry ->
+				WorkoutExercise(
+					exercise = entry.exercise,
+					orderIndex = index,
+					sets = entry.sets
+				)
+			}
 
 		val workout = Workout(
 			startTime = startTimeMillis,
 			endTime = endTimeMillis,
-			durationSeconds = state.elapsedSeconds,
+			durationSeconds = _elapsedMillis.value / 1000,
 			exercises = workoutExercises
 		)
 

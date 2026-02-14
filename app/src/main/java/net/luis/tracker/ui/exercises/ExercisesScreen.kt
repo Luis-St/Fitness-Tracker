@@ -43,7 +43,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.luis.tracker.FitnessTrackerApp
@@ -62,12 +61,13 @@ fun ExercisesScreen(
 	onExerciseClick: (Long) -> Unit,
 	onOpenSettings: () -> Unit = {}
 ) {
-	val viewModel: ExercisesViewModel = viewModel(
-		factory = ExercisesViewModel.Factory(
+	val factory = remember {
+		ExercisesViewModel.Factory(
 			exerciseRepository = ExerciseRepository(app.database.exerciseDao()),
 			categoryRepository = CategoryRepository(app.database.categoryDao())
 		)
-	)
+	}
+	val viewModel: ExercisesViewModel = viewModel(factory = factory)
 
 	val uiState by viewModel.uiState.collectAsState()
 	var showCategoryDialog by remember { mutableStateOf(false) }
@@ -224,16 +224,6 @@ private fun ExerciseItem(
 								style = MaterialTheme.typography.labelSmall
 							)
 						}
-					)
-				}
-				if (exercise.notes.isNotEmpty()) {
-					Spacer(modifier = Modifier.height(4.dp))
-					Text(
-						text = exercise.notes,
-						style = MaterialTheme.typography.bodySmall,
-						color = MaterialTheme.colorScheme.onSurfaceVariant,
-						maxLines = 2,
-						overflow = TextOverflow.Ellipsis
 					)
 				}
 			}

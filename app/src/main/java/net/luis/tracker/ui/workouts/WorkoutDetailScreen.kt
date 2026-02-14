@@ -42,7 +42,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.R
 import net.luis.tracker.data.repository.WorkoutRepository
@@ -77,8 +79,10 @@ fun WorkoutDetailScreen(
 	val scope = rememberCoroutineScope()
 
 	LaunchedEffect(workoutId) {
-		workout = workoutRepository.getByIdWithExercises(workoutId)
-		isLoading = false
+		withContext(Dispatchers.IO) {
+			workout = workoutRepository.getByIdWithExercises(workoutId)
+			isLoading = false
+		}
 	}
 
 	val dateFormatter = remember {

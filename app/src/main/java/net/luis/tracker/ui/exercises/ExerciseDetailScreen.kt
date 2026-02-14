@@ -38,7 +38,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.R
 import net.luis.tracker.data.repository.CategoryRepository
@@ -72,15 +74,17 @@ fun ExerciseDetailScreen(
 
 	// Load exercise data
 	LaunchedEffect(exerciseId) {
-		val loaded = exerciseRepository.getById(exerciseId)
-		if (loaded != null) {
-			exercise = loaded
-			title = loaded.title
-			notes = loaded.notes
-			hasWeight = loaded.hasWeight
-			selectedCategory = loaded.category
+		withContext(Dispatchers.IO) {
+			val loaded = exerciseRepository.getById(exerciseId)
+			if (loaded != null) {
+				exercise = loaded
+				title = loaded.title
+				notes = loaded.notes
+				hasWeight = loaded.hasWeight
+				selectedCategory = loaded.category
+			}
+			isLoaded = true
 		}
-		isLoaded = true
 	}
 
 	Scaffold(
