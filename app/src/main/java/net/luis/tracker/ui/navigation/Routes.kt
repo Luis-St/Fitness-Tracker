@@ -37,3 +37,6 @@ data class WorkoutDetailRoute(val workoutId: Long)
 
 @Serializable
 data class EditWorkoutRoute(val workoutId: Long)
+
+@Serializable
+data class RestTimerRoute(val durationSeconds: Int)

@@ -57,6 +57,10 @@
 	<string name="expand">Expand</string>
 	<string name="collapse">Collapse</string>
 	<string name="edit_exercise_sets">Edit Sets</string>
+	<string name="rest">Rest</string>
+	<string name="finish_and_rest">Finish &amp; Rest</string>
+	<string name="skip">Skip</string>
+	<string name="rest_timer">Rest Timer</string>
 
 	<!-- Workouts History -->
 	<string name="workouts_title">Workouts</string>

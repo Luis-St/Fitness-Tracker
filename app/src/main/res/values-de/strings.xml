@@ -57,6 +57,10 @@
 	<string name="expand">Ausklappen</string>
 	<string name="collapse">Einklappen</string>
 	<string name="edit_exercise_sets">Sätze bearbeiten</string>
+	<string name="rest">Pause</string>
+	<string name="finish_and_rest">Beenden &amp; Pause</string>
+	<string name="skip">Überspringen</string>
+	<string name="rest_timer">Pausenzeit</string>
 
 	<!-- Workouts History -->
 	<string name="workouts_title">Workouts</string>

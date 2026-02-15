@@ -17,10 +17,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import net.luis.tracker.R
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.common.components.WeightInput
-import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,13 +56,15 @@ fun ActiveWorkoutExerciseScreen(
 	viewModel: ActiveWorkoutViewModel,
 	entryId: Long,
 	weightUnit: WeightUnit,
-	onNavigateBack: () -> Unit
+	onNavigateBack: () -> Unit,
+	onRest: () -> Unit,
+	onFinishWithTimer: () -> Unit
 ) {
 	val entry by remember(entryId) {
 		viewModel.uiState
 			.map { state -> state.exercises.find { it.id == entryId } }
 			.distinctUntilChanged()
-	}.collectAsStateWithLifecycle(initialValue = viewModel.uiState.collectAsState().value.exercises.find { it.id == entryId })
+	}.collectAsStateWithLifecycle(initialValue = viewModel.uiState.value.exercises.find { it.id == entryId })
 
 	var weightText by remember { mutableStateOf("") }
 	var repsText by remember { mutableStateOf("") }
@@ -105,6 +109,38 @@ fun ActiveWorkoutExerciseScreen(
 					}
 				}
 			)
+		},
+		bottomBar = {
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(horizontal = 16.dp, vertical = 12.dp),
+				horizontalArrangement = Arrangement.spacedBy(8.dp)
+			) {
+				FilledTonalButton(
+					onClick = onRest,
+					modifier = Modifier.weight(1f)
+				) {
+					Icon(
+						imageVector = Icons.Default.Timer,
+						contentDescription = null,
+						modifier = Modifier.padding(end = 8.dp)
+					)
+					Text(stringResource(R.string.rest))
+				}
+				Button(
+					onClick = onFinishWithTimer,
+					enabled = entry?.sets?.isNotEmpty() == true,
+					modifier = Modifier.weight(1f)
+				) {
+					Icon(
+						imageVector = Icons.Default.Timer,
+						contentDescription = null,
+						modifier = Modifier.padding(end = 8.dp)
+					)
+					Text(stringResource(R.string.finish_and_rest))
+				}
+			}
 		}
 	) { innerPadding ->
 		val currentEntry = entry
@@ -132,48 +168,23 @@ fun ActiveWorkoutExerciseScreen(
 					modifier = Modifier.padding(vertical = 16.dp)
 				)
 			} else {
+				val hasWeight = currentEntry.exercise.hasWeight
+				val setCount = currentEntry.sets.size
 				LazyColumn(
 					modifier = Modifier.weight(1f, fill = false),
 					contentPadding = PaddingValues(vertical = 8.dp),
 					verticalArrangement = Arrangement.spacedBy(4.dp)
 				) {
-					itemsIndexed(currentEntry.sets) { index, set ->
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(vertical = 4.dp),
-							verticalAlignment = Alignment.CenterVertically
-						) {
-							Text(
-								text = stringResource(R.string.set_number, set.setNumber),
-								style = MaterialTheme.typography.bodyLarge,
-								fontWeight = FontWeight.Medium,
-								modifier = Modifier.width(48.dp)
-							)
-							if (currentEntry.exercise.hasWeight) {
-								Text(
-									text = weightUnit.formatWeight(set.weightKg),
-									style = MaterialTheme.typography.bodyLarge,
-									modifier = Modifier.weight(1f)
-								)
-							} else {
-								Spacer(modifier = Modifier.weight(1f))
-							}
-							Text(
-								text = "${set.reps} ${stringResource(R.string.reps)}",
-								style = MaterialTheme.typography.bodyLarge
-							)
-							IconButton(onClick = { viewModel.removeSet(entryId, index) }) {
-								Icon(
-									imageVector = Icons.Default.Delete,
-									contentDescription = stringResource(R.string.remove),
-									tint = MaterialTheme.colorScheme.error
-								)
-							}
-						}
-						if (index < currentEntry.sets.lastIndex) {
-							HorizontalDivider()
-						}
+					itemsIndexed(currentEntry.sets, key = { _, set -> set.setNumber }) { index, set ->
+						SetItem(
+							setNumber = set.setNumber,
+							weightKg = set.weightKg,
+							reps = set.reps,
+							hasWeight = hasWeight,
+							weightUnit = weightUnit,
+							showDivider = index < setCount - 1,
+							onRemove = { viewModel.removeSet(entryId, index) }
+						)
 					}
 				}
 			}
@@ -235,5 +246,53 @@ fun ActiveWorkoutExerciseScreen(
 
 			Spacer(modifier = Modifier.height(16.dp))
 		}
+	}
+}
+
+@Composable
+private fun SetItem(
+	setNumber: Int,
+	weightKg: Double,
+	reps: Int,
+	hasWeight: Boolean,
+	weightUnit: WeightUnit,
+	showDivider: Boolean,
+	onRemove: () -> Unit
+) {
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(vertical = 4.dp),
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		Text(
+			text = stringResource(R.string.set_number, setNumber),
+			style = MaterialTheme.typography.bodyLarge,
+			fontWeight = FontWeight.Medium,
+			modifier = Modifier.width(48.dp)
+		)
+		if (hasWeight) {
+			Text(
+				text = weightUnit.formatWeight(weightKg),
+				style = MaterialTheme.typography.bodyLarge,
+				modifier = Modifier.weight(1f)
+			)
+		} else {
+			Spacer(modifier = Modifier.weight(1f))
+		}
+		Text(
+			text = "$reps ${stringResource(R.string.reps)}",
+			style = MaterialTheme.typography.bodyLarge
+		)
+		IconButton(onClick = onRemove) {
+			Icon(
+				imageVector = Icons.Default.Delete,
+				contentDescription = stringResource(R.string.remove),
+				tint = MaterialTheme.colorScheme.error
+			)
+		}
+	}
+	if (showDivider) {
+		HorizontalDivider()
 	}
 }

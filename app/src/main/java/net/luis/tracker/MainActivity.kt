@@ -19,6 +19,7 @@ import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.navigation.ActiveWorkoutExerciseRoute
 import net.luis.tracker.ui.navigation.ActiveWorkoutRoute
+import net.luis.tracker.ui.navigation.RestTimerRoute
 import net.luis.tracker.ui.navigation.SelectExerciseForWorkoutRoute
 import net.luis.tracker.ui.navigation.AppNavHost
 import net.luis.tracker.ui.navigation.BottomNavBar
@@ -37,16 +38,18 @@ class MainActivity : ComponentActivity() {
 			data class AppSettings(
 				val themeMode: ThemeMode = ThemeMode.SYSTEM,
 				val dynamicColors: Boolean = true,
-				val weightUnit: WeightUnit = WeightUnit.KG
+				val weightUnit: WeightUnit = WeightUnit.KG,
+				val restTimerSeconds: Int = 90
 			)
 
 			val settingsFlow = remember {
 				combine(
 					settingsRepo.themeMode,
 					settingsRepo.dynamicColors,
-					settingsRepo.weightUnit
-				) { theme, dynamic, unit ->
-					AppSettings(theme, dynamic, unit)
+					settingsRepo.weightUnit,
+					settingsRepo.restTimerSeconds
+				) { theme, dynamic, unit, restTimer ->
+					AppSettings(theme, dynamic, unit, restTimer)
 				}
 			}
 			val settings by settingsFlow.collectAsState(initial = AppSettings())
@@ -68,7 +71,8 @@ class MainActivity : ComponentActivity() {
 				val isBottomNavRoute = bottomNavItems.any { it.route::class.qualifiedName == currentRoute }
 				val isActiveWorkout = currentRoute == ActiveWorkoutRoute::class.qualifiedName ||
 				currentRoute == ActiveWorkoutExerciseRoute::class.qualifiedName ||
-				currentRoute == SelectExerciseForWorkoutRoute::class.qualifiedName
+				currentRoute == SelectExerciseForWorkoutRoute::class.qualifiedName ||
+				currentRoute == RestTimerRoute::class.qualifiedName
 
 				Scaffold(
 					bottomBar = {
@@ -92,6 +96,7 @@ class MainActivity : ComponentActivity() {
 						navController = navController,
 						app = app,
 						weightUnit = settings.weightUnit,
+						restTimerSeconds = settings.restTimerSeconds,
 						modifier = if (!isActiveWorkout) Modifier.padding(innerPadding) else Modifier
 					)
 				}

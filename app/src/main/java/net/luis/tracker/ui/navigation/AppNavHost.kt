@@ -19,6 +19,7 @@ import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.activeworkout.ActiveWorkoutExerciseScreen
 import net.luis.tracker.ui.activeworkout.ActiveWorkoutScreen
 import net.luis.tracker.ui.activeworkout.ActiveWorkoutViewModel
+import net.luis.tracker.ui.activeworkout.RestTimerScreen
 import net.luis.tracker.ui.activeworkout.SelectExerciseScreen
 import net.luis.tracker.ui.exercises.AddExerciseScreen
 import net.luis.tracker.ui.exercises.ExerciseDetailScreen
@@ -60,6 +61,7 @@ fun AppNavHost(
 	navController: NavHostController,
 	app: FitnessTrackerApp,
 	weightUnit: WeightUnit,
+	restTimerSeconds: Int,
 	modifier: Modifier = Modifier
 ) {
 	NavHost(
@@ -153,7 +155,24 @@ fun AppNavHost(
 					onNavigateBack = {
 						sharedViewModel.removeExerciseIfEmpty(route.entryId)
 						navController.popBackStack()
+					},
+					onRest = {
+						navController.navigate(RestTimerRoute(restTimerSeconds))
+					},
+					onFinishWithTimer = {
+						sharedViewModel.removeExerciseIfEmpty(route.entryId)
+						navController.navigate(RestTimerRoute(restTimerSeconds)) {
+							popUpTo<ActiveWorkoutRoute>()
+						}
 					}
+				)
+			}
+			composable<RestTimerRoute> { backStackEntry ->
+				val route = backStackEntry.toRoute<RestTimerRoute>()
+				RestTimerScreen(
+					durationSeconds = route.durationSeconds,
+					onFinished = { navController.popBackStack() },
+					onSkip = { navController.popBackStack() }
 				)
 			}
 		}
