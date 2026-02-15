@@ -4,14 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -210,28 +208,35 @@ fun OverviewScreen(
 
 				Spacer(modifier = Modifier.height(8.dp))
 
-				// Metric selector chips
-				LazyRow(
-					contentPadding = PaddingValues(vertical = 4.dp),
-					horizontalArrangement = Arrangement.spacedBy(8.dp)
-				) {
-					val metrics = ChartMetric.entries
-					items(metrics.size) { index ->
-						val metric = metrics[index]
-						FilterChip(
-							selected = uiState.selectedMetric == metric,
-							onClick = { viewModel.selectMetric(metric) },
-							label = {
-								Text(
-									text = when (metric) {
-										ChartMetric.MAX_WEIGHT -> stringResource(R.string.metric_max_weight)
-										ChartMetric.TOTAL_VOLUME -> stringResource(R.string.metric_total_volume)
-										ChartMetric.MAX_REPS -> stringResource(R.string.metric_max_reps)
-										ChartMetric.SET_COUNT -> stringResource(R.string.metric_set_count)
-									}
-								)
-							}
-						)
+				// Metric selector chips (2-column grid)
+				val metrics = ChartMetric.entries
+				metrics.chunked(2).forEach { row ->
+					Row(
+						modifier = Modifier.fillMaxWidth(),
+						horizontalArrangement = Arrangement.spacedBy(8.dp)
+					) {
+						row.forEach { metric ->
+							FilterChip(
+								selected = uiState.selectedMetric == metric,
+								onClick = { viewModel.selectMetric(metric) },
+								modifier = Modifier.weight(1f),
+								label = {
+									Text(
+										text = when (metric) {
+											ChartMetric.MAX_WEIGHT -> stringResource(R.string.metric_max_weight)
+											ChartMetric.TOTAL_VOLUME -> stringResource(R.string.metric_total_volume)
+											ChartMetric.MAX_REPS -> stringResource(R.string.metric_max_reps)
+											ChartMetric.SET_COUNT -> stringResource(R.string.metric_set_count)
+										},
+										maxLines = 1
+									)
+								}
+							)
+						}
+						// Fill remaining space if odd number of items
+						if (row.size < 2) {
+							Spacer(modifier = Modifier.weight(1f))
+						}
 					}
 				}
 
