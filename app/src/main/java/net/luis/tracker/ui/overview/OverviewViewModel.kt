@@ -8,15 +8,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.luis.tracker.data.local.dao.CategoryWorkoutCount
 import net.luis.tracker.data.local.dao.ExerciseProgress
 import net.luis.tracker.data.local.dao.PersonalRecord
@@ -66,6 +62,7 @@ class OverviewViewModel(
 	val uiState: StateFlow<OverviewUiState> = _uiState.asStateFlow()
 
 	private var progressJob: Job? = null
+	private var monthDataJob: Job? = null
 
 	init {
 		viewModelScope.launch {
@@ -171,10 +168,10 @@ class OverviewViewModel(
 	}
 
 	private fun loadMonthData() {
-		viewModelScope.launch {
-			val state = _uiState.value
+		monthDataJob?.cancel()
+		monthDataJob = viewModelScope.launch {
 			val zone = ZoneId.systemDefault()
-			val month = state.currentMonth
+			val month = _uiState.value.currentMonth
 
 			// Month range
 			val monthStart = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
@@ -187,65 +184,54 @@ class OverviewViewModel(
 			val weekStartMillis = weekStart.atStartOfDay(zone).toInstant().toEpochMilli()
 			val weekEndMillis = weekEnd.atStartOfDay(zone).toInstant().toEpochMilli()
 
-			data class MonthData(
-				val workoutDays: Set<Int>,
-				val workoutDayMap: Map<Int, List<Long>>,
-				val workoutsThisMonth: Int,
-				val workoutsThisWeek: Int,
-				val averageDuration: Double?,
-				val currentStreak: Int
-			)
+			// Streak range (last 365 days)
+			val streakRangeStart = today.minusDays(365).atStartOfDay(zone).toInstant().toEpochMilli()
+			val streakRangeEnd = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
 
-			val data = withContext(Dispatchers.IO) {
-				coroutineScope {
-					val workoutInfoDeferred = async { statsRepository.getWorkoutIdsInRange(monthStart, monthEnd).first() }
-					val workoutsThisMonthDeferred = async { statsRepository.getWorkoutCount(monthStart, monthEnd).first() }
-					val workoutsThisWeekDeferred = async { statsRepository.getWorkoutCount(weekStartMillis, weekEndMillis).first() }
-					val averageDurationDeferred = async { statsRepository.getAverageDuration(monthStart, monthEnd).first() }
-					val currentStreakDeferred = async { calculateStreak(zone) }
-
-					val workoutInfoList = workoutInfoDeferred.await()
+			launch {
+				statsRepository.getWorkoutIdsInRange(monthStart, monthEnd).collect { workoutInfoList ->
 					val workoutDayMap = workoutInfoList.groupBy { info ->
 						Instant.ofEpochMilli(info.startTime).atZone(zone).toLocalDate().dayOfMonth
 					}.mapValues { entry -> entry.value.map { it.workoutId } }
-
-					val workoutDays = workoutDayMap.keys
-
-					MonthData(
-						workoutDays,
-						workoutDayMap,
-						workoutsThisMonthDeferred.await(),
-						workoutsThisWeekDeferred.await(),
-						averageDurationDeferred.await(),
-						currentStreakDeferred.await()
-					)
+					_uiState.update {
+						it.copy(
+							workoutDays = workoutDayMap.keys,
+							workoutDayMap = workoutDayMap,
+							isLoading = false
+						)
+					}
 				}
 			}
-
-			_uiState.update {
-				it.copy(
-					workoutDays = data.workoutDays,
-					workoutDayMap = data.workoutDayMap,
-					workoutsThisWeek = data.workoutsThisWeek,
-					workoutsThisMonth = data.workoutsThisMonth,
-					currentStreak = data.currentStreak,
-					averageDuration = data.averageDuration,
-					isLoading = false
-				)
+			launch {
+				statsRepository.getWorkoutCount(monthStart, monthEnd).collect { count ->
+					_uiState.update { it.copy(workoutsThisMonth = count) }
+				}
+			}
+			launch {
+				statsRepository.getWorkoutCount(weekStartMillis, weekEndMillis).collect { count ->
+					_uiState.update { it.copy(workoutsThisWeek = count) }
+				}
+			}
+			launch {
+				statsRepository.getAverageDuration(monthStart, monthEnd).collect { avg ->
+					_uiState.update { it.copy(averageDuration = avg) }
+				}
+			}
+			launch {
+				statsRepository.getWorkoutDatesInRange(streakRangeStart, streakRangeEnd).collect { workoutDates ->
+					val streak = calculateStreak(workoutDates, zone)
+					_uiState.update { it.copy(currentStreak = streak) }
+				}
 			}
 		}
 	}
 
-	private suspend fun calculateStreak(zone: ZoneId): Int {
-		val today = LocalDate.now()
-		val rangeStart = today.minusDays(365).atStartOfDay(zone).toInstant().toEpochMilli()
-		val rangeEnd = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-
-		val workoutDates = statsRepository.getWorkoutDatesInRange(rangeStart, rangeEnd).first()
-		val workoutLocalDates = workoutDates.map { millis ->
+	private fun calculateStreak(workoutDateMillis: List<Long>, zone: ZoneId): Int {
+		val workoutLocalDates = workoutDateMillis.map { millis ->
 			Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 		}.toSet()
 
+		val today = LocalDate.now()
 		var streak = 0
 		var checkDate = today
 		if (!workoutLocalDates.contains(checkDate)) {
