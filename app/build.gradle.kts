@@ -60,8 +60,8 @@ dependencies {
 	// DataStore
 	implementation(libs.androidx.datastore.preferences)
 
-	// Vico Charts
-	implementation(libs.vico.compose.m3)
+	// ComposeCharts
+	implementation(libs.compose.charts)
 
 	// Kotlin Serialization
 	implementation(libs.kotlinx.serialization.json)

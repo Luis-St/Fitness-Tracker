@@ -89,6 +89,17 @@
 	<string name="metric_total_volume">Total Volume</string>
 	<string name="metric_max_reps">Max Reps</string>
 	<string name="metric_set_count">Set Count</string>
+	<string name="total_workouts">Total Workouts</string>
+	<string name="total_volume_all_time">Total Volume</string>
+	<string name="avg_per_week">Avg/Week</string>
+	<string name="longest_workout">Longest Workout</string>
+	<string name="personal_records">Personal Records</string>
+	<string name="category_breakdown">Category Breakdown</string>
+	<string name="no_category_label">Uncategorized</string>
+	<string name="workouts_on_day">Workouts on %1$s</string>
+	<string name="heaviest_weight">Heaviest Weight</string>
+	<string name="most_reps">Most Reps</string>
+	<string name="highest_volume">Highest Volume</string>
 
 	<!-- Settings -->
 	<string name="appearance">Appearance</string>

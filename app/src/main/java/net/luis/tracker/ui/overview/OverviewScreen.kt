@@ -1,9 +1,11 @@
 package net.luis.tracker.ui.overview
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,20 +17,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.luis.tracker.FitnessTrackerApp
@@ -46,15 +52,22 @@ import net.luis.tracker.data.repository.StatsRepository
 import net.luis.tracker.domain.model.ChartMetric
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.overview.components.CalendarView
+import net.luis.tracker.ui.overview.components.CategoryBreakdownChart
+import net.luis.tracker.ui.overview.components.PersonalRecordsCard
 import net.luis.tracker.ui.overview.components.ProgressChart
 import net.luis.tracker.ui.overview.components.StatsSummaryCard
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
 	app: FitnessTrackerApp,
 	weightUnit: WeightUnit,
-	onOpenSettings: () -> Unit = {}
+	onOpenSettings: () -> Unit = {},
+	onNavigateToWorkout: (Long) -> Unit = {}
 ) {
 	val factory = remember {
 		OverviewViewModel.Factory(
@@ -65,6 +78,70 @@ fun OverviewScreen(
 	val viewModel: OverviewViewModel = viewModel(factory = factory)
 
 	val uiState by viewModel.uiState.collectAsState()
+
+	// Handle navigation events
+	LaunchedEffect(uiState.navigateToWorkoutId) {
+		uiState.navigateToWorkoutId?.let { workoutId ->
+			onNavigateToWorkout(workoutId)
+			viewModel.onNavigationHandled()
+		}
+	}
+
+	// Bottom sheet for multiple workouts on same day
+	if (uiState.showWorkoutPicker) {
+		val sheetState = rememberModalBottomSheetState()
+		val dateFormatter = remember { DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT) }
+		val zone = remember { ZoneId.systemDefault() }
+
+		ModalBottomSheet(
+			onDismissRequest = { viewModel.dismissWorkoutPicker() },
+			sheetState = sheetState
+		) {
+			Column(
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(horizontal = 16.dp)
+					.padding(bottom = 32.dp)
+			) {
+				Text(
+					text = if (uiState.selectedDayWorkouts.isNotEmpty()) {
+						val firstTime = uiState.selectedDayWorkouts.first().startTime
+						val date = Instant.ofEpochMilli(firstTime).atZone(zone).toLocalDate()
+						stringResource(R.string.workouts_on_day, date.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)))
+					} else {
+						stringResource(R.string.nav_workouts)
+					},
+					style = MaterialTheme.typography.titleMedium,
+					fontWeight = FontWeight.Bold
+				)
+				Spacer(modifier = Modifier.height(12.dp))
+
+				uiState.selectedDayWorkouts.forEach { workoutInfo ->
+					val time = Instant.ofEpochMilli(workoutInfo.startTime)
+						.atZone(zone)
+						.toLocalDateTime()
+						.format(dateFormatter)
+
+					Row(
+						modifier = Modifier
+							.fillMaxWidth()
+							.clickable {
+								viewModel.dismissWorkoutPicker()
+								onNavigateToWorkout(workoutInfo.workoutId)
+							}
+							.padding(vertical = 12.dp),
+						horizontalArrangement = Arrangement.SpaceBetween,
+						verticalAlignment = Alignment.CenterVertically
+					) {
+						Text(
+							text = time,
+							style = MaterialTheme.typography.bodyLarge
+						)
+					}
+				}
+			}
+		}
+	}
 
 	Scaffold(
 		topBar = {
@@ -100,27 +177,32 @@ fun OverviewScreen(
 			) {
 				Spacer(modifier = Modifier.height(8.dp))
 
-				// Calendar
+				// 1. Calendar with clickable days
 				CalendarView(
 					yearMonth = uiState.currentMonth,
 					workoutDays = uiState.workoutDays,
-					onMonthChange = { viewModel.changeMonth(it) }
+					onMonthChange = { viewModel.changeMonth(it) },
+					onDayClick = { viewModel.onDayClick(it) }
 				)
 
 				Spacer(modifier = Modifier.height(16.dp))
 
-				// Stats summary
+				// 2. Stats summary (expanded with 8 metrics)
 				StatsSummaryCard(
 					workoutsThisWeek = uiState.workoutsThisWeek,
 					workoutsThisMonth = uiState.workoutsThisMonth,
 					currentStreak = uiState.currentStreak,
 					averageDuration = uiState.averageDuration,
+					totalWorkoutsAllTime = uiState.totalWorkoutsAllTime,
+					totalVolumeAllTime = uiState.totalVolumeAllTime,
+					avgWorkoutsPerWeek = uiState.avgWorkoutsPerWeek,
+					longestWorkoutMinutes = uiState.longestWorkoutMinutes,
 					weightUnit = weightUnit
 				)
 
 				Spacer(modifier = Modifier.height(24.dp))
 
-				// Progress section title
+				// 3. Progress section
 				Text(
 					text = stringResource(R.string.progress),
 					style = MaterialTheme.typography.titleMedium
@@ -207,11 +289,26 @@ fun OverviewScreen(
 
 				Spacer(modifier = Modifier.height(16.dp))
 
-				// Progress chart
+				// Progress chart (ComposeCharts LineChart)
 				ProgressChart(
 					progressData = uiState.progressData,
 					metric = uiState.selectedMetric,
 					weightUnit = weightUnit
+				)
+
+				Spacer(modifier = Modifier.height(24.dp))
+
+				// 4. Personal Records
+				PersonalRecordsCard(
+					personalRecords = uiState.personalRecords,
+					weightUnit = weightUnit
+				)
+
+				Spacer(modifier = Modifier.height(16.dp))
+
+				// 5. Category Breakdown donut chart
+				CategoryBreakdownChart(
+					categoryBreakdown = uiState.categoryBreakdown
 				)
 
 				Spacer(modifier = Modifier.height(16.dp))

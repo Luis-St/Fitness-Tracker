@@ -3,25 +3,25 @@ package net.luis.tracker.ui.overview.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
-import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
-import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
-import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
-import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
-import com.patrykandpatrick.vico.core.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.core.cartesian.data.lineSeries
+import ir.ehsannarmani.compose_charts.LineChart
+import ir.ehsannarmani.compose_charts.models.AnimationMode
+import ir.ehsannarmani.compose_charts.models.DotProperties
+import ir.ehsannarmani.compose_charts.models.DrawStyle
+import ir.ehsannarmani.compose_charts.models.GridProperties
+import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
+import ir.ehsannarmani.compose_charts.models.LabelHelperProperties
+import ir.ehsannarmani.compose_charts.models.LabelProperties
+import ir.ehsannarmani.compose_charts.models.Line
 import net.luis.tracker.R
 import net.luis.tracker.data.local.dao.ExerciseProgress
 import net.luis.tracker.domain.model.ChartMetric
@@ -53,10 +53,20 @@ fun ProgressChart(
 		return
 	}
 
-	val modelProducer = remember { CartesianChartModelProducer() }
-
+	val primary = MaterialTheme.colorScheme.primary
 	val dateFormatter = remember { DateTimeFormatter.ofPattern("dd/MM") }
 	val zone = remember { ZoneId.systemDefault() }
+
+	val values = remember(progressData, metric, weightUnit) {
+		progressData.map { progress ->
+			when (metric) {
+				ChartMetric.MAX_WEIGHT -> weightUnit.convertFromKg(progress.maxWeight)
+				ChartMetric.TOTAL_VOLUME -> weightUnit.convertFromKg(progress.totalVolume)
+				ChartMetric.MAX_REPS -> progress.maxReps.toDouble()
+				ChartMetric.SET_COUNT -> progress.setCount.toDouble()
+			}
+		}
+	}
 
 	val dateLabels = remember(progressData) {
 		progressData.map { progress ->
@@ -67,37 +77,39 @@ fun ProgressChart(
 		}
 	}
 
-	LaunchedEffect(progressData, metric, weightUnit) {
-		val values = progressData.map { progress ->
-			when (metric) {
-				ChartMetric.MAX_WEIGHT -> weightUnit.convertFromKg(progress.maxWeight)
-				ChartMetric.TOTAL_VOLUME -> weightUnit.convertFromKg(progress.totalVolume)
-				ChartMetric.MAX_REPS -> progress.maxReps.toDouble()
-				ChartMetric.SET_COUNT -> progress.setCount.toDouble()
-			}
-		}
-
-		if (values.isNotEmpty()) {
-			modelProducer.runTransaction {
-				lineSeries { series(values) }
-			}
-		}
+	val lineData = remember(values, primary) {
+		listOf(
+			Line(
+				label = "",
+				values = values,
+				color = SolidColor(primary),
+				firstGradientFillColor = primary.copy(alpha = 0.4f),
+				secondGradientFillColor = Color.Transparent,
+				drawStyle = DrawStyle.Stroke(width = 2.dp),
+				curvedEdges = true,
+				dotProperties = DotProperties(
+					enabled = true,
+					radius = 4.dp,
+					color = SolidColor(primary),
+					strokeWidth = 2.dp,
+					strokeColor = SolidColor(primary)
+				)
+			)
+		)
 	}
 
-	CartesianChartHost(
-		chart = rememberCartesianChart(
-			rememberLineCartesianLayer(),
-			startAxis = VerticalAxis.rememberStart(),
-			bottomAxis = HorizontalAxis.rememberBottom(
-				valueFormatter = { _, value, _ ->
-					val index = value.toInt()
-					if (index in dateLabels.indices) dateLabels[index] else ""
-				}
-			)
-		),
-		modelProducer = modelProducer,
+	LineChart(
 		modifier = modifier
 			.fillMaxWidth()
-			.height(250.dp)
+			.height(250.dp),
+		data = lineData,
+		animationMode = AnimationMode.Together(delayBuilder = { it * 100L }),
+		labelHelperProperties = LabelHelperProperties(enabled = false),
+		labelProperties = LabelProperties(
+			enabled = true,
+			labels = dateLabels
+		),
+		indicatorProperties = HorizontalIndicatorProperties(enabled = true),
+		gridProperties = GridProperties(enabled = false)
 	)
 }

@@ -71,7 +71,10 @@ fun AppNavHost(
 			OverviewScreen(
 				app = app,
 				weightUnit = weightUnit,
-				onOpenSettings = { navController.navigate(SettingsRoute) }
+				onOpenSettings = { navController.navigate(SettingsRoute) },
+				onNavigateToWorkout = { workoutId ->
+					navController.navigate(WorkoutDetailRoute(workoutId))
+				}
 			)
 		}
 		composable<ExercisesRoute> {

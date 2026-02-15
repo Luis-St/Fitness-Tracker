@@ -1,6 +1,7 @@
 package net.luis.tracker.ui.overview.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +34,7 @@ fun CalendarView(
 	yearMonth: YearMonth,
 	workoutDays: Set<Int>,
 	onMonthChange: (YearMonth) -> Unit,
+	onDayClick: (Int) -> Unit = {},
 	modifier: Modifier = Modifier
 ) {
 	Column(modifier = modifier.fillMaxWidth()) {
@@ -116,11 +118,12 @@ fun CalendarView(
 							Box(
 								modifier = Modifier
 									.matchParentSize()
+									.clip(CircleShape)
 									.then(
 										if (isWorkoutDay) {
 											Modifier
-												.clip(CircleShape)
 												.background(MaterialTheme.colorScheme.primary)
+												.clickable { onDayClick(dayNumber) }
 										} else {
 											Modifier
 										}

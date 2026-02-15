@@ -12,6 +12,24 @@ data class ExerciseProgress(
 	val setCount: Int
 )
 
+data class PersonalRecord(
+	val exerciseId: Long,
+	val exerciseTitle: String,
+	val maxWeight: Double,
+	val maxReps: Int,
+	val maxVolume: Double
+)
+
+data class CategoryWorkoutCount(
+	val categoryName: String,
+	val count: Int
+)
+
+data class WorkoutDateInfo(
+	val workoutId: Long,
+	val startTime: Long
+)
+
 @Dao
 interface StatsDao {
 
@@ -56,4 +74,62 @@ interface StatsDao {
 
 	@Query("SELECT DISTINCT startTime FROM workouts WHERE startTime >= :startMillis AND startTime < :endMillis")
 	fun getWorkoutDatesInRange(startMillis: Long, endMillis: Long): Flow<List<Long>>
+
+	@Query("SELECT COUNT(*) FROM workouts")
+	fun getTotalWorkoutCount(): Flow<Int>
+
+	@Query(
+		"""
+		SELECT SUM(ws.weightKg * ws.reps)
+		FROM workout_sets ws
+		INNER JOIN workout_exercises we ON ws.workoutExerciseId = we.id
+		"""
+	)
+	fun getTotalVolume(): Flow<Double?>
+
+	@Query("SELECT MIN(startTime) FROM workouts")
+	fun getFirstWorkoutDate(): Flow<Long?>
+
+	@Query("SELECT MAX(durationSeconds) FROM workouts")
+	fun getLongestWorkoutDuration(): Flow<Long?>
+
+	@Query(
+		"""
+		SELECT e.id as exerciseId,
+			e.title as exerciseTitle,
+			MAX(ws.weightKg) as maxWeight,
+			MAX(ws.reps) as maxReps,
+			MAX(ws.weightKg * ws.reps) as maxVolume
+		FROM exercises e
+		INNER JOIN workout_exercises we ON we.exerciseId = e.id
+		INNER JOIN workout_sets ws ON ws.workoutExerciseId = we.id
+		WHERE e.isDeleted = 0
+		GROUP BY e.id
+		ORDER BY maxWeight DESC
+		"""
+	)
+	fun getPersonalRecords(): Flow<List<PersonalRecord>>
+
+	@Query(
+		"""
+		SELECT COALESCE(c.name, 'Uncategorized') as categoryName,
+			COUNT(we.id) as count
+		FROM workout_exercises we
+		INNER JOIN exercises e ON we.exerciseId = e.id
+		LEFT JOIN categories c ON e.categoryId = c.id
+		GROUP BY COALESCE(c.name, 'Uncategorized')
+		ORDER BY count DESC
+		"""
+	)
+	fun getCategoryBreakdown(): Flow<List<CategoryWorkoutCount>>
+
+	@Query(
+		"""
+		SELECT id as workoutId, startTime
+		FROM workouts
+		WHERE startTime >= :startMillis AND startTime < :endMillis
+		ORDER BY startTime ASC
+		"""
+	)
+	fun getWorkoutIdsInRange(startMillis: Long, endMillis: Long): Flow<List<WorkoutDateInfo>>
 }

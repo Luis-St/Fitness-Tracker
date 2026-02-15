@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,7 +28,11 @@ fun StatsSummaryCard(
 	workoutsThisMonth: Int,
 	currentStreak: Int,
 	averageDuration: Double?,
-	@Suppress("UNUSED_PARAMETER") weightUnit: WeightUnit,
+	totalWorkoutsAllTime: Int,
+	totalVolumeAllTime: Double,
+	avgWorkoutsPerWeek: Double,
+	longestWorkoutMinutes: Long,
+	weightUnit: WeightUnit,
 	modifier: Modifier = Modifier
 ) {
 	Card(
@@ -71,6 +76,43 @@ fun StatsSummaryCard(
 				StatItem(
 					value = formatDuration(averageDuration),
 					label = stringResource(R.string.avg_duration),
+					modifier = Modifier.weight(1f)
+				)
+			}
+
+			HorizontalDivider(
+				modifier = Modifier.padding(vertical = 12.dp),
+				color = MaterialTheme.colorScheme.outlineVariant
+			)
+
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.SpaceEvenly
+			) {
+				StatItem(
+					value = totalWorkoutsAllTime.toString(),
+					label = stringResource(R.string.total_workouts),
+					modifier = Modifier.weight(1f)
+				)
+				StatItem(
+					value = weightUnit.formatWeight(totalVolumeAllTime),
+					label = stringResource(R.string.total_volume_all_time),
+					modifier = Modifier.weight(1f)
+				)
+			}
+			Spacer(modifier = Modifier.height(12.dp))
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.SpaceEvenly
+			) {
+				StatItem(
+					value = "%.1f".format(avgWorkoutsPerWeek),
+					label = stringResource(R.string.avg_per_week),
+					modifier = Modifier.weight(1f)
+				)
+				StatItem(
+					value = "$longestWorkoutMinutes ${stringResource(R.string.minutes_short)}",
+					label = stringResource(R.string.longest_workout),
 					modifier = Modifier.weight(1f)
 				)
 			}

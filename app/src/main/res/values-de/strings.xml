@@ -89,6 +89,17 @@
 	<string name="metric_total_volume">Gesamtvolumen</string>
 	<string name="metric_max_reps">Max. Wdh.</string>
 	<string name="metric_set_count">Anzahl Sätze</string>
+	<string name="total_workouts">Gesamt Workouts</string>
+	<string name="total_volume_all_time">Gesamtvolumen</string>
+	<string name="avg_per_week">Ø pro Woche</string>
+	<string name="longest_workout">Längstes Workout</string>
+	<string name="personal_records">Persönliche Rekorde</string>
+	<string name="category_breakdown">Verteilung nach Kategorie</string>
+	<string name="no_category_label">Ohne Kategorie</string>
+	<string name="workouts_on_day">Workouts am %1$s</string>
+	<string name="heaviest_weight">Höchstes Gewicht</string>
+	<string name="most_reps">Meiste Wiederholungen</string>
+	<string name="highest_volume">Höchstes Volumen</string>
 
 	<!-- Settings -->
 	<string name="appearance">Darstellung</string>
