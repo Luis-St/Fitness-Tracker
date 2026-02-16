@@ -27,15 +27,14 @@ val bottomNavItems = listOf(
 
 @Composable
 fun BottomNavBar(
-	currentRoute: String?,
-	onNavigate: (Any) -> Unit
+	selectedIndex: Int,
+	onTabSelected: (Int) -> Unit
 ) {
 	NavigationBar {
-		bottomNavItems.forEach { item ->
-			val routeName = item.route::class.qualifiedName
+		bottomNavItems.forEachIndexed { index, item ->
 			NavigationBarItem(
-				selected = currentRoute == routeName,
-				onClick = { onNavigate(item.route) },
+				selected = selectedIndex == index,
+				onClick = { onTabSelected(index) },
 				icon = { Icon(item.icon, contentDescription = stringResource(item.labelResId)) },
 				label = { Text(stringResource(item.labelResId)) }
 			)

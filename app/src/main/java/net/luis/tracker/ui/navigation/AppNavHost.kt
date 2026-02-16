@@ -2,6 +2,8 @@ package net.luis.tracker.ui.navigation
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -59,6 +61,7 @@ private fun activeWorkoutViewModel(
 @Composable
 fun AppNavHost(
 	navController: NavHostController,
+	pagerState: PagerState,
 	app: FitnessTrackerApp,
 	weightUnit: WeightUnit,
 	restTimerSeconds: Int,
@@ -66,35 +69,38 @@ fun AppNavHost(
 ) {
 	NavHost(
 		navController = navController,
-		startDestination = OverviewRoute,
+		startDestination = TabsRoute,
 		modifier = modifier
 	) {
-		composable<OverviewRoute> {
-			OverviewScreen(
-				app = app,
-				weightUnit = weightUnit,
-				onOpenSettings = { navController.navigate(SettingsRoute) },
-				onNavigateToWorkout = { workoutId ->
-					navController.navigate(WorkoutDetailRoute(workoutId))
+		composable<TabsRoute> {
+			HorizontalPager(
+				state = pagerState,
+				beyondViewportPageCount = 1
+			) { page ->
+				when (page) {
+					0 -> ExercisesScreen(
+						app = app,
+						onAddExercise = { navController.navigate(AddExerciseRoute) },
+						onExerciseClick = { id -> navController.navigate(ExerciseDetailRoute(id)) },
+						onOpenSettings = { navController.navigate(SettingsRoute) }
+					)
+					1 -> OverviewScreen(
+						app = app,
+						weightUnit = weightUnit,
+						onOpenSettings = { navController.navigate(SettingsRoute) },
+						onNavigateToWorkout = { workoutId ->
+							navController.navigate(WorkoutDetailRoute(workoutId))
+						}
+					)
+					2 -> WorkoutsScreen(
+						app = app,
+						weightUnit = weightUnit,
+						onStartWorkout = { navController.navigate(ActiveWorkoutGraphRoute) },
+						onWorkoutClick = { id -> navController.navigate(WorkoutDetailRoute(id)) },
+						onOpenSettings = { navController.navigate(SettingsRoute) }
+					)
 				}
-			)
-		}
-		composable<ExercisesRoute> {
-			ExercisesScreen(
-				app = app,
-				onAddExercise = { navController.navigate(AddExerciseRoute) },
-				onExerciseClick = { id -> navController.navigate(ExerciseDetailRoute(id)) },
-				onOpenSettings = { navController.navigate(SettingsRoute) }
-			)
-		}
-		composable<WorkoutsRoute> {
-			WorkoutsScreen(
-				app = app,
-				weightUnit = weightUnit,
-				onStartWorkout = { navController.navigate(ActiveWorkoutGraphRoute) },
-				onWorkoutClick = { id -> navController.navigate(WorkoutDetailRoute(id)) },
-				onOpenSettings = { navController.navigate(SettingsRoute) }
-			)
+			}
 		}
 		composable<SettingsRoute> {
 			SettingsScreen(

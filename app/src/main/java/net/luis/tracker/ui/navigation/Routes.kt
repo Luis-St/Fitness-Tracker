@@ -3,6 +3,9 @@ package net.luis.tracker.ui.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
+object TabsRoute
+
+@Serializable
 object OverviewRoute
 
 @Serializable

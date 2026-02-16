@@ -6,11 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -21,9 +24,9 @@ import net.luis.tracker.ui.navigation.ActiveWorkoutExerciseRoute
 import net.luis.tracker.ui.navigation.ActiveWorkoutRoute
 import net.luis.tracker.ui.navigation.RestTimerRoute
 import net.luis.tracker.ui.navigation.SelectExerciseForWorkoutRoute
+import net.luis.tracker.ui.navigation.TabsRoute
 import net.luis.tracker.ui.navigation.AppNavHost
 import net.luis.tracker.ui.navigation.BottomNavBar
-import net.luis.tracker.ui.navigation.bottomNavItems
 import net.luis.tracker.ui.theme.FitnessTrackerTheme
 
 class MainActivity : ComponentActivity() {
@@ -68,7 +71,10 @@ class MainActivity : ComponentActivity() {
 				val navBackStackEntry by navController.currentBackStackEntryAsState()
 				val currentRoute = navBackStackEntry?.destination?.route
 
-				val isBottomNavRoute = bottomNavItems.any { it.route::class.qualifiedName == currentRoute }
+				val pagerState = rememberPagerState(initialPage = 1, pageCount = { 3 })
+				val coroutineScope = rememberCoroutineScope()
+
+				val isBottomNavRoute = currentRoute == TabsRoute::class.qualifiedName
 				val isActiveWorkout = currentRoute == ActiveWorkoutRoute::class.qualifiedName ||
 				currentRoute == ActiveWorkoutExerciseRoute::class.qualifiedName ||
 				currentRoute == SelectExerciseForWorkoutRoute::class.qualifiedName ||
@@ -78,14 +84,10 @@ class MainActivity : ComponentActivity() {
 					bottomBar = {
 						if (isBottomNavRoute) {
 							BottomNavBar(
-								currentRoute = currentRoute,
-								onNavigate = { route ->
-									navController.navigate(route) {
-										popUpTo(navController.graph.startDestinationId) {
-											saveState = true
-										}
-										launchSingleTop = true
-										restoreState = true
+								selectedIndex = pagerState.currentPage,
+								onTabSelected = { index ->
+									coroutineScope.launch {
+										pagerState.animateScrollToPage(index)
 									}
 								}
 							)
@@ -94,10 +96,15 @@ class MainActivity : ComponentActivity() {
 				) { innerPadding ->
 					AppNavHost(
 						navController = navController,
+						pagerState = pagerState,
 						app = app,
 						weightUnit = settings.weightUnit,
 						restTimerSeconds = settings.restTimerSeconds,
-						modifier = if (!isActiveWorkout) Modifier.padding(innerPadding) else Modifier
+						modifier = when {
+							isActiveWorkout -> Modifier
+							isBottomNavRoute -> Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+							else -> Modifier.padding(innerPadding)
+						}
 					)
 				}
 			}

@@ -29,6 +29,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -100,7 +101,8 @@ fun WorkoutsScreen(
 					contentDescription = stringResource(R.string.start_workout)
 				)
 			}
-		}
+		},
+		contentWindowInsets = WindowInsets(0)
 	) { innerPadding ->
 		when {
 			uiState.isLoading -> {
@@ -126,7 +128,7 @@ fun WorkoutsScreen(
 						start = 16.dp,
 						end = 16.dp,
 						top = innerPadding.calculateTopPadding() + 8.dp,
-						bottom = innerPadding.calculateBottomPadding() + 80.dp
+						bottom = innerPadding.calculateBottomPadding() + 16.dp
 					),
 					verticalArrangement = Arrangement.spacedBy(12.dp),
 					modifier = Modifier.fillMaxSize()

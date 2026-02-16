@@ -30,6 +30,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
@@ -100,7 +101,8 @@ fun ExercisesScreen(
 					contentDescription = stringResource(R.string.add_exercise)
 				)
 			}
-		}
+		},
+		contentWindowInsets = WindowInsets(0)
 	) { innerPadding ->
 		Column(
 			modifier = Modifier
