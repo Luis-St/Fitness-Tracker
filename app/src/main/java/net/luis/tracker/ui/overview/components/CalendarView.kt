@@ -1,6 +1,7 @@
 package net.luis.tracker.ui.overview.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -96,6 +98,13 @@ fun CalendarView(
 		val totalCells = startOffset + daysInMonth
 		val rows = (totalCells + 6) / 7
 
+		val today = LocalDate.now()
+		val todayDay = if (yearMonth.year == today.year && yearMonth.monthValue == today.monthValue) {
+			today.dayOfMonth
+		} else {
+			-1
+		}
+
 		for (row in 0 until rows) {
 			Row(
 				modifier = Modifier
@@ -115,6 +124,7 @@ fun CalendarView(
 					) {
 						if (dayNumber in 1..daysInMonth) {
 							val isWorkoutDay = workoutDays.contains(dayNumber)
+							val isToday = dayNumber == todayDay
 							Box(
 								modifier = Modifier
 									.matchParentSize()
@@ -124,6 +134,21 @@ fun CalendarView(
 											Modifier
 												.background(MaterialTheme.colorScheme.primary)
 												.clickable { onDayClick(dayNumber) }
+										} else {
+											Modifier
+										}
+									)
+									.then(
+										if (isToday) {
+											Modifier.border(
+												width = 2.dp,
+												color = if (isWorkoutDay) {
+													MaterialTheme.colorScheme.onPrimary
+												} else {
+													MaterialTheme.colorScheme.primary
+												},
+												shape = CircleShape
+											)
 										} else {
 											Modifier
 										}
