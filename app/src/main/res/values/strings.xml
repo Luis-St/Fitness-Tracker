@@ -85,6 +85,7 @@
 	<string name="current_streak">Current Streak</string>
 	<string name="avg_duration">Avg. Duration</string>
 	<string name="days">days</string>
+	<string name="weeks">weeks</string>
 	<string name="minutes_short">min</string>
 	<string name="progress">Progress</string>
 	<string name="all_exercises">All Exercises</string>
@@ -117,6 +118,8 @@
 	<string name="weight_unit">Weight Unit</string>
 	<string name="workout_settings">Workout</string>
 	<string name="default_rest_timer">Default Rest Timer</string>
+	<string name="weekly_workout_goal">Weekly Workout Goal</string>
+	<string name="weekly_workout_goal_value">%1$d workouts per week</string>
 	<string name="rest_timer_format">%1$d:%2$02d</string>
 	<string name="data">Data</string>
 	<string name="export_data">Export Data</string>

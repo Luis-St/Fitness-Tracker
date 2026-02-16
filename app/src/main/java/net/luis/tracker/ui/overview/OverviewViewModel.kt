@@ -55,7 +55,8 @@ data class OverviewUiState(
 
 class OverviewViewModel(
 	private val statsRepository: StatsRepository,
-	private val exerciseRepository: ExerciseRepository
+	private val exerciseRepository: ExerciseRepository,
+	private val weeklyWorkoutGoal: Int
 ) : ViewModel() {
 
 	private val _uiState = MutableStateFlow(OverviewUiState())
@@ -227,20 +228,52 @@ class OverviewViewModel(
 	}
 
 	private fun calculateStreak(workoutDateMillis: List<Long>, zone: ZoneId): Int {
-		val workoutLocalDates = workoutDateMillis.map { millis ->
-			Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
-		}.toSet()
+		if (workoutDateMillis.isEmpty()) return 0
 
-		val today = LocalDate.now()
-		var streak = 0
-		var checkDate = today
-		if (!workoutLocalDates.contains(checkDate)) {
-			checkDate = today.minusDays(1)
+		val workoutDates = workoutDateMillis.map { millis ->
+			Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 		}
 
-		while (workoutLocalDates.contains(checkDate)) {
-			streak++
-			checkDate = checkDate.minusDays(1)
+		// Group by ISO week: pair of (week-based year, week number)
+		val weekFields = java.time.temporal.WeekFields.ISO
+		val workoutsPerWeek = workoutDates.groupBy { date ->
+			val weekYear = date.get(weekFields.weekBasedYear())
+			val weekNum = date.get(weekFields.weekOfWeekBasedYear())
+			weekYear to weekNum
+		}.mapValues { (_, dates) -> dates.toSet().size } // count distinct days
+
+		val today = LocalDate.now()
+		val currentWeekYear = today.get(weekFields.weekBasedYear())
+		val currentWeekNum = today.get(weekFields.weekOfWeekBasedYear())
+
+		// Determine starting point: if current week already meets the goal, count it;
+		// otherwise skip it (it's still in progress) and start from the previous week
+		var checkDate = today.with(weekFields.weekOfWeekBasedYear(), currentWeekNum.toLong())
+			.with(weekFields.weekBasedYear(), currentWeekYear.toLong())
+		val currentWeekKey = currentWeekYear to currentWeekNum
+		val currentWeekCount = workoutsPerWeek[currentWeekKey] ?: 0
+
+		var streak = 0
+		if (currentWeekCount >= weeklyWorkoutGoal) {
+			streak = 1
+			checkDate = checkDate.minusWeeks(1)
+		} else {
+			// Current week doesn't meet goal yet, start checking from previous week
+			checkDate = checkDate.minusWeeks(1)
+		}
+
+		// Count consecutive previous weeks that meet the goal
+		while (true) {
+			val weekYear = checkDate.get(weekFields.weekBasedYear())
+			val weekNum = checkDate.get(weekFields.weekOfWeekBasedYear())
+			val key = weekYear to weekNum
+			val count = workoutsPerWeek[key] ?: 0
+			if (count >= weeklyWorkoutGoal) {
+				streak++
+				checkDate = checkDate.minusWeeks(1)
+			} else {
+				break
+			}
 		}
 
 		return streak
@@ -263,11 +296,12 @@ class OverviewViewModel(
 
 	class Factory(
 		private val statsRepository: StatsRepository,
-		private val exerciseRepository: ExerciseRepository
+		private val exerciseRepository: ExerciseRepository,
+		private val weeklyWorkoutGoal: Int
 	) : ViewModelProvider.Factory {
 		@Suppress("UNCHECKED_CAST")
 		override fun <T : ViewModel> create(modelClass: Class<T>): T {
-			return OverviewViewModel(statsRepository, exerciseRepository) as T
+			return OverviewViewModel(statsRepository, exerciseRepository, weeklyWorkoutGoal) as T
 		}
 	}
 }

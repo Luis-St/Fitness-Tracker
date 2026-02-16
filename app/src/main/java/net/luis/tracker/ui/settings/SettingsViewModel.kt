@@ -17,7 +17,8 @@ data class SettingsUiState(
 	val themeMode: ThemeMode = ThemeMode.SYSTEM,
 	val dynamicColors: Boolean = true,
 	val weightUnit: WeightUnit = WeightUnit.KG,
-	val restTimerSeconds: Int = 90
+	val restTimerSeconds: Int = 90,
+	val weeklyWorkoutGoal: Int = 2
 )
 
 class SettingsViewModel(
@@ -33,13 +34,17 @@ class SettingsViewModel(
 				settingsRepository.themeMode,
 				settingsRepository.dynamicColors,
 				settingsRepository.weightUnit,
-				settingsRepository.restTimerSeconds
-			) { mode, dynamicColors, unit, seconds ->
+				combine(
+					settingsRepository.restTimerSeconds,
+					settingsRepository.weeklyWorkoutGoal
+				) { rest, goal -> rest to goal }
+			) { mode, dynamicColors, unit, (seconds, goal) ->
 				SettingsUiState(
 					themeMode = mode,
 					dynamicColors = dynamicColors,
 					weightUnit = unit,
-					restTimerSeconds = seconds
+					restTimerSeconds = seconds,
+					weeklyWorkoutGoal = goal
 				)
 			}.collect { state ->
 				_uiState.value = state
@@ -68,6 +73,12 @@ class SettingsViewModel(
 	fun setRestTimerSeconds(seconds: Int) {
 		viewModelScope.launch {
 			settingsRepository.setRestTimerSeconds(seconds)
+		}
+	}
+
+	fun setWeeklyWorkoutGoal(goal: Int) {
+		viewModelScope.launch {
+			settingsRepository.setWeeklyWorkoutGoal(goal)
 		}
 	}
 

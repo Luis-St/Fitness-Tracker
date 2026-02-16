@@ -42,7 +42,8 @@ class MainActivity : ComponentActivity() {
 				val themeMode: ThemeMode = ThemeMode.SYSTEM,
 				val dynamicColors: Boolean = true,
 				val weightUnit: WeightUnit = WeightUnit.KG,
-				val restTimerSeconds: Int = 90
+				val restTimerSeconds: Int = 90,
+				val weeklyWorkoutGoal: Int = 2
 			)
 
 			val settingsFlow = remember {
@@ -50,9 +51,12 @@ class MainActivity : ComponentActivity() {
 					settingsRepo.themeMode,
 					settingsRepo.dynamicColors,
 					settingsRepo.weightUnit,
-					settingsRepo.restTimerSeconds
-				) { theme, dynamic, unit, restTimer ->
-					AppSettings(theme, dynamic, unit, restTimer)
+					combine(
+						settingsRepo.restTimerSeconds,
+						settingsRepo.weeklyWorkoutGoal
+					) { rest, goal -> rest to goal }
+				) { theme, dynamic, unit, (restTimer, goal) ->
+					AppSettings(theme, dynamic, unit, restTimer, goal)
 				}
 			}
 			val settings by settingsFlow.collectAsState(initial = AppSettings())
@@ -100,6 +104,7 @@ class MainActivity : ComponentActivity() {
 						app = app,
 						weightUnit = settings.weightUnit,
 						restTimerSeconds = settings.restTimerSeconds,
+						weeklyWorkoutGoal = settings.weeklyWorkoutGoal,
 						modifier = when {
 							isActiveWorkout -> Modifier
 							isBottomNavRoute -> Modifier.padding(bottom = innerPadding.calculateBottomPadding())

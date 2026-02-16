@@ -65,6 +65,7 @@ fun AppNavHost(
 	app: FitnessTrackerApp,
 	weightUnit: WeightUnit,
 	restTimerSeconds: Int,
+	weeklyWorkoutGoal: Int,
 	modifier: Modifier = Modifier
 ) {
 	NavHost(
@@ -87,6 +88,7 @@ fun AppNavHost(
 					1 -> OverviewScreen(
 						app = app,
 						weightUnit = weightUnit,
+						weeklyWorkoutGoal = weeklyWorkoutGoal,
 						onOpenSettings = { navController.navigate(SettingsRoute) },
 						onNavigateToWorkout = { workoutId ->
 							navController.navigate(WorkoutDetailRoute(workoutId))

@@ -69,7 +69,7 @@ fun StatsSummaryCard(
 				horizontalArrangement = Arrangement.SpaceEvenly
 			) {
 				StatItem(
-					value = "$currentStreak ${stringResource(R.string.days)}",
+					value = "$currentStreak ${stringResource(R.string.weeks)}",
 					label = stringResource(R.string.current_streak),
 					modifier = Modifier.weight(1f)
 				)

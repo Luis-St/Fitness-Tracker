@@ -22,6 +22,7 @@ class SettingsRepository(private val context: Context) {
 		val DYNAMIC_COLORS = booleanPreferencesKey("dynamic_colors")
 		val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
 		val REST_TIMER_SECONDS = intPreferencesKey("rest_timer_seconds")
+		val WEEKLY_WORKOUT_GOAL = intPreferencesKey("weekly_workout_goal")
 	}
 
 	val themeMode: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
@@ -40,6 +41,10 @@ class SettingsRepository(private val context: Context) {
 		prefs[Keys.REST_TIMER_SECONDS] ?: 90
 	}
 
+	val weeklyWorkoutGoal: Flow<Int> = context.dataStore.data.map { prefs ->
+		prefs[Keys.WEEKLY_WORKOUT_GOAL] ?: 2
+	}
+
 	suspend fun setThemeMode(mode: ThemeMode) {
 		context.dataStore.edit { it[Keys.THEME_MODE] = mode.name }
 	}
@@ -54,5 +59,9 @@ class SettingsRepository(private val context: Context) {
 
 	suspend fun setRestTimerSeconds(seconds: Int) {
 		context.dataStore.edit { it[Keys.REST_TIMER_SECONDS] = seconds }
+	}
+
+	suspend fun setWeeklyWorkoutGoal(goal: Int) {
+		context.dataStore.edit { it[Keys.WEEKLY_WORKOUT_GOAL] = goal }
 	}
 }

@@ -65,13 +65,15 @@ import java.time.format.FormatStyle
 fun OverviewScreen(
 	app: FitnessTrackerApp,
 	weightUnit: WeightUnit,
+	weeklyWorkoutGoal: Int = 2,
 	onOpenSettings: () -> Unit = {},
 	onNavigateToWorkout: (Long) -> Unit = {}
 ) {
-	val factory = remember {
+	val factory = remember(weeklyWorkoutGoal) {
 		OverviewViewModel.Factory(
 			statsRepository = StatsRepository(app.database.statsDao()),
-			exerciseRepository = ExerciseRepository(app.database.exerciseDao())
+			exerciseRepository = ExerciseRepository(app.database.exerciseDao()),
+			weeklyWorkoutGoal = weeklyWorkoutGoal
 		)
 	}
 	val viewModel: OverviewViewModel = viewModel(factory = factory)

@@ -252,6 +252,30 @@ fun SettingsScreen(
 				modifier = Modifier.fillMaxWidth()
 			)
 
+			Spacer(modifier = Modifier.height(16.dp))
+
+			Text(
+				text = stringResource(R.string.weekly_workout_goal),
+				style = MaterialTheme.typography.bodyLarge
+			)
+			Spacer(modifier = Modifier.height(4.dp))
+
+			Text(
+				text = stringResource(R.string.weekly_workout_goal_value, uiState.weeklyWorkoutGoal),
+				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onSurfaceVariant
+			)
+
+			Slider(
+				value = uiState.weeklyWorkoutGoal.toFloat(),
+				onValueChange = { value ->
+					viewModel.setWeeklyWorkoutGoal(value.roundToInt())
+				},
+				valueRange = 1f..7f,
+				steps = 5, // 5 intermediate steps between 1 and 7
+				modifier = Modifier.fillMaxWidth()
+			)
+
 			Spacer(modifier = Modifier.height(24.dp))
 
 			// --- Data Section ---
