@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.R
+import net.luis.tracker.data.repository.ActiveWorkoutDraftRepository
 import net.luis.tracker.data.repository.WorkoutRepository
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.domain.model.Workout
@@ -61,6 +62,7 @@ import java.time.format.DateTimeFormatter
 fun WorkoutsScreen(
 	app: FitnessTrackerApp,
 	weightUnit: WeightUnit,
+	draftRepository: ActiveWorkoutDraftRepository,
 	onStartWorkout: () -> Unit,
 	onWorkoutClick: (Long) -> Unit,
 	onOpenSettings: () -> Unit = {}
@@ -72,7 +74,8 @@ fun WorkoutsScreen(
 				app.database.workoutDao(),
 				app.database.workoutExerciseDao(),
 				app.database.workoutSetDao()
-			)
+			),
+			draftRepository = draftRepository
 		)
 	}
 	val viewModel: WorkoutsViewModel = viewModel(factory = factory)
@@ -157,6 +160,7 @@ fun WorkoutsScreen(
 			onDismiss = { workoutToDelete = null }
 		)
 	}
+
 }
 
 @Composable
@@ -189,12 +193,21 @@ private fun WorkoutCard(
 				modifier = Modifier.fillMaxWidth(),
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Text(
-					text = formattedDate,
-					style = MaterialTheme.typography.titleMedium,
-					fontWeight = FontWeight.Bold,
-					modifier = Modifier.weight(1f)
-				)
+				Column(modifier = Modifier.weight(1f)) {
+					Text(
+						text = formattedDate,
+						style = MaterialTheme.typography.titleMedium,
+						fontWeight = FontWeight.Bold
+					)
+					if (!workout.isFinished) {
+						Spacer(modifier = Modifier.height(4.dp))
+						Text(
+							text = stringResource(R.string.unfinished),
+							style = MaterialTheme.typography.labelSmall,
+							color = MaterialTheme.colorScheme.error
+						)
+					}
+				}
 				IconButton(onClick = onDelete) {
 					Icon(
 						imageVector = Icons.Default.Delete,

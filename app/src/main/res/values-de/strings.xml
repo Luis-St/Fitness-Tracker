@@ -62,6 +62,10 @@
 	<string name="skip">Überspringen</string>
 	<string name="rest_timer">Pausenzeit</string>
 
+	<string name="unfinished">Unvollständig</string>
+	<string name="mark_as_finished">Als abgeschlossen markieren</string>
+	<string name="resume_workout">Workout fortsetzen</string>
+
 	<!-- Workouts History -->
 	<string name="workouts_title">Workouts</string>
 	<string name="no_workouts">Noch keine Workouts</string>

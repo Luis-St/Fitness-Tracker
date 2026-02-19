@@ -10,5 +10,6 @@ data class WorkoutEntity(
 	val startTime: Long, // epoch millis
 	val endTime: Long? = null, // epoch millis
 	val durationSeconds: Long = 0,
-	val notes: String = ""
+	val notes: String = "",
+	val isFinished: Boolean = true
 )

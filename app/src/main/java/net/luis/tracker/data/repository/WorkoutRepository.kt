@@ -40,6 +40,9 @@ class WorkoutRepository(
 	suspend fun delete(workout: Workout) =
 		workoutDao.delete(workout.toEntity())
 
+	suspend fun deleteById(id: Long) =
+		workoutDao.deleteById(id)
+
 	suspend fun saveFullWorkout(workout: Workout): Long = withContext(Dispatchers.IO) {
 		database.withTransaction {
 			val workoutId = workoutDao.insert(workout.toEntity())

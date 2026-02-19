@@ -15,10 +15,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +30,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -62,7 +66,8 @@ fun WorkoutDetailScreen(
 	workoutId: Long,
 	weightUnit: WeightUnit,
 	onNavigateBack: () -> Unit,
-	onEdit: () -> Unit
+	onEdit: () -> Unit,
+	onResume: () -> Unit = {}
 ) {
 	val workoutRepository = remember {
 		WorkoutRepository(
@@ -102,6 +107,22 @@ fun WorkoutDetailScreen(
 					}
 				},
 				actions = {
+					if (workout?.isFinished == false) {
+						IconButton(onClick = {
+							workout?.let { w ->
+								scope.launch {
+									val updated = w.copy(isFinished = true)
+									workoutRepository.update(updated)
+									workout = updated
+								}
+							}
+						}) {
+							Icon(
+								imageVector = Icons.Default.CheckCircle,
+								contentDescription = stringResource(R.string.mark_as_finished)
+							)
+						}
+					}
 					IconButton(onClick = onEdit) {
 						Icon(
 							imageVector = Icons.Default.Edit,
@@ -163,6 +184,42 @@ fun WorkoutDetailScreen(
 					verticalArrangement = Arrangement.spacedBy(12.dp),
 					modifier = Modifier.fillMaxSize()
 				) {
+					// Resume / Mark as Finished buttons for unfinished workouts
+					if (!w.isFinished) {
+						item {
+							Row(
+								modifier = Modifier.fillMaxWidth(),
+								horizontalArrangement = Arrangement.spacedBy(12.dp)
+							) {
+								Button(
+									onClick = onResume,
+									modifier = Modifier.weight(1f)
+								) {
+									Icon(
+										imageVector = Icons.Default.PlayArrow,
+										contentDescription = null
+									)
+									Spacer(modifier = Modifier.width(8.dp))
+									Text(stringResource(R.string.resume_workout))
+								}
+								OutlinedButton(
+									onClick = {
+										workout?.let { w ->
+											scope.launch {
+												val updated = w.copy(isFinished = true)
+												workoutRepository.update(updated)
+												workout = updated
+											}
+										}
+									},
+									modifier = Modifier.weight(1f)
+								) {
+									Text(stringResource(R.string.mark_as_finished))
+								}
+							}
+						}
+					}
+
 					// Workout summary card
 					item {
 						Card(

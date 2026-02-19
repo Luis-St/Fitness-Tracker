@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import net.luis.tracker.data.repository.ActiveWorkoutDraftRepository
 import net.luis.tracker.data.repository.WorkoutRepository
 import net.luis.tracker.domain.model.Workout
 
@@ -17,13 +18,17 @@ data class WorkoutsUiState(
 )
 
 class WorkoutsViewModel(
-	private val workoutRepository: WorkoutRepository
+	private val workoutRepository: WorkoutRepository,
+	private val draftRepository: ActiveWorkoutDraftRepository
 ) : ViewModel() {
 
 	private val _uiState = MutableStateFlow(WorkoutsUiState())
 	val uiState: StateFlow<WorkoutsUiState> = _uiState.asStateFlow()
 
 	init {
+		viewModelScope.launch {
+			draftRepository.resolveDraftToWorkout(workoutRepository)
+		}
 		viewModelScope.launch {
 			workoutRepository.getAllWithExercises().collect { workouts ->
 				_uiState.update {
@@ -43,11 +48,12 @@ class WorkoutsViewModel(
 	}
 
 	class Factory(
-		private val workoutRepository: WorkoutRepository
+		private val workoutRepository: WorkoutRepository,
+		private val draftRepository: ActiveWorkoutDraftRepository
 	) : ViewModelProvider.Factory {
 		@Suppress("UNCHECKED_CAST")
 		override fun <T : ViewModel> create(modelClass: Class<T>): T {
-			return WorkoutsViewModel(workoutRepository) as T
+			return WorkoutsViewModel(workoutRepository, draftRepository) as T
 		}
 	}
 }

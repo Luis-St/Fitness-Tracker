@@ -6,6 +6,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
@@ -15,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
 import net.luis.tracker.FitnessTrackerApp
+import net.luis.tracker.data.repository.ActiveWorkoutDraftRepository
 import net.luis.tracker.data.repository.ExerciseRepository
 import net.luis.tracker.data.repository.WorkoutRepository
 import net.luis.tracker.domain.model.WeightUnit
@@ -36,12 +38,14 @@ import net.luis.tracker.ui.workouts.WorkoutsScreen
 private fun activeWorkoutViewModel(
 	navController: NavHostController,
 	app: FitnessTrackerApp,
+	draftRepository: ActiveWorkoutDraftRepository,
 	currentEntry: NavBackStackEntry
 ): ActiveWorkoutViewModel {
 	val parentEntry = remember(currentEntry) {
 		navController.getBackStackEntry<ActiveWorkoutGraphRoute>()
 	}
-	val factory = remember {
+	val graphRoute = parentEntry.toRoute<ActiveWorkoutGraphRoute>()
+	val factory = remember(graphRoute.resumeWorkoutId) {
 		ActiveWorkoutViewModel.Factory(
 			ExerciseRepository(app.database.exerciseDao()),
 			WorkoutRepository(
@@ -49,7 +53,9 @@ private fun activeWorkoutViewModel(
 				app.database.workoutDao(),
 				app.database.workoutExerciseDao(),
 				app.database.workoutSetDao()
-			)
+			),
+			draftRepository,
+			resumeWorkoutId = graphRoute.resumeWorkoutId
 		)
 	}
 	return viewModel(
@@ -68,6 +74,9 @@ fun AppNavHost(
 	weeklyWorkoutGoal: Int,
 	modifier: Modifier = Modifier
 ) {
+	val context = LocalContext.current
+	val draftRepository = remember { ActiveWorkoutDraftRepository(context.applicationContext) }
+
 	NavHost(
 		navController = navController,
 		startDestination = TabsRoute,
@@ -97,7 +106,8 @@ fun AppNavHost(
 					2 -> WorkoutsScreen(
 						app = app,
 						weightUnit = weightUnit,
-						onStartWorkout = { navController.navigate(ActiveWorkoutGraphRoute) },
+						draftRepository = draftRepository,
+						onStartWorkout = { navController.navigate(ActiveWorkoutGraphRoute()) },
 						onWorkoutClick = { id -> navController.navigate(WorkoutDetailRoute(id)) },
 						onOpenSettings = { navController.navigate(SettingsRoute) }
 					)
@@ -126,10 +136,10 @@ fun AppNavHost(
 		}
 		navigation<ActiveWorkoutGraphRoute>(startDestination = ActiveWorkoutRoute) {
 			composable<ActiveWorkoutRoute> {
-				val sharedViewModel = activeWorkoutViewModel(navController, app, it)
+				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, it)
 				ActiveWorkoutScreen(
 					viewModel = sharedViewModel,
-					onFinished = { navController.popBackStack(ActiveWorkoutGraphRoute, inclusive = true) },
+					onFinished = { navController.popBackStack(ActiveWorkoutGraphRoute::class, inclusive = true) },
 					onEditExercise = { entryId ->
 						navController.navigate(ActiveWorkoutExerciseRoute(entryId))
 					},
@@ -142,7 +152,7 @@ fun AppNavHost(
 				enterTransition = { EnterTransition.None },
 				exitTransition = { ExitTransition.None }
 			) {
-				val sharedViewModel = activeWorkoutViewModel(navController, app, it)
+				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, it)
 				SelectExerciseScreen(
 					viewModel = sharedViewModel,
 					onExerciseSelected = { entryId ->
@@ -155,7 +165,7 @@ fun AppNavHost(
 			}
 			composable<ActiveWorkoutExerciseRoute> { backStackEntry ->
 				val route = backStackEntry.toRoute<ActiveWorkoutExerciseRoute>()
-				val sharedViewModel = activeWorkoutViewModel(navController, app, backStackEntry)
+				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, backStackEntry)
 				ActiveWorkoutExerciseScreen(
 					viewModel = sharedViewModel,
 					entryId = route.entryId,
@@ -191,7 +201,12 @@ fun AppNavHost(
 				workoutId = route.workoutId,
 				weightUnit = weightUnit,
 				onNavigateBack = { navController.popBackStack() },
-				onEdit = { navController.navigate(EditWorkoutRoute(route.workoutId)) }
+				onEdit = { navController.navigate(EditWorkoutRoute(route.workoutId)) },
+				onResume = {
+					navController.navigate(ActiveWorkoutGraphRoute(resumeWorkoutId = route.workoutId)) {
+						popUpTo<WorkoutDetailRoute> { inclusive = true }
+					}
+				}
 			)
 		}
 		composable<EditWorkoutRoute> { backStackEntry ->

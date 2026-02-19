@@ -65,9 +65,10 @@ fun ActiveWorkoutScreen(
 		}
 	}
 
-	// Start the workout timer automatically
-	LaunchedEffect(Unit) {
-		viewModel.startWorkout()
+	// Start the workout timer once draft loading completes
+	val isReady by viewModel.isReady.collectAsStateWithLifecycle()
+	LaunchedEffect(isReady) {
+		if (isReady) viewModel.startWorkout()
 	}
 
 	// Intercept back button to offer discard

@@ -62,6 +62,10 @@
 	<string name="skip">Skip</string>
 	<string name="rest_timer">Rest Timer</string>
 
+	<string name="unfinished">Unfinished</string>
+	<string name="mark_as_finished">Mark as Finished</string>
+	<string name="resume_workout">Resume Workout</string>
+
 	<!-- Workouts History -->
 	<string name="workouts_title">Workouts</string>
 	<string name="no_workouts">No workouts yet</string>
