@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Schedule
@@ -36,9 +35,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -51,7 +48,6 @@ import net.luis.tracker.data.repository.ActiveWorkoutDraftRepository
 import net.luis.tracker.data.repository.WorkoutRepository
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.domain.model.Workout
-import net.luis.tracker.ui.common.components.ConfirmDeleteDialog
 import net.luis.tracker.ui.common.components.EmptyState
 import java.time.Instant
 import java.time.ZoneId
@@ -81,7 +77,7 @@ fun WorkoutsScreen(
 	val viewModel: WorkoutsViewModel = viewModel(factory = factory)
 
 	val uiState by viewModel.uiState.collectAsState()
-	var workoutToDelete by remember { mutableStateOf<Workout?>(null) }
+
 
 	Scaffold(
 		topBar = {
@@ -131,7 +127,7 @@ fun WorkoutsScreen(
 						start = 16.dp,
 						end = 16.dp,
 						top = innerPadding.calculateTopPadding() + 8.dp,
-						bottom = innerPadding.calculateBottomPadding() + 16.dp
+						bottom = innerPadding.calculateBottomPadding() + 80.dp
 					),
 					verticalArrangement = Arrangement.spacedBy(12.dp),
 					modifier = Modifier.fillMaxSize()
@@ -140,25 +136,12 @@ fun WorkoutsScreen(
 						WorkoutCard(
 							workout = workout,
 							weightUnit = weightUnit,
-							onClick = { onWorkoutClick(workout.id) },
-							onDelete = { workoutToDelete = workout }
+							onClick = { onWorkoutClick(workout.id) }
 						)
 					}
 				}
 			}
 		}
-	}
-
-	workoutToDelete?.let { workout ->
-		ConfirmDeleteDialog(
-			title = stringResource(R.string.delete_workout),
-			message = stringResource(R.string.delete_workout_confirmation),
-			onConfirm = {
-				viewModel.deleteWorkout(workout)
-				workoutToDelete = null
-			},
-			onDismiss = { workoutToDelete = null }
-		)
 	}
 
 }
@@ -167,8 +150,7 @@ fun WorkoutsScreen(
 private fun WorkoutCard(
 	workout: Workout,
 	weightUnit: WeightUnit,
-	onClick: () -> Unit,
-	onDelete: () -> Unit
+	onClick: () -> Unit
 ) {
 	val dateFormatter = remember {
 		DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")
@@ -189,32 +171,18 @@ private fun WorkoutCard(
 		elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
 	) {
 		Column(modifier = Modifier.padding(16.dp)) {
-			Row(
-				modifier = Modifier.fillMaxWidth(),
-				verticalAlignment = Alignment.CenterVertically
-			) {
-				Column(modifier = Modifier.weight(1f)) {
-					Text(
-						text = formattedDate,
-						style = MaterialTheme.typography.titleMedium,
-						fontWeight = FontWeight.Bold
-					)
-					if (!workout.isFinished) {
-						Spacer(modifier = Modifier.height(4.dp))
-						Text(
-							text = stringResource(R.string.unfinished),
-							style = MaterialTheme.typography.labelSmall,
-							color = MaterialTheme.colorScheme.error
-						)
-					}
-				}
-				IconButton(onClick = onDelete) {
-					Icon(
-						imageVector = Icons.Default.Delete,
-						contentDescription = stringResource(R.string.delete_workout),
-						tint = MaterialTheme.colorScheme.error
-					)
-				}
+			Text(
+				text = formattedDate,
+				style = MaterialTheme.typography.titleMedium,
+				fontWeight = FontWeight.Bold
+			)
+			if (!workout.isFinished) {
+				Spacer(modifier = Modifier.height(4.dp))
+				Text(
+					text = stringResource(R.string.unfinished),
+					style = MaterialTheme.typography.labelSmall,
+					color = MaterialTheme.colorScheme.error
+				)
 			}
 
 			Spacer(modifier = Modifier.height(8.dp))

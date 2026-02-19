@@ -11,13 +11,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Settings
@@ -50,7 +48,6 @@ import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.R
 import net.luis.tracker.data.repository.CategoryRepository
 import net.luis.tracker.data.repository.ExerciseRepository
-import net.luis.tracker.ui.common.components.ConfirmDeleteDialog
 import net.luis.tracker.ui.common.components.EmptyState
 import net.luis.tracker.ui.exercises.components.CategoryManagementDialog
 
@@ -72,7 +69,7 @@ fun ExercisesScreen(
 
 	val uiState by viewModel.uiState.collectAsState()
 	var showCategoryDialog by remember { mutableStateOf(false) }
-	var exerciseToDelete by remember { mutableStateOf<Long?>(null) }
+
 
 	Scaffold(
 		topBar = {
@@ -151,15 +148,14 @@ fun ExercisesScreen(
 				}
 				else -> {
 					LazyColumn(
-						contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+						contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
 						verticalArrangement = Arrangement.spacedBy(8.dp),
 						modifier = Modifier.fillMaxSize()
 					) {
 						items(uiState.exercises, key = { it.id }) { exercise ->
 							ExerciseItem(
 								exercise = exercise,
-								onClick = { onExerciseClick(exercise.id) },
-								onDelete = { exerciseToDelete = exercise.id }
+								onClick = { onExerciseClick(exercise.id) }
 							)
 						}
 					}
@@ -179,25 +175,12 @@ fun ExercisesScreen(
 		)
 	}
 
-	// Confirm delete exercise dialog
-	exerciseToDelete?.let { id ->
-		ConfirmDeleteDialog(
-			title = stringResource(R.string.delete_exercise),
-			message = stringResource(R.string.delete_exercise_confirmation),
-			onConfirm = {
-				viewModel.deleteExercise(id)
-				exerciseToDelete = null
-			},
-			onDismiss = { exerciseToDelete = null }
-		)
-	}
 }
 
 @Composable
 private fun ExerciseItem(
 	exercise: net.luis.tracker.domain.model.Exercise,
-	onClick: () -> Unit,
-	onDelete: () -> Unit
+	onClick: () -> Unit
 ) {
 	Card(
 		modifier = Modifier
@@ -228,14 +211,6 @@ private fun ExerciseItem(
 						}
 					)
 				}
-			}
-			Spacer(modifier = Modifier.width(8.dp))
-			IconButton(onClick = onDelete) {
-				Icon(
-					imageVector = Icons.Default.Delete,
-					contentDescription = stringResource(R.string.delete),
-					tint = MaterialTheme.colorScheme.error
-				)
 			}
 		}
 	}
