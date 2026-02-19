@@ -8,17 +8,18 @@ import net.luis.tracker.data.local.dao.ExerciseDao
 import net.luis.tracker.domain.mapper.toDomain
 import net.luis.tracker.domain.mapper.toEntity
 import net.luis.tracker.domain.model.Exercise
+import net.luis.tracker.util.NaturalOrderComparator
 
 class ExerciseRepository(private val exerciseDao: ExerciseDao) {
 
 	fun getAllActive(): Flow<List<Exercise>> =
 		exerciseDao.getAllActive()
-			.map { list -> list.map { it.toDomain() } }
+			.map { list -> list.map { it.toDomain() }.sortedWith(compareBy(NaturalOrderComparator) { it.title }) }
 			.flowOn(Dispatchers.Default)
 
 	fun getByCategory(categoryId: Long): Flow<List<Exercise>> =
 		exerciseDao.getByCategory(categoryId)
-			.map { list -> list.map { it.toDomain() } }
+			.map { list -> list.map { it.toDomain() }.sortedWith(compareBy(NaturalOrderComparator) { it.title }) }
 			.flowOn(Dispatchers.Default)
 
 	suspend fun getById(id: Long): Exercise? =
