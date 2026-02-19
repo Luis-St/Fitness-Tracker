@@ -19,10 +19,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ir.ehsannarmani.compose_charts.PieChart
+import ir.ehsannarmani.compose_charts.models.LabelHelperProperties
 import ir.ehsannarmani.compose_charts.models.Pie
 import net.luis.tracker.R
 import net.luis.tracker.data.local.dao.CategoryWorkoutCount
@@ -74,29 +72,20 @@ fun CategoryBreakdownChart(
 			)
 			Spacer(modifier = Modifier.height(16.dp))
 
-			var pieData by remember(categoryBreakdown) {
-				mutableStateOf(
-					categoryBreakdown.mapIndexed { index, category ->
-						Pie(
-							label = if (category.categoryName == "Uncategorized") noCategoryLabel else category.categoryName,
-							data = category.count.toDouble(),
-							color = categoryColors[index % categoryColors.size],
-							selectedColor = categoryColors[index % categoryColors.size].copy(alpha = 0.8f)
-						)
-					}
-				)
+			val pieData = remember(categoryBreakdown) {
+				categoryBreakdown.mapIndexed { index, category ->
+					Pie(
+						label = if (category.categoryName == "Uncategorized") noCategoryLabel else category.categoryName,
+						data = category.count.toDouble(),
+						color = categoryColors[index % categoryColors.size],
+					)
+				}
 			}
 
 			PieChart(
 				modifier = Modifier.size(200.dp),
 				data = pieData,
-				onPieClick = { clickedPie ->
-					val pieIndex = pieData.indexOf(clickedPie)
-					pieData = pieData.mapIndexed { mapIndex, pie ->
-						pie.copy(selected = pieIndex == mapIndex && !pie.selected)
-					}
-				},
-				selectedScale = 1.1f,
+				labelHelperProperties = LabelHelperProperties(enabled = false),
 				style = Pie.Style.Stroke(width = 48.dp)
 			)
 
