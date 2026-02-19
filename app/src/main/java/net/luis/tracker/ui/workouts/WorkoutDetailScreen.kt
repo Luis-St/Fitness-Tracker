@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -188,12 +190,16 @@ fun WorkoutDetailScreen(
 					if (!w.isFinished) {
 						item {
 							Row(
-								modifier = Modifier.fillMaxWidth(),
+								modifier = Modifier
+									.fillMaxWidth()
+									.height(IntrinsicSize.Min),
 								horizontalArrangement = Arrangement.spacedBy(12.dp)
 							) {
 								Button(
 									onClick = onResume,
-									modifier = Modifier.weight(1f)
+									modifier = Modifier
+										.weight(1f)
+										.fillMaxHeight()
 								) {
 									Icon(
 										imageVector = Icons.Default.PlayArrow,
@@ -212,7 +218,9 @@ fun WorkoutDetailScreen(
 											}
 										}
 									},
-									modifier = Modifier.weight(1f)
+									modifier = Modifier
+										.weight(1f)
+										.fillMaxHeight()
 								) {
 									Text(stringResource(R.string.mark_as_finished))
 								}

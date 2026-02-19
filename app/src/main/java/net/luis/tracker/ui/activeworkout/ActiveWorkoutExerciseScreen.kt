@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -114,12 +116,15 @@ fun ActiveWorkoutExerciseScreen(
 			Row(
 				modifier = Modifier
 					.fillMaxWidth()
-					.padding(horizontal = 16.dp, vertical = 12.dp),
+					.padding(horizontal = 16.dp, vertical = 12.dp)
+					.height(IntrinsicSize.Min),
 				horizontalArrangement = Arrangement.spacedBy(8.dp)
 			) {
 				FilledTonalButton(
 					onClick = onRest,
-					modifier = Modifier.weight(1f)
+					modifier = Modifier
+						.weight(1f)
+						.fillMaxHeight()
 				) {
 					Icon(
 						imageVector = Icons.Default.Timer,
@@ -131,7 +136,9 @@ fun ActiveWorkoutExerciseScreen(
 				Button(
 					onClick = onFinishWithTimer,
 					enabled = entry?.sets?.isNotEmpty() == true,
-					modifier = Modifier.weight(1f)
+					modifier = Modifier
+						.weight(1f)
+						.fillMaxHeight()
 				) {
 					Icon(
 						imageVector = Icons.Default.Timer,
