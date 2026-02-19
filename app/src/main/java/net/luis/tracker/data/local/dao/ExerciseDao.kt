@@ -23,8 +23,9 @@ interface ExerciseDao {
 	@Query("SELECT * FROM exercises ORDER BY title ASC")
 	suspend fun getAllIncludingDeleted(): List<ExerciseEntity>
 
+	@Transaction
 	@Query("SELECT * FROM exercises WHERE id = :id")
-	suspend fun getById(id: Long): ExerciseEntity?
+	suspend fun getById(id: Long): ExerciseWithCategory?
 
 	@Insert
 	suspend fun insert(exercise: ExerciseEntity): Long
