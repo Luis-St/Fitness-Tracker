@@ -110,7 +110,7 @@ fun ActiveWorkoutScreen(
 
 			// Compact exercise list
 			LazyColumn(
-				contentPadding = PaddingValues(horizontal = 0.dp, vertical = 8.dp),
+				contentPadding = PaddingValues(top = 8.dp, bottom = 80.dp),
 				modifier = Modifier.weight(1f).fillMaxWidth()
 			) {
 				items(uiState.exercises, key = { it.id }) { entry ->
