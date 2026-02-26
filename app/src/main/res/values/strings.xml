@@ -110,6 +110,9 @@
 	<string name="heaviest_weight">Heaviest Weight</string>
 	<string name="most_reps">Most Reps</string>
 	<string name="highest_volume">Highest Volume</string>
+	<string name="exercise_history">Exercise History</string>
+	<string name="view_history">View History</string>
+	<string name="set_detail_format">Set %1$d</string>
 
 	<!-- Settings -->
 	<string name="appearance">Appearance</string>

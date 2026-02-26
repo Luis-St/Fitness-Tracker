@@ -46,3 +46,6 @@ data class RestTimerRoute(val durationSeconds: Int)
 
 @Serializable
 object AllPersonalRecordsRoute
+
+@Serializable
+data class ExerciseHistoryRoute(val exerciseId: Long, val exerciseTitle: String)

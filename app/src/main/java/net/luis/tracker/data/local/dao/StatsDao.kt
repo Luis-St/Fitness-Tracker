@@ -25,6 +25,14 @@ data class CategoryWorkoutCount(
 	val count: Int
 )
 
+data class ExerciseSetHistory(
+	val workoutId: Long,
+	val workoutDate: Long,
+	val setNumber: Int,
+	val weightKg: Double,
+	val reps: Int
+)
+
 data class WorkoutDateInfo(
 	val workoutId: Long,
 	val startTime: Long
@@ -132,4 +140,20 @@ interface StatsDao {
 		"""
 	)
 	fun getWorkoutIdsInRange(startMillis: Long, endMillis: Long): Flow<List<WorkoutDateInfo>>
+
+	@Query(
+		"""
+		SELECT w.id as workoutId,
+			w.startTime as workoutDate,
+			ws.setNumber,
+			ws.weightKg,
+			ws.reps
+		FROM workouts w
+		INNER JOIN workout_exercises we ON we.workoutId = w.id
+		INNER JOIN workout_sets ws ON ws.workoutExerciseId = we.id
+		WHERE we.exerciseId = :exerciseId
+		ORDER BY w.startTime DESC, ws.setNumber ASC
+		"""
+	)
+	fun getExerciseSetHistory(exerciseId: Long): Flow<List<ExerciseSetHistory>>
 }

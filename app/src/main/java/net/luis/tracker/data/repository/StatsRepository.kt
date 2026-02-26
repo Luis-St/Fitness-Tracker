@@ -3,6 +3,7 @@ package net.luis.tracker.data.repository
 import kotlinx.coroutines.flow.Flow
 import net.luis.tracker.data.local.dao.CategoryWorkoutCount
 import net.luis.tracker.data.local.dao.ExerciseProgress
+import net.luis.tracker.data.local.dao.ExerciseSetHistory
 import net.luis.tracker.data.local.dao.PersonalRecord
 import net.luis.tracker.data.local.dao.StatsDao
 import net.luis.tracker.data.local.dao.WorkoutDateInfo
@@ -44,4 +45,7 @@ class StatsRepository(private val statsDao: StatsDao) {
 
 	fun getWorkoutIdsInRange(startMillis: Long, endMillis: Long): Flow<List<WorkoutDateInfo>> =
 		statsDao.getWorkoutIdsInRange(startMillis, endMillis)
+
+	fun getExerciseSetHistory(exerciseId: Long): Flow<List<ExerciseSetHistory>> =
+		statsDao.getExerciseSetHistory(exerciseId)
 }

@@ -1,5 +1,6 @@
 package net.luis.tracker.ui.overview
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,7 +34,8 @@ import net.luis.tracker.ui.overview.components.PersonalRecordRow
 fun AllPersonalRecordsScreen(
 	app: FitnessTrackerApp,
 	weightUnit: WeightUnit,
-	onNavigateBack: () -> Unit
+	onNavigateBack: () -> Unit,
+	onExerciseClick: (exerciseId: Long, exerciseTitle: String) -> Unit
 ) {
 	val statsRepository = remember { StatsRepository(app.database.statsDao()) }
 	val personalRecords by statsRepository.getPersonalRecords().collectAsState(initial = emptyList())
@@ -61,7 +63,13 @@ fun AllPersonalRecordsScreen(
 				.padding(horizontal = 16.dp)
 		) {
 			itemsIndexed(personalRecords, key = { _, record -> record.exerciseId }) { index, record ->
-				PersonalRecordRow(record = record, weightUnit = weightUnit)
+				PersonalRecordRow(
+					record = record,
+					weightUnit = weightUnit,
+					modifier = Modifier.clickable {
+						onExerciseClick(record.exerciseId, record.exerciseTitle)
+					}
+				)
 				if (index < personalRecords.lastIndex) {
 					HorizontalDivider(
 						modifier = Modifier.padding(vertical = 8.dp),

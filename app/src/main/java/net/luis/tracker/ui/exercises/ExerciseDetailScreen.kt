@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -54,7 +55,8 @@ import net.luis.tracker.ui.common.components.ConfirmDeleteDialog
 fun ExerciseDetailScreen(
 	app: FitnessTrackerApp,
 	exerciseId: Long,
-	onNavigateBack: () -> Unit
+	onNavigateBack: () -> Unit,
+	onViewHistory: (exerciseTitle: String) -> Unit
 ) {
 	val exerciseRepository = remember { ExerciseRepository(app.database.exerciseDao()) }
 	val categoryRepository = remember { CategoryRepository(app.database.categoryDao()) }
@@ -71,6 +73,7 @@ fun ExerciseDetailScreen(
 	var titleError by remember { mutableStateOf(false) }
 	var showDeleteDialog by remember { mutableStateOf(false) }
 	var isLoaded by remember { mutableStateOf(false) }
+	var isEditing by remember { mutableStateOf(false) }
 
 	// Load exercise data
 	LaunchedEffect(exerciseId) {
@@ -100,34 +103,40 @@ fun ExerciseDetailScreen(
 					}
 				},
 				actions = {
-					IconButton(onClick = { showDeleteDialog = true }) {
-						Icon(
-							imageVector = Icons.Default.Delete,
-							contentDescription = stringResource(R.string.delete),
-							tint = MaterialTheme.colorScheme.error
-						)
-					}
-					TextButton(
-						onClick = {
-							val trimmedTitle = title.trim()
-							if (trimmedTitle.isEmpty()) {
-								titleError = true
-								return@TextButton
-							}
-							val current = exercise ?: return@TextButton
-							scope.launch {
-								exerciseRepository.update(
-									current.copy(
-										title = trimmedTitle,
-										notes = notes.trim(),
-										category = selectedCategory
-									)
-								)
-								onNavigateBack()
-							}
+					if (isEditing) {
+						IconButton(onClick = { showDeleteDialog = true }) {
+							Icon(
+								imageVector = Icons.Default.Delete,
+								contentDescription = stringResource(R.string.delete),
+								tint = MaterialTheme.colorScheme.error
+							)
 						}
-					) {
-						Text(stringResource(R.string.save))
+						TextButton(
+							onClick = {
+								val trimmedTitle = title.trim()
+								if (trimmedTitle.isEmpty()) {
+									titleError = true
+									return@TextButton
+								}
+								val current = exercise ?: return@TextButton
+								val updated = current.copy(
+									title = trimmedTitle,
+									notes = notes.trim(),
+									category = selectedCategory
+								)
+								scope.launch {
+									exerciseRepository.update(updated)
+									exercise = updated
+									isEditing = false
+								}
+							}
+						) {
+							Text(stringResource(R.string.save))
+						}
+					} else {
+						TextButton(onClick = { isEditing = true }) {
+							Text(stringResource(R.string.edit))
+						}
 					}
 				}
 			)
@@ -175,6 +184,7 @@ fun ExerciseDetailScreen(
 						if (it.isNotBlank()) titleError = false
 					},
 					label = { Text(stringResource(R.string.exercise_title)) },
+					enabled = isEditing,
 					isError = titleError,
 					supportingText = if (titleError) {
 						{ Text(stringResource(R.string.field_required)) }
@@ -190,6 +200,7 @@ fun ExerciseDetailScreen(
 					value = notes,
 					onValueChange = { notes = it },
 					label = { Text(stringResource(R.string.exercise_notes)) },
+					enabled = isEditing,
 					minLines = 3,
 					maxLines = 5,
 					modifier = Modifier.fillMaxWidth()
@@ -219,12 +230,13 @@ fun ExerciseDetailScreen(
 				// Category dropdown
 				ExposedDropdownMenuBox(
 					expanded = categoryExpanded,
-					onExpandedChange = { categoryExpanded = it }
+					onExpandedChange = { if (isEditing) categoryExpanded = it }
 				) {
 					OutlinedTextField(
 						value = selectedCategory?.name ?: stringResource(R.string.no_category),
 						onValueChange = {},
 						readOnly = true,
+						enabled = isEditing,
 						label = { Text(stringResource(R.string.category)) },
 						trailingIcon = {
 							ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
@@ -254,6 +266,15 @@ fun ExerciseDetailScreen(
 							)
 						}
 					}
+				}
+
+				Spacer(modifier = Modifier.height(24.dp))
+
+				OutlinedButton(
+					onClick = { onViewHistory(title) },
+					modifier = Modifier.fillMaxWidth()
+				) {
+					Text(stringResource(R.string.view_history))
 				}
 
 				Spacer(modifier = Modifier.height(24.dp))

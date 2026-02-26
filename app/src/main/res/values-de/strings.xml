@@ -110,6 +110,9 @@
 	<string name="heaviest_weight">Höchstes Gewicht</string>
 	<string name="most_reps">Meiste Wiederholungen</string>
 	<string name="highest_volume">Höchstes Volumen</string>
+	<string name="exercise_history">Übungshistorie</string>
+	<string name="view_history">Historie anzeigen</string>
+	<string name="set_detail_format">Satz %1$d</string>
 
 	<!-- Settings -->
 	<string name="appearance">Darstellung</string>
