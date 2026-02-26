@@ -321,7 +321,7 @@ fun SettingsScreen(
 					style = MaterialTheme.typography.bodyLarge
 				)
 				Text(
-					text = "1.1.0",
+					text = "1.3.0",
 					style = MaterialTheme.typography.bodyLarge,
 					color = MaterialTheme.colorScheme.onSurfaceVariant
 				)
