@@ -23,7 +23,10 @@ import net.luis.tracker.domain.model.ChartMetric
 import net.luis.tracker.domain.model.WeightUnit
 import java.time.Instant
 import java.time.ZoneId
+import java.time.chrono.IsoChronology
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.format.FormatStyle
 
 @Composable
 fun ProgressChart(
@@ -50,7 +53,13 @@ fun ProgressChart(
 
 	val primary = MaterialTheme.colorScheme.primary
 	val textColor = MaterialTheme.colorScheme.onSurface
-	val dateFormatter = remember { DateTimeFormatter.ofPattern("dd/MM") }
+	val dateFormatter = remember {
+		val pattern = DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+			FormatStyle.SHORT, null, IsoChronology.INSTANCE, java.util.Locale.getDefault()
+		)
+		val shortPattern = pattern.replace(Regex("[/\\-.]?\\s*y+\\s*[/\\-.]?"), "").trim()
+		DateTimeFormatter.ofPattern(shortPattern)
+	}
 	val zone = remember { ZoneId.systemDefault() }
 
 	val values = remember(progressData, metric, weightUnit) {
