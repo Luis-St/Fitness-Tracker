@@ -37,6 +37,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -58,6 +61,7 @@ fun ActiveWorkoutScreen(
 	onAddExercise: () -> Unit
 ) {
 	val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+	var removeEntryId by remember { mutableStateOf<Long?>(null) }
 
 	// Keep screen on while workout is active
 	val context = LocalContext.current
@@ -154,7 +158,7 @@ fun ActiveWorkoutScreen(
 									)
 								}
 								if (!isInactiveGhost) {
-									IconButton(onClick = { viewModel.removeExercise(entry.id) }) {
+									IconButton(onClick = { removeEntryId = entry.id }) {
 										Icon(
 											imageVector = Icons.Default.Close,
 											contentDescription = stringResource(R.string.remove),
@@ -185,6 +189,28 @@ fun ActiveWorkoutScreen(
 			},
 			dismissButton = {
 				TextButton(onClick = { viewModel.cancelDiscard() }) {
+					Text(stringResource(R.string.cancel))
+				}
+			}
+		)
+	}
+
+	// Remove exercise confirmation dialog
+	if (removeEntryId != null) {
+		AlertDialog(
+			onDismissRequest = { removeEntryId = null },
+			title = { Text(stringResource(R.string.remove_exercise)) },
+			text = { Text(stringResource(R.string.remove_exercise_confirmation)) },
+			confirmButton = {
+				TextButton(onClick = {
+					viewModel.removeExercise(removeEntryId!!)
+					removeEntryId = null
+				}) {
+					Text(stringResource(R.string.remove))
+				}
+			},
+			dismissButton = {
+				TextButton(onClick = { removeEntryId = null }) {
 					Text(stringResource(R.string.cancel))
 				}
 			}

@@ -1,5 +1,6 @@
 package net.luis.tracker.ui.activeworkout
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -100,7 +101,12 @@ fun SelectExerciseScreen(
 							supportingContent = exercise.category?.let {
 								{ Text(it.name) }
 							},
-							modifier = Modifier.fillMaxWidth(),
+							modifier = Modifier
+								.fillMaxWidth()
+								.clickable {
+									val entryId = viewModel.addExercise(exercise)
+									onExerciseSelected(entryId)
+								},
 							trailingContent = {
 								IconButton(onClick = {
 									val entryId = viewModel.addExercise(exercise)

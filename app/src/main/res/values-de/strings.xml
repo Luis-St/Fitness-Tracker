@@ -46,6 +46,8 @@
 	<string name="finish_workout">Beenden</string>
 	<string name="discard_workout">Workout verwerfen</string>
 	<string name="discard_workout_message">Möchtest du dieses Workout wirklich verwerfen? Alle Fortschritte gehen verloren.</string>
+	<string name="remove_exercise">Übung entfernen</string>
+	<string name="remove_exercise_confirmation">Möchtest du diese Übung wirklich aus dem Workout entfernen?</string>
 	<string name="discard">Verwerfen</string>
 	<string name="pause">Pause</string>
 	<string name="resume">Fortsetzen</string>

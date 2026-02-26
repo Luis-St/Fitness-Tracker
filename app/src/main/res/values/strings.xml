@@ -46,6 +46,8 @@
 	<string name="finish_workout">Finish</string>
 	<string name="discard_workout">Discard Workout</string>
 	<string name="discard_workout_message">Are you sure you want to discard this workout? All progress will be lost.</string>
+	<string name="remove_exercise">Remove Exercise</string>
+	<string name="remove_exercise_confirmation">Are you sure you want to remove this exercise from the workout?</string>
 	<string name="discard">Discard</string>
 	<string name="pause">Pause</string>
 	<string name="resume">Resume</string>

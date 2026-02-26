@@ -70,6 +70,8 @@ fun ActiveWorkoutExerciseScreen(
 
 	var weightText by remember { mutableStateOf("") }
 	var repsText by remember { mutableStateOf("") }
+	var weightError by remember { mutableStateOf(false) }
+	var repsError by remember { mutableStateOf(false) }
 	var showNotesDialog by remember { mutableStateOf(false) }
 
 	if (showNotesDialog) {
@@ -83,6 +85,27 @@ fun ActiveWorkoutExerciseScreen(
 				}
 			}
 		)
+	}
+
+	val tryAddPendingSet = {
+		val currentEntry = entry
+		if (currentEntry != null) {
+			val reps = repsText.toIntOrNull() ?: 0
+			val weightValid = !currentEntry.exercise.hasWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
+			val repsValid = reps > 0
+			if (repsValid && weightValid) {
+				val weightKg = if (currentEntry.exercise.hasWeight) {
+					weightUnit.convertToKg(weightText.toDoubleOrNull() ?: 0.0)
+				} else {
+					0.0
+				}
+				viewModel.addSet(entryId, weightKg, reps)
+			}
+		}
+		weightText = ""
+		repsText = ""
+		weightError = false
+		repsError = false
 	}
 
 	Scaffold(
@@ -121,7 +144,7 @@ fun ActiveWorkoutExerciseScreen(
 				horizontalArrangement = Arrangement.spacedBy(8.dp)
 			) {
 				FilledTonalButton(
-					onClick = onRest,
+					onClick = { tryAddPendingSet(); onRest() },
 					modifier = Modifier
 						.weight(1f)
 						.fillMaxHeight()
@@ -134,7 +157,7 @@ fun ActiveWorkoutExerciseScreen(
 					Text(stringResource(R.string.rest))
 				}
 				Button(
-					onClick = onFinishWithTimer,
+					onClick = { tryAddPendingSet(); onFinishWithTimer() },
 					enabled = entry?.sets?.isNotEmpty() == true,
 					modifier = Modifier
 						.weight(1f)
@@ -225,8 +248,9 @@ fun ActiveWorkoutExerciseScreen(
 			if (currentEntry.exercise.hasWeight) {
 				WeightInput(
 					text = weightText,
-					onTextChange = { weightText = it },
+					onTextChange = { weightText = it; weightError = false },
 					weightUnit = weightUnit,
+					isError = weightError,
 					modifier = Modifier.fillMaxWidth()
 				)
 
@@ -235,10 +259,11 @@ fun ActiveWorkoutExerciseScreen(
 
 			OutlinedTextField(
 				value = repsText,
-				onValueChange = { repsText = it },
+				onValueChange = { repsText = it; repsError = false },
 				label = { Text(stringResource(R.string.reps)) },
 				modifier = Modifier.fillMaxWidth(),
 				singleLine = true,
+				isError = repsError,
 				keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
 			)
 
@@ -247,7 +272,11 @@ fun ActiveWorkoutExerciseScreen(
 			Button(
 				onClick = {
 					val reps = repsText.toIntOrNull() ?: 0
-					if (reps > 0) {
+					val weightValid = !currentEntry.exercise.hasWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
+					val repsValid = reps > 0
+					weightError = !weightValid
+					repsError = !repsValid
+					if (repsValid && weightValid) {
 						val weightKg = if (currentEntry.exercise.hasWeight) {
 							weightUnit.convertToKg(weightText.toDoubleOrNull() ?: 0.0)
 						} else {
