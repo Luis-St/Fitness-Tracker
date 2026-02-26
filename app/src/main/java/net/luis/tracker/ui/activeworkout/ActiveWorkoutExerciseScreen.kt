@@ -66,7 +66,7 @@ fun ActiveWorkoutExerciseScreen(
 		viewModel.uiState
 			.map { state -> state.exercises.find { it.id == entryId } }
 			.distinctUntilChanged()
-	}.collectAsStateWithLifecycle(initialValue = viewModel.uiState.value.exercises.find { it.id == entryId })
+	}.collectAsStateWithLifecycle(initialValue = null)
 
 	var weightText by remember { mutableStateOf("") }
 	var repsText by remember { mutableStateOf("") }
