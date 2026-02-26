@@ -92,22 +92,18 @@ class OverviewViewModel(
 
 	fun onDayClick(dayNumber: Int) {
 		val workoutIds = _uiState.value.workoutDayMap[dayNumber] ?: return
-		if (workoutIds.size == 1) {
-			_uiState.update { it.copy(navigateToWorkoutId = workoutIds.first()) }
-		} else {
-			// Multiple workouts - load details for bottom sheet
-			val zone = ZoneId.systemDefault()
-			val month = _uiState.value.currentMonth
-			val dayStart = month.atDay(dayNumber).atStartOfDay(zone).toInstant().toEpochMilli()
-			val dayEnd = month.atDay(dayNumber).plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-			viewModelScope.launch {
-				val workouts = statsRepository.getWorkoutIdsInRange(dayStart, dayEnd).first()
-				_uiState.update {
-					it.copy(
-						selectedDayWorkouts = workouts,
-						showWorkoutPicker = true
-					)
-				}
+		if (workoutIds.isEmpty()) return
+		val zone = ZoneId.systemDefault()
+		val month = _uiState.value.currentMonth
+		val dayStart = month.atDay(dayNumber).atStartOfDay(zone).toInstant().toEpochMilli()
+		val dayEnd = month.atDay(dayNumber).plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+		viewModelScope.launch {
+			val workouts = statsRepository.getWorkoutIdsInRange(dayStart, dayEnd).first()
+			_uiState.update {
+				it.copy(
+					selectedDayWorkouts = workouts,
+					showWorkoutPicker = true
+				)
 			}
 		}
 	}
