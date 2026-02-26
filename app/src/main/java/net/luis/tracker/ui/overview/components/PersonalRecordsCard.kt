@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import net.luis.tracker.R
 import net.luis.tracker.data.local.dao.PersonalRecord
 import net.luis.tracker.domain.model.WeightUnit
@@ -79,19 +80,22 @@ private fun PersonalRecordRow(
 			if (record.maxWeight > 0) {
 				StatChip(
 					label = stringResource(R.string.heaviest_weight),
-					value = weightUnit.formatWeight(record.maxWeight)
+					value = weightUnit.formatWeight(record.maxWeight),
+					modifier = Modifier.weight(1f)
 				)
 			}
 			if (record.maxReps > 0) {
 				StatChip(
 					label = stringResource(R.string.most_reps),
-					value = record.maxReps.toString()
+					value = record.maxReps.toString(),
+					modifier = Modifier.weight(1f)
 				)
 			}
 			if (record.maxVolume > 0) {
 				StatChip(
 					label = stringResource(R.string.highest_volume),
-					value = weightUnit.formatWeight(record.maxVolume)
+					value = weightUnit.formatWeight(record.maxVolume),
+					modifier = Modifier.weight(1f)
 				)
 			}
 		}
@@ -117,7 +121,8 @@ private fun StatChip(
 		Text(
 			text = label,
 			style = MaterialTheme.typography.labelSmall,
-			color = MaterialTheme.colorScheme.onSurfaceVariant
+			color = MaterialTheme.colorScheme.onSurfaceVariant,
+			textAlign = TextAlign.Center
 		)
 	}
 }
