@@ -47,7 +47,7 @@ private fun activeWorkoutViewModel(
 		navController.getBackStackEntry<ActiveWorkoutGraphRoute>()
 	}
 	val graphRoute = parentEntry.toRoute<ActiveWorkoutGraphRoute>()
-	val factory = remember(graphRoute.resumeWorkoutId) {
+	val factory = remember(graphRoute.resumeWorkoutId, graphRoute.planWorkoutId) {
 		ActiveWorkoutViewModel.Factory(
 			ExerciseRepository(app.database.exerciseDao()),
 			WorkoutRepository(
@@ -57,7 +57,8 @@ private fun activeWorkoutViewModel(
 				app.database.workoutSetDao()
 			),
 			draftRepository,
-			resumeWorkoutId = graphRoute.resumeWorkoutId
+			resumeWorkoutId = graphRoute.resumeWorkoutId,
+			planWorkoutId = graphRoute.planWorkoutId
 		)
 	}
 	return viewModel(
@@ -145,6 +146,7 @@ fun AppNavHost(
 				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, it)
 				ActiveWorkoutScreen(
 					viewModel = sharedViewModel,
+					weightUnit = weightUnit,
 					onFinished = { navController.popBackStack(ActiveWorkoutGraphRoute::class, inclusive = true) },
 					onEditExercise = { entryId ->
 						navController.navigate(ActiveWorkoutExerciseRoute(entryId))
@@ -230,6 +232,11 @@ fun AppNavHost(
 				onEdit = { navController.navigate(EditWorkoutRoute(route.workoutId)) },
 				onResume = {
 					navController.navigate(ActiveWorkoutGraphRoute(resumeWorkoutId = route.workoutId)) {
+						popUpTo<WorkoutDetailRoute> { inclusive = true }
+					}
+				},
+				onUsePlan = {
+					navController.navigate(ActiveWorkoutGraphRoute(planWorkoutId = route.workoutId)) {
 						popUpTo<WorkoutDetailRoute> { inclusive = true }
 					}
 				}

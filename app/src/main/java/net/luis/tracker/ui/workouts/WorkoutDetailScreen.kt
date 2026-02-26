@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -69,7 +70,8 @@ fun WorkoutDetailScreen(
 	weightUnit: WeightUnit,
 	onNavigateBack: () -> Unit,
 	onEdit: () -> Unit,
-	onResume: () -> Unit = {}
+	onResume: () -> Unit = {},
+	onUsePlan: () -> Unit = {}
 ) {
 	val workoutRepository = remember {
 		WorkoutRepository(
@@ -124,6 +126,12 @@ fun WorkoutDetailScreen(
 								contentDescription = stringResource(R.string.mark_as_finished)
 							)
 						}
+					}
+					IconButton(onClick = onUsePlan) {
+						Icon(
+							imageVector = Icons.Default.ContentCopy,
+							contentDescription = stringResource(R.string.use_as_plan)
+						)
 					}
 					IconButton(onClick = onEdit) {
 						Icon(
@@ -320,6 +328,7 @@ fun WorkoutDetailScreen(
 								Spacer(modifier = Modifier.height(8.dp))
 
 								// Column headers
+								val hasWeight = workoutExercise.exercise.hasWeight
 								Row(
 									modifier = Modifier.fillMaxWidth(),
 									horizontalArrangement = Arrangement.SpaceBetween
@@ -330,12 +339,14 @@ fun WorkoutDetailScreen(
 										color = MaterialTheme.colorScheme.onSurfaceVariant,
 										modifier = Modifier.width(48.dp)
 									)
-									Text(
-										text = stringResource(R.string.weight),
-										style = MaterialTheme.typography.labelMedium,
-										color = MaterialTheme.colorScheme.onSurfaceVariant,
-										modifier = Modifier.weight(1f)
-									)
+									if (hasWeight) {
+										Text(
+											text = stringResource(R.string.weight),
+											style = MaterialTheme.typography.labelMedium,
+											color = MaterialTheme.colorScheme.onSurfaceVariant,
+											modifier = Modifier.weight(1f)
+										)
+									}
 									Text(
 										text = stringResource(R.string.reps),
 										style = MaterialTheme.typography.labelMedium,
@@ -358,11 +369,13 @@ fun WorkoutDetailScreen(
 											style = MaterialTheme.typography.bodyMedium,
 											modifier = Modifier.width(48.dp)
 										)
-										Text(
-											text = weightUnit.formatWeight(set.weightKg),
-											style = MaterialTheme.typography.bodyMedium,
-											modifier = Modifier.weight(1f)
-										)
+										if (hasWeight) {
+											Text(
+												text = weightUnit.formatWeight(set.weightKg),
+												style = MaterialTheme.typography.bodyMedium,
+												modifier = Modifier.weight(1f)
+											)
+										}
 										Text(
 											text = "${set.reps} ${stringResource(R.string.reps)}",
 											style = MaterialTheme.typography.bodyMedium

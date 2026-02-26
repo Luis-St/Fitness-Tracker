@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -44,6 +43,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -167,7 +167,11 @@ fun ActiveWorkoutExerciseScreen(
 				.padding(horizontal = 16.dp)
 		) {
 			// Sets list
-			if (currentEntry.sets.isEmpty()) {
+			val realSets = currentEntry.sets
+			val ghostSets = currentEntry.planSetsData
+			val totalRows = maxOf(realSets.size, ghostSets.size)
+
+			if (totalRows == 0) {
 				Text(
 					text = stringResource(R.string.no_sets_yet),
 					style = MaterialTheme.typography.bodyLarge,
@@ -176,22 +180,35 @@ fun ActiveWorkoutExerciseScreen(
 				)
 			} else {
 				val hasWeight = currentEntry.exercise.hasWeight
-				val setCount = currentEntry.sets.size
 				LazyColumn(
 					modifier = Modifier.weight(1f, fill = false),
 					contentPadding = PaddingValues(vertical = 8.dp),
 					verticalArrangement = Arrangement.spacedBy(4.dp)
 				) {
-					itemsIndexed(currentEntry.sets, key = { _, set -> set.setNumber }) { index, set ->
-						SetItem(
-							setNumber = set.setNumber,
-							weightKg = set.weightKg,
-							reps = set.reps,
-							hasWeight = hasWeight,
-							weightUnit = weightUnit,
-							showDivider = index < setCount - 1,
-							onRemove = { viewModel.removeSet(entryId, index) }
-						)
+					items(totalRows) { index ->
+						val realSet = realSets.getOrNull(index)
+						val ghostSet = ghostSets.getOrNull(index)
+						if (realSet != null) {
+							SetItem(
+								setNumber = realSet.setNumber,
+								weightKg = realSet.weightKg,
+								reps = realSet.reps,
+								hasWeight = hasWeight,
+								weightUnit = weightUnit,
+								showDivider = index < totalRows - 1,
+								onRemove = { viewModel.removeSet(entryId, index) }
+							)
+						} else if (ghostSet != null) {
+							SetItem(
+								setNumber = index + 1,
+								weightKg = ghostSet.weightKg,
+								reps = ghostSet.reps,
+								hasWeight = hasWeight,
+								weightUnit = weightUnit,
+								showDivider = index < totalRows - 1,
+								isGhost = true
+							)
+						}
 					}
 				}
 			}
@@ -264,8 +281,10 @@ private fun SetItem(
 	hasWeight: Boolean,
 	weightUnit: WeightUnit,
 	showDivider: Boolean,
-	onRemove: () -> Unit
+	isGhost: Boolean = false,
+	onRemove: (() -> Unit)? = null
 ) {
+	val contentAlpha = if (isGhost) 0.5f else 1f
 	Row(
 		modifier = Modifier
 			.fillMaxWidth()
@@ -276,26 +295,30 @@ private fun SetItem(
 			text = stringResource(R.string.set_number, setNumber),
 			style = MaterialTheme.typography.bodyLarge,
 			fontWeight = FontWeight.Medium,
-			modifier = Modifier.width(48.dp)
+			modifier = Modifier.width(48.dp).alpha(contentAlpha)
 		)
 		if (hasWeight) {
 			Text(
 				text = weightUnit.formatWeight(weightKg),
 				style = MaterialTheme.typography.bodyLarge,
-				modifier = Modifier.weight(1f)
+				modifier = Modifier.weight(1f).alpha(contentAlpha)
 			)
 		} else {
 			Spacer(modifier = Modifier.weight(1f))
 		}
 		Text(
 			text = "$reps ${stringResource(R.string.reps)}",
-			style = MaterialTheme.typography.bodyLarge
+			style = MaterialTheme.typography.bodyLarge,
+			modifier = Modifier.alpha(contentAlpha)
 		)
-		IconButton(onClick = onRemove) {
+		IconButton(
+			onClick = onRemove ?: {},
+			enabled = !isGhost
+		) {
 			Icon(
 				imageVector = Icons.Default.Delete,
 				contentDescription = stringResource(R.string.remove),
-				tint = MaterialTheme.colorScheme.error
+				tint = MaterialTheme.colorScheme.error.copy(alpha = if (isGhost) 0.38f else 1f)
 			)
 		}
 	}

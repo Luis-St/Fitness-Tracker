@@ -81,6 +81,7 @@
 	<string name="set_label">Set</string>
 	<string name="weight">Weight</string>
 	<string name="edit_workout">Edit Workout</string>
+	<string name="use_as_plan">Use as Plan</string>
 
 	<!-- Overview / Statistics -->
 	<string name="stats_summary">Summary</string>

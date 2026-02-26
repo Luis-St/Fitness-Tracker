@@ -19,7 +19,11 @@ data class DraftExerciseEntry(
 	val hasWeight: Boolean,
 	val categoryId: Long? = null,
 	val categoryName: String? = null,
-	val sets: List<DraftWorkoutSet>
+	val sets: List<DraftWorkoutSet>,
+	val isGhost: Boolean = false,
+	val planWeightKg: Double = 0.0,
+	val planSets: Int = 0,
+	val planSetsData: List<DraftWorkoutSet> = emptyList()
 )
 
 @Serializable

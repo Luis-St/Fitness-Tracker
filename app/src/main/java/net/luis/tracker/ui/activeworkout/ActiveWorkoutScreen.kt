@@ -2,6 +2,7 @@ package net.luis.tracker.ui.activeworkout
 
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -43,12 +44,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
+import androidx.compose.ui.draw.alpha
 import net.luis.tracker.R
+import net.luis.tracker.domain.model.WeightUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveWorkoutScreen(
 	viewModel: ActiveWorkoutViewModel,
+	weightUnit: WeightUnit,
 	onFinished: () -> Unit,
 	onEditExercise: (entryId: Long) -> Unit,
 	onAddExercise: () -> Unit
@@ -114,12 +118,32 @@ fun ActiveWorkoutScreen(
 				modifier = Modifier.weight(1f).fillMaxWidth()
 			) {
 				items(uiState.exercises, key = { it.id }) { entry ->
+					val isInactiveGhost = entry.isGhost && entry.sets.isEmpty()
 					ListItem(
+						modifier = (if (isInactiveGhost) Modifier.alpha(0.5f) else Modifier)
+							.clickable { onEditExercise(entry.id) },
 						headlineContent = {
 							Text(entry.exercise.title)
 						},
 						supportingContent = {
-							Text(stringResource(R.string.n_sets, entry.sets.size))
+							if (isInactiveGhost) {
+								if (entry.planWeightKg > 0.0) {
+									Text(
+										stringResource(R.string.n_sets, entry.planSets) +
+											" · ${weightUnit.formatWeight(entry.planWeightKg)}"
+									)
+								} else {
+									Text(stringResource(R.string.n_sets, entry.planSets))
+								}
+							} else if (entry.sets.isNotEmpty()) {
+								val maxWeight = entry.sets.maxOf { it.weightKg }
+								Text(
+									stringResource(R.string.n_sets, entry.sets.size) +
+										if (maxWeight > 0.0) " · ${weightUnit.formatWeight(maxWeight)}" else ""
+								)
+							} else {
+								Text(stringResource(R.string.n_sets, 0))
+							}
 						},
 						trailingContent = {
 							Row {
@@ -129,12 +153,14 @@ fun ActiveWorkoutScreen(
 										contentDescription = stringResource(R.string.edit_exercise_sets)
 									)
 								}
-								IconButton(onClick = { viewModel.removeExercise(entry.id) }) {
-									Icon(
-										imageVector = Icons.Default.Close,
-										contentDescription = stringResource(R.string.remove),
-										tint = MaterialTheme.colorScheme.error
-									)
+								if (!isInactiveGhost) {
+									IconButton(onClick = { viewModel.removeExercise(entry.id) }) {
+										Icon(
+											imageVector = Icons.Default.Close,
+											contentDescription = stringResource(R.string.remove),
+											tint = MaterialTheme.colorScheme.error
+										)
+									}
 								}
 							}
 						}

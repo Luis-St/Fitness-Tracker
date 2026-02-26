@@ -30,7 +30,11 @@ import net.luis.tracker.domain.model.WorkoutSet
 data class ActiveExerciseEntry(
 	val id: Long,
 	val exercise: Exercise,
-	val sets: List<WorkoutSet> = emptyList()
+	val sets: List<WorkoutSet> = emptyList(),
+	val isGhost: Boolean = false,
+	val planWeightKg: Double = 0.0,
+	val planSets: Int = 0,
+	val planSetsData: List<WorkoutSet> = emptyList()
 )
 
 data class ActiveWorkoutUiState(
@@ -43,7 +47,8 @@ class ActiveWorkoutViewModel(
 	private val exerciseRepository: ExerciseRepository,
 	private val workoutRepository: WorkoutRepository,
 	private val draftRepository: ActiveWorkoutDraftRepository,
-	private val resumeWorkoutId: Long = 0L
+	private val resumeWorkoutId: Long = 0L,
+	private val planWorkoutId: Long = 0L
 ) : ViewModel() {
 
 	private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
@@ -78,6 +83,8 @@ class ActiveWorkoutViewModel(
 		viewModelScope.launch {
 			if (resumeWorkoutId > 0L) {
 				restoreFromWorkout(resumeWorkoutId)
+			} else if (planWorkoutId > 0L) {
+				loadPlan(planWorkoutId)
 			} else {
 				val draft = draftRepository.loadDraft()
 				if (draft != null) {
@@ -138,7 +145,7 @@ class ActiveWorkoutViewModel(
 	fun removeExerciseIfEmpty(entryId: Long) {
 		_uiState.update { state ->
 			val entry = state.exercises.find { it.id == entryId }
-			if (entry != null && entry.sets.isEmpty()) {
+			if (entry != null && entry.sets.isEmpty() && !entry.isGhost) {
 				state.copy(exercises = state.exercises.filter { it.id != entryId })
 			} else {
 				state
@@ -307,7 +314,17 @@ class ActiveWorkoutViewModel(
 							weightKg = set.weightKg,
 							reps = set.reps
 						)
-					}
+					},
+					isGhost = entry.isGhost,
+					planWeightKg = entry.planWeightKg,
+					planSets = entry.planSets,
+				planSetsData = entry.planSetsData.map { set ->
+					DraftWorkoutSet(
+						setNumber = set.setNumber,
+						weightKg = set.weightKg,
+						reps = set.reps
+					)
+				}
 				)
 			}
 		)
@@ -335,6 +352,16 @@ class ActiveWorkoutViewModel(
 						}
 					),
 					sets = entry.sets.map { set ->
+						WorkoutSet(
+							setNumber = set.setNumber,
+							weightKg = set.weightKg,
+							reps = set.reps
+						)
+					},
+					isGhost = entry.isGhost,
+					planWeightKg = entry.planWeightKg,
+					planSets = entry.planSets,
+					planSetsData = entry.planSetsData.map { set ->
 						WorkoutSet(
 							setNumber = set.setNumber,
 							weightKg = set.weightKg,
@@ -378,15 +405,38 @@ class ActiveWorkoutViewModel(
 		)
 	}
 
+	private suspend fun loadPlan(workoutId: Long) {
+		val workout = workoutRepository.getByIdWithExercises(workoutId) ?: return
+
+		var nextEntryId = 0L
+		val exercises = workout.exercises.map { we ->
+			val entryId = ++nextEntryId
+			val maxWeight = we.sets.maxOfOrNull { it.weightKg } ?: 0.0
+			ActiveExerciseEntry(
+				id = entryId,
+				exercise = we.exercise,
+				sets = emptyList(),
+				isGhost = true,
+				planWeightKg = maxWeight,
+				planSets = we.sets.size,
+				planSetsData = we.sets
+			)
+		}
+		entryIdCounter = nextEntryId
+
+		_uiState.value = ActiveWorkoutUiState(exercises = exercises)
+	}
+
 	class Factory(
 		private val exerciseRepository: ExerciseRepository,
 		private val workoutRepository: WorkoutRepository,
 		private val draftRepository: ActiveWorkoutDraftRepository,
-		private val resumeWorkoutId: Long = 0L
+		private val resumeWorkoutId: Long = 0L,
+		private val planWorkoutId: Long = 0L
 	) : ViewModelProvider.Factory {
 		@Suppress("UNCHECKED_CAST")
 		override fun <T : ViewModel> create(modelClass: Class<T>): T {
-			return ActiveWorkoutViewModel(exerciseRepository, workoutRepository, draftRepository, resumeWorkoutId) as T
+			return ActiveWorkoutViewModel(exerciseRepository, workoutRepository, draftRepository, resumeWorkoutId, planWorkoutId) as T
 		}
 	}
 }
