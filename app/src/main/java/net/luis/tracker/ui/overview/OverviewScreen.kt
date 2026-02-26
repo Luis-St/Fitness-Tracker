@@ -67,7 +67,8 @@ fun OverviewScreen(
 	weightUnit: WeightUnit,
 	weeklyWorkoutGoal: Int = 2,
 	onOpenSettings: () -> Unit = {},
-	onNavigateToWorkout: (Long) -> Unit = {}
+	onNavigateToWorkout: (Long) -> Unit = {},
+	onViewAllRecords: () -> Unit = {}
 ) {
 	val factory = remember(weeklyWorkoutGoal) {
 		OverviewViewModel.Factory(
@@ -310,7 +311,8 @@ fun OverviewScreen(
 				// 4. Personal Records
 				PersonalRecordsCard(
 					personalRecords = uiState.personalRecords,
-					weightUnit = weightUnit
+					weightUnit = weightUnit,
+					onClick = onViewAllRecords
 				)
 
 				Spacer(modifier = Modifier.height(16.dp))

@@ -28,6 +28,7 @@ import net.luis.tracker.ui.activeworkout.SelectExerciseScreen
 import net.luis.tracker.ui.exercises.AddExerciseScreen
 import net.luis.tracker.ui.exercises.ExerciseDetailScreen
 import net.luis.tracker.ui.exercises.ExercisesScreen
+import net.luis.tracker.ui.overview.AllPersonalRecordsScreen
 import net.luis.tracker.ui.overview.OverviewScreen
 import net.luis.tracker.ui.settings.SettingsScreen
 import net.luis.tracker.ui.workouts.EditWorkoutScreen
@@ -101,7 +102,8 @@ fun AppNavHost(
 						onOpenSettings = { navController.navigate(SettingsRoute) },
 						onNavigateToWorkout = { workoutId ->
 							navController.navigate(WorkoutDetailRoute(workoutId))
-						}
+						},
+						onViewAllRecords = { navController.navigate(AllPersonalRecordsRoute) }
 					)
 					2 -> WorkoutsScreen(
 						app = app,
@@ -193,6 +195,13 @@ fun AppNavHost(
 					onSkip = { navController.popBackStack() }
 				)
 			}
+		}
+		composable<AllPersonalRecordsRoute> {
+			AllPersonalRecordsScreen(
+				app = app,
+				weightUnit = weightUnit,
+				onNavigateBack = { navController.popBackStack() }
+			)
 		}
 		composable<WorkoutDetailRoute> { backStackEntry ->
 			val route = backStackEntry.toRoute<WorkoutDetailRoute>()

@@ -27,11 +27,13 @@ import net.luis.tracker.domain.model.WeightUnit
 fun PersonalRecordsCard(
 	personalRecords: List<PersonalRecord>,
 	weightUnit: WeightUnit,
+	onClick: () -> Unit = {},
 	modifier: Modifier = Modifier
 ) {
 	if (personalRecords.isEmpty()) return
 
 	Card(
+		onClick = onClick,
 		modifier = modifier.fillMaxWidth(),
 		elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
 	) {
@@ -60,7 +62,7 @@ fun PersonalRecordsCard(
 }
 
 @Composable
-private fun PersonalRecordRow(
+fun PersonalRecordRow(
 	record: PersonalRecord,
 	weightUnit: WeightUnit,
 	modifier: Modifier = Modifier
@@ -103,7 +105,7 @@ private fun PersonalRecordRow(
 }
 
 @Composable
-private fun StatChip(
+internal fun StatChip(
 	label: String,
 	value: String,
 	modifier: Modifier = Modifier

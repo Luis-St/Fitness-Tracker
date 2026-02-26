@@ -103,6 +103,7 @@
 	<string name="avg_per_week">Avg/Week</string>
 	<string name="longest_workout">Longest Workout</string>
 	<string name="personal_records">Personal Records</string>
+	<string name="all_personal_records">Personal Records</string>
 	<string name="category_breakdown">Category Breakdown</string>
 	<string name="no_category_label">Uncategorized</string>
 	<string name="workouts_on_day">Workouts on %1$s</string>

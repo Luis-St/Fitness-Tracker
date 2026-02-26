@@ -103,6 +103,7 @@
 	<string name="avg_per_week">Ø pro Woche</string>
 	<string name="longest_workout">Längstes Workout</string>
 	<string name="personal_records">Persönliche Rekorde</string>
+	<string name="all_personal_records">Persönliche Rekorde</string>
 	<string name="category_breakdown">Verteilung nach Kategorie</string>
 	<string name="no_category_label">Ohne Kategorie</string>
 	<string name="workouts_on_day">Workouts am %1$s</string>
