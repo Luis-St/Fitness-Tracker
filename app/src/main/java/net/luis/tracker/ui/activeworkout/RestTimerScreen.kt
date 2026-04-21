@@ -16,7 +16,8 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,14 +35,19 @@ fun RestTimerScreen(
 	onFinished: () -> Unit,
 	onSkip: () -> Unit
 ) {
-	var progress by remember { mutableFloatStateOf(1f) }
-	var remainingSeconds by remember { mutableIntStateOf(durationSeconds) }
+	var startedAtNanos by rememberSaveable { mutableLongStateOf(-1L) }
+	var progress by rememberSaveable { mutableFloatStateOf(1f) }
+	var remainingSeconds by rememberSaveable { mutableIntStateOf(durationSeconds) }
 
 	LaunchedEffect(Unit) {
-		val startNanos = withFrameNanos { it }
+		if (startedAtNanos == -1L) {
+			startedAtNanos = System.nanoTime()
+		}
+		val start = startedAtNanos
 		val totalNanos = durationSeconds * 1_000_000_000L
 		while (true) {
-			val elapsed = withFrameNanos { it } - startNanos
+			withFrameNanos { }
+			val elapsed = System.nanoTime() - start
 			val fraction = 1f - (elapsed.toFloat() / totalNanos)
 			if (fraction <= 0f) {
 				progress = 0f
@@ -49,10 +55,9 @@ fun RestTimerScreen(
 				break
 			}
 			progress = fraction
-			val newSeconds = (fraction * durationSeconds).let { raw ->
+			remainingSeconds = (fraction * durationSeconds).let { raw ->
 				if (raw > 0f && raw < durationSeconds.toFloat()) raw.toInt() + 1 else raw.toInt()
 			}
-			remainingSeconds = newSeconds
 		}
 		onFinished()
 	}
