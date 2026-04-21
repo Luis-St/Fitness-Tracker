@@ -1,6 +1,7 @@
 package net.luis.tracker.ui.settings
 
 import android.net.Uri
+import net.luis.tracker.BuildConfig
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -321,7 +322,7 @@ fun SettingsScreen(
 					style = MaterialTheme.typography.bodyLarge
 				)
 				Text(
-					text = "1.3.0",
+					text = BuildConfig.VERSION_NAME,
 					style = MaterialTheme.typography.bodyLarge,
 					color = MaterialTheme.colorScheme.onSurfaceVariant
 				)
