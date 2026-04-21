@@ -162,21 +162,23 @@ class ActiveWorkoutViewModel(
 
 	fun addSet(entryId: Long, weightKg: Double, reps: Int) {
 		_uiState.update { state ->
-			state.copy(
-				exercises = state.exercises.map { entry ->
-					if (entry.id == entryId) {
-						val nextSetNumber = entry.sets.size + 1
-						val newSet = WorkoutSet(
-							setNumber = nextSetNumber,
-							weightKg = weightKg,
-							reps = reps
-						)
-						entry.copy(sets = entry.sets + newSet)
-					} else {
-						entry
-					}
-				}
-			)
+			val index = state.exercises.indexOfFirst { it.id == entryId }
+			if (index < 0) return@update state
+
+			val entry = state.exercises[index]
+			val newSet = WorkoutSet(setNumber = entry.sets.size + 1, weightKg = weightKg, reps = reps)
+			val updatedEntry = entry.copy(sets = entry.sets + newSet)
+
+			if (!entry.isGhost || entry.sets.isNotEmpty()) {
+				state.copy(exercises = state.exercises.map { if (it.id == entryId) updatedEntry else it })
+			} else {
+				// First real set on a ghost exercise: move it right after the last active exercise
+				val list = state.exercises.toMutableList()
+				list.removeAt(index)
+				val insertAt = list.indexOfLast { it.sets.isNotEmpty() } + 1
+				list.add(insertAt, updatedEntry)
+				state.copy(exercises = list)
+			}
 		}
 		saveDraft()
 	}
