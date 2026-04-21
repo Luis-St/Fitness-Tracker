@@ -197,7 +197,7 @@ fun OverviewScreen(
 					currentStreak = uiState.currentStreak,
 					averageDuration = uiState.averageDuration,
 					totalWorkoutsAllTime = uiState.totalWorkoutsAllTime,
-					totalVolumeAllTime = uiState.totalVolumeAllTime,
+					maxWorkoutVolume = uiState.maxWorkoutVolume,
 					avgWorkoutsPerWeek = uiState.avgWorkoutsPerWeek,
 					longestWorkoutMinutes = uiState.longestWorkoutMinutes,
 					weightUnit = weightUnit

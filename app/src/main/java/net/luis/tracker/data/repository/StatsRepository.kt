@@ -28,8 +28,8 @@ class StatsRepository(private val statsDao: StatsDao) {
 	fun getTotalWorkoutCount(): Flow<Int> =
 		statsDao.getTotalWorkoutCount()
 
-	fun getTotalVolume(): Flow<Double?> =
-		statsDao.getTotalVolume()
+	fun getMaxWorkoutVolume(): Flow<Double?> =
+		statsDao.getMaxWorkoutVolume()
 
 	fun getFirstWorkoutDate(): Flow<Long?> =
 		statsDao.getFirstWorkoutDate()

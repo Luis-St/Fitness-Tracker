@@ -88,12 +88,15 @@ interface StatsDao {
 
 	@Query(
 		"""
-		SELECT SUM(ws.weightKg * ws.reps)
-		FROM workout_sets ws
-		INNER JOIN workout_exercises we ON ws.workoutExerciseId = we.id
+		SELECT MAX(workout_volume) FROM (
+			SELECT SUM(ws.weightKg * ws.reps) as workout_volume
+			FROM workout_sets ws
+			INNER JOIN workout_exercises we ON ws.workoutExerciseId = we.id
+			GROUP BY we.workoutId
+		)
 		"""
 	)
-	fun getTotalVolume(): Flow<Double?>
+	fun getMaxWorkoutVolume(): Flow<Double?>
 
 	@Query("SELECT MIN(startTime) FROM workouts")
 	fun getFirstWorkoutDate(): Flow<Long?>

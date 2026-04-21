@@ -29,7 +29,7 @@ fun StatsSummaryCard(
 	currentStreak: Int,
 	averageDuration: Double?,
 	totalWorkoutsAllTime: Int,
-	totalVolumeAllTime: Double,
+	maxWorkoutVolume: Double,
 	avgWorkoutsPerWeek: Double,
 	longestWorkoutMinutes: Long,
 	weightUnit: WeightUnit,
@@ -95,8 +95,8 @@ fun StatsSummaryCard(
 					modifier = Modifier.weight(1f)
 				)
 				StatItem(
-					value = weightUnit.formatWeight(totalVolumeAllTime),
-					label = stringResource(R.string.total_volume_all_time),
+					value = weightUnit.formatWeightLarge(maxWorkoutVolume),
+					label = stringResource(R.string.max_workout_volume),
 					modifier = Modifier.weight(1f)
 				)
 			}

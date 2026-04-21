@@ -21,4 +21,12 @@ enum class WeightUnit {
 			"${"%.1f".format(converted)} ${name.lowercase()}"
 		}
 	}
+
+	fun formatWeightLarge(kg: Double): String {
+		return if (kg >= 1_000.0) {
+			"${"%.1f".format(kg / 1_000.0)} t"
+		} else {
+			formatWeight(kg)
+		}
+	}
 }

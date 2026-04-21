@@ -43,7 +43,7 @@ data class OverviewUiState(
 	val progressData: List<ExerciseProgress> = emptyList(),
 	val isLoading: Boolean = true,
 	val totalWorkoutsAllTime: Int = 0,
-	val totalVolumeAllTime: Double = 0.0,
+	val maxWorkoutVolume: Double = 0.0,
 	val avgWorkoutsPerWeek: Double = 0.0,
 	val longestWorkoutMinutes: Long = 0,
 	val personalRecords: List<PersonalRecord> = emptyList(),
@@ -133,8 +133,8 @@ class OverviewViewModel(
 			}
 		}
 		viewModelScope.launch {
-			statsRepository.getTotalVolume().collect { volume ->
-				_uiState.update { it.copy(totalVolumeAllTime = volume ?: 0.0) }
+			statsRepository.getMaxWorkoutVolume().collect { volume ->
+				_uiState.update { it.copy(maxWorkoutVolume = volume ?: 0.0) }
 			}
 		}
 		viewModelScope.launch {
