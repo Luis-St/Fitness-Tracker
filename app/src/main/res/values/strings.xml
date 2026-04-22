@@ -132,6 +132,10 @@
 	<string name="dynamic_colors_desc">Use colors from your wallpaper (Android 12+)</string>
 	<string name="units">Units</string>
 	<string name="weight_unit">Weight Unit</string>
+	<string name="preferred_weights">Preferred Weights</string>
+	<string name="add_weight">Add Weight</string>
+	<string name="custom_weight">Custom…</string>
+	<string name="no_preferred_weights">No preferred weights configured</string>
 	<string name="workout_settings">Workout</string>
 	<string name="default_rest_timer">Default Rest Timer</string>
 	<string name="weekly_workout_goal">Weekly Workout Goal</string>

@@ -27,6 +27,7 @@ class SettingsRepository(private val context: Context) {
 		val WEEKLY_WORKOUT_GOAL = intPreferencesKey("weekly_workout_goal")
 		val TIMER_RESUME_MODE = stringPreferencesKey("timer_resume_mode")
 		val APP_LANGUAGE = stringPreferencesKey("app_language")
+		val PREFERRED_WEIGHTS_KG = stringPreferencesKey("preferred_weights_kg")
 	}
 
 	val themeMode: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
@@ -83,5 +84,15 @@ class SettingsRepository(private val context: Context) {
 
 	suspend fun setAppLanguage(language: AppLanguage) {
 		context.dataStore.edit { it[Keys.APP_LANGUAGE] = language.name }
+	}
+
+	val preferredWeightsKg: Flow<List<Double>> = context.dataStore.data.map { prefs ->
+		val raw = prefs[Keys.PREFERRED_WEIGHTS_KG] ?: ""
+		if (raw.isBlank()) emptyList()
+		else raw.split(",").mapNotNull { it.toDoubleOrNull() }
+	}
+
+	suspend fun setPreferredWeightsKg(weights: List<Double>) {
+		context.dataStore.edit { it[Keys.PREFERRED_WEIGHTS_KG] = weights.joinToString(",") }
 	}
 }

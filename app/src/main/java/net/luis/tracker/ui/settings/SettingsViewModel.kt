@@ -22,7 +22,8 @@ data class SettingsUiState(
 	val restTimerSeconds: Int = 90,
 	val weeklyWorkoutGoal: Int = 2,
 	val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME,
-	val appLanguage: AppLanguage = AppLanguage.SYSTEM
+	val appLanguage: AppLanguage = AppLanguage.SYSTEM,
+	val preferredWeightsKg: List<Double> = emptyList()
 )
 
 class SettingsViewModel(
@@ -41,10 +42,12 @@ class SettingsViewModel(
 				combine(
 					settingsRepository.restTimerSeconds,
 					settingsRepository.weeklyWorkoutGoal,
-					settingsRepository.timerResumeMode
-				) { rest, goal, timerMode -> Triple(rest, goal, timerMode) },
+					settingsRepository.timerResumeMode,
+					settingsRepository.preferredWeightsKg
+				) { rest, goal, timerMode, weights -> Triple(rest, goal, timerMode) to weights },
 				settingsRepository.appLanguage
-			) { mode, dynamicColors, unit, (seconds, goal, timerMode), lang ->
+			) { mode, dynamicColors, unit, (workoutSettings, weights), lang ->
+				val (seconds, goal, timerMode) = workoutSettings
 				SettingsUiState(
 					themeMode = mode,
 					dynamicColors = dynamicColors,
@@ -52,7 +55,8 @@ class SettingsViewModel(
 					restTimerSeconds = seconds,
 					weeklyWorkoutGoal = goal,
 					timerResumeMode = timerMode,
-					appLanguage = lang
+					appLanguage = lang,
+					preferredWeightsKg = weights
 				)
 			}.collect { state ->
 				_uiState.value = state
@@ -99,6 +103,12 @@ class SettingsViewModel(
 	fun setAppLanguage(language: AppLanguage) {
 		viewModelScope.launch {
 			settingsRepository.setAppLanguage(language)
+		}
+	}
+
+	fun setPreferredWeightsKg(weights: List<Double>) {
+		viewModelScope.launch {
+			settingsRepository.setPreferredWeightsKg(weights)
 		}
 	}
 

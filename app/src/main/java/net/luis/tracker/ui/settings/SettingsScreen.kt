@@ -12,10 +12,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Restore
@@ -23,9 +30,11 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -49,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Dispatchers
@@ -328,6 +338,113 @@ fun SettingsScreen(
 					) {
 						Text(weightLabels[index])
 					}
+				}
+			}
+
+			Spacer(modifier = Modifier.height(16.dp))
+
+			Text(
+				text = stringResource(R.string.preferred_weights),
+				style = MaterialTheme.typography.bodyLarge
+			)
+			Spacer(modifier = Modifier.height(8.dp))
+
+			var showAddWeightField by remember { mutableStateOf(false) }
+			var addWeightText by remember { mutableStateOf("") }
+
+			val sortedWeights = uiState.preferredWeightsKg.sortedBy { it }
+
+			if (sortedWeights.isEmpty() && !showAddWeightField) {
+				Text(
+					text = stringResource(R.string.no_preferred_weights),
+					style = MaterialTheme.typography.bodySmall,
+					color = MaterialTheme.colorScheme.onSurfaceVariant,
+					modifier = Modifier.padding(bottom = 8.dp)
+				)
+			}
+
+			sortedWeights.forEach { weightKg ->
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					Text(
+						text = uiState.weightUnit.formatWeight(weightKg),
+						style = MaterialTheme.typography.bodyMedium,
+						modifier = Modifier.weight(1f)
+					)
+					IconButton(onClick = {
+						viewModel.setPreferredWeightsKg(uiState.preferredWeightsKg - weightKg)
+					}) {
+						Icon(
+							imageVector = Icons.Default.Delete,
+							contentDescription = stringResource(R.string.remove),
+							tint = MaterialTheme.colorScheme.error
+						)
+					}
+				}
+				HorizontalDivider()
+			}
+
+			if (showAddWeightField) {
+				Spacer(modifier = Modifier.height(8.dp))
+				Row(
+					verticalAlignment = Alignment.CenterVertically,
+					horizontalArrangement = Arrangement.spacedBy(8.dp)
+				) {
+					val confirmAdd = {
+						val value = addWeightText.toDoubleOrNull()
+						if (value != null && value > 0) {
+							val weightKg = uiState.weightUnit.convertToKg(value)
+							if (uiState.preferredWeightsKg.none { kotlin.math.abs(it - weightKg) < 0.001 }) {
+								viewModel.setPreferredWeightsKg(uiState.preferredWeightsKg + weightKg)
+							}
+							addWeightText = ""
+							showAddWeightField = false
+						}
+					}
+					OutlinedTextField(
+						value = addWeightText,
+						onValueChange = { input ->
+							if (input.isEmpty() || input.toDoubleOrNull()?.let { it > 0 } == true) {
+								addWeightText = input
+							}
+						},
+						label = { Text(stringResource(R.string.weight)) },
+						suffix = { Text(uiState.weightUnit.name.lowercase()) },
+						singleLine = true,
+						keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+						keyboardActions = KeyboardActions(onDone = { confirmAdd() }),
+						modifier = Modifier.weight(1f)
+					)
+					IconButton(onClick = { confirmAdd() }) {
+						Icon(
+							imageVector = Icons.Default.Check,
+							contentDescription = stringResource(R.string.save)
+						)
+					}
+					IconButton(onClick = {
+						addWeightText = ""
+						showAddWeightField = false
+					}) {
+						Icon(
+							imageVector = Icons.Default.Close,
+							contentDescription = stringResource(R.string.cancel)
+						)
+					}
+				}
+			} else {
+				Spacer(modifier = Modifier.height(8.dp))
+				FilledTonalButton(
+					onClick = { showAddWeightField = true },
+					modifier = Modifier.fillMaxWidth()
+				) {
+					Icon(
+						imageVector = Icons.Default.Add,
+						contentDescription = null,
+						modifier = Modifier.padding(end = 8.dp)
+					)
+					Text(stringResource(R.string.add_weight))
 				}
 			}
 

@@ -52,6 +52,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import net.luis.tracker.R
 import net.luis.tracker.domain.model.WeightUnit
+import net.luis.tracker.ui.common.components.WeightDropdown
 import net.luis.tracker.ui.common.components.WeightInput
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +61,7 @@ fun ActiveWorkoutExerciseScreen(
 	viewModel: ActiveWorkoutViewModel,
 	entryId: Long,
 	weightUnit: WeightUnit,
+	preferredWeightsKg: List<Double> = emptyList(),
 	onNavigateBack: () -> Unit,
 	onRest: () -> Unit,
 	onFinishWithTimer: () -> Unit
@@ -290,18 +292,20 @@ fun ActiveWorkoutExerciseScreen(
 							modifier = Modifier.fillMaxWidth(),
 							horizontalArrangement = Arrangement.spacedBy(8.dp)
 						) {
-							WeightInput(
+							WeightDropdown(
 								text = weightText,
 								onTextChange = { weightText = it; weightError = false },
 								weightUnit = weightUnit,
+								preferredWeightsKg = preferredWeightsKg,
 								isError = weightError,
 								modifier = Modifier.weight(1f)
 							)
 							if (isDropSet) {
-								WeightInput(
+								WeightDropdown(
 									text = dropWeightText,
 									onTextChange = { dropWeightText = it; dropWeightError = false },
 									weightUnit = weightUnit,
+									preferredWeightsKg = preferredWeightsKg,
 									isError = dropWeightError,
 									label = stringResource(R.string.drop_weight),
 									modifier = Modifier.weight(1f)

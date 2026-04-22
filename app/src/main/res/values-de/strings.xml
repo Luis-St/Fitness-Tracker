@@ -132,6 +132,10 @@
 	<string name="dynamic_colors_desc">Farben aus dem Hintergrundbild verwenden (Android 12+)</string>
 	<string name="units">Einheiten</string>
 	<string name="weight_unit">Gewichtseinheit</string>
+	<string name="preferred_weights">Bevorzugte Gewichte</string>
+	<string name="add_weight">Gewicht hinzufügen</string>
+	<string name="custom_weight">Benutzerdefiniert…</string>
+	<string name="no_preferred_weights">Keine bevorzugten Gewichte konfiguriert</string>
 	<string name="workout_settings">Workout</string>
 	<string name="default_rest_timer">Standard-Pausenzeit</string>
 	<string name="weekly_workout_goal">Wöchentliches Trainingsziel</string>

@@ -80,6 +80,7 @@ fun AppNavHost(
 	restTimerSeconds: Int,
 	weeklyWorkoutGoal: Int,
 	timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME,
+	preferredWeightsKg: List<Double> = emptyList(),
 	pendingImportUri: String? = null,
 	modifier: Modifier = Modifier
 ) {
@@ -192,6 +193,7 @@ fun AppNavHost(
 					viewModel = sharedViewModel,
 					entryId = route.entryId,
 					weightUnit = weightUnit,
+					preferredWeightsKg = preferredWeightsKg,
 					onNavigateBack = {
 						sharedViewModel.removeExerciseIfEmpty(route.entryId)
 						navController.popBackStack()

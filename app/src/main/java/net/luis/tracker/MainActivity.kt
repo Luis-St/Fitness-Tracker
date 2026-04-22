@@ -71,7 +71,8 @@ class MainActivity : ComponentActivity() {
 				val restTimerSeconds: Int = 90,
 				val weeklyWorkoutGoal: Int = 2,
 				val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME,
-				val appLanguage: AppLanguage = AppLanguage.SYSTEM
+				val appLanguage: AppLanguage = AppLanguage.SYSTEM,
+				val preferredWeightsKg: List<Double> = emptyList()
 			)
 
 			val settingsFlow = remember {
@@ -82,11 +83,13 @@ class MainActivity : ComponentActivity() {
 					combine(
 						settingsRepo.restTimerSeconds,
 						settingsRepo.weeklyWorkoutGoal,
-						settingsRepo.timerResumeMode
-					) { rest, goal, timerMode -> Triple(rest, goal, timerMode) },
+						settingsRepo.timerResumeMode,
+						settingsRepo.preferredWeightsKg
+					) { rest, goal, timerMode, weights -> Triple(rest, goal, timerMode) to weights },
 					settingsRepo.appLanguage
-				) { theme, dynamic, unit, (restTimer, goal, timerMode), lang ->
-					AppSettings(theme, dynamic, unit, restTimer, goal, timerMode, lang)
+				) { theme, dynamic, unit, (workoutSettings, weights), lang ->
+					val (restTimer, goal, timerMode) = workoutSettings
+					AppSettings(theme, dynamic, unit, restTimer, goal, timerMode, lang, weights)
 				}
 			}
 			val settings by settingsFlow.collectAsState(initial = AppSettings())
@@ -146,6 +149,7 @@ class MainActivity : ComponentActivity() {
 						restTimerSeconds = settings.restTimerSeconds,
 						weeklyWorkoutGoal = settings.weeklyWorkoutGoal,
 						timerResumeMode = settings.timerResumeMode,
+						preferredWeightsKg = settings.preferredWeightsKg,
 						pendingImportUri = pendingImportUri,
 						modifier = when {
 							isActiveWorkout -> Modifier
