@@ -15,7 +15,7 @@ object ExercisesRoute
 object WorkoutsRoute
 
 @Serializable
-object SettingsRoute
+data class SettingsRoute(val importUri: String = "")
 
 @Serializable
 object AddExerciseRoute

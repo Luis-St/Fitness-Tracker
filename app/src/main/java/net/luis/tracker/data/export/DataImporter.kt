@@ -18,8 +18,10 @@ object DataImporter {
 
 	suspend fun `import`(database: AppDatabase, inputStream: InputStream) {
 		val jsonString = inputStream.bufferedReader().use { it.readText() }
-		val exportData = json.decodeFromString(ExportData.serializer(), jsonString)
+		importFromData(database, json.decodeFromString(ExportData.serializer(), jsonString))
+	}
 
+	suspend fun importFromData(database: AppDatabase, exportData: ExportData) {
 		val categoryDao = database.categoryDao()
 		val exerciseDao = database.exerciseDao()
 		val workoutDao = database.workoutDao()

@@ -142,4 +142,11 @@
 	<string name="import_success">Daten erfolgreich importiert</string>
 	<string name="export_error">Datenexport fehlgeschlagen</string>
 	<string name="import_error">Datenimport fehlgeschlagen</string>
+	<string name="import_confirm_title">Vorhandene Daten ersetzen?</string>
+	<string name="import_confirm_message">Beim Importieren werden alle aktuellen Daten dauerhaft gelöscht und durch den Inhalt der Datei ersetzt. Dies kann nicht rückgängig gemacht werden.</string>
+	<string name="restore_data">Vorherige Daten wiederherstellen</string>
+	<string name="restore_confirm_title">Vorherige Daten wiederherstellen?</string>
+	<string name="restore_confirm_message">Dadurch werden alle aktuellen Daten durch die Sicherung ersetzt, die vor dem letzten Import erstellt wurde.</string>
+	<string name="restore_success">Daten erfolgreich wiederhergestellt</string>
+	<string name="restore_error">Wiederherstellung der Daten fehlgeschlagen</string>
 </resources>

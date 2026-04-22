@@ -5,6 +5,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
@@ -75,10 +76,17 @@ fun AppNavHost(
 	weightUnit: WeightUnit,
 	restTimerSeconds: Int,
 	weeklyWorkoutGoal: Int,
+	pendingImportUri: String? = null,
 	modifier: Modifier = Modifier
 ) {
 	val context = LocalContext.current
 	val draftRepository = remember { ActiveWorkoutDraftRepository(context.applicationContext) }
+
+	LaunchedEffect(pendingImportUri) {
+		if (!pendingImportUri.isNullOrEmpty()) {
+			navController.navigate(SettingsRoute(importUri = pendingImportUri))
+		}
+	}
 
 	NavHost(
 		navController = navController,
@@ -95,13 +103,13 @@ fun AppNavHost(
 						app = app,
 						onAddExercise = { navController.navigate(AddExerciseRoute) },
 						onExerciseClick = { id -> navController.navigate(ExerciseDetailRoute(id)) },
-						onOpenSettings = { navController.navigate(SettingsRoute) }
+						onOpenSettings = { navController.navigate(SettingsRoute()) }
 					)
 					1 -> OverviewScreen(
 						app = app,
 						weightUnit = weightUnit,
 						weeklyWorkoutGoal = weeklyWorkoutGoal,
-						onOpenSettings = { navController.navigate(SettingsRoute) },
+						onOpenSettings = { navController.navigate(SettingsRoute()) },
 						onNavigateToWorkout = { workoutId ->
 							navController.navigate(WorkoutDetailRoute(workoutId))
 						},
@@ -113,14 +121,16 @@ fun AppNavHost(
 						draftRepository = draftRepository,
 						onStartWorkout = { navController.navigate(ActiveWorkoutGraphRoute()) },
 						onWorkoutClick = { id -> navController.navigate(WorkoutDetailRoute(id)) },
-						onOpenSettings = { navController.navigate(SettingsRoute) }
+						onOpenSettings = { navController.navigate(SettingsRoute()) }
 					)
 				}
 			}
 		}
-		composable<SettingsRoute> {
+		composable<SettingsRoute> { backStackEntry ->
+			val route = backStackEntry.toRoute<SettingsRoute>()
 			SettingsScreen(
 				app = app,
+				importUri = route.importUri,
 				onNavigateBack = { navController.popBackStack() }
 			)
 		}

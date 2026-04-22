@@ -142,4 +142,11 @@
 	<string name="import_success">Data imported successfully</string>
 	<string name="export_error">Failed to export data</string>
 	<string name="import_error">Failed to import data</string>
+	<string name="import_confirm_title">Replace existing data?</string>
+	<string name="import_confirm_message">Importing will permanently delete all current data and replace it with the contents of the file. This cannot be undone.</string>
+	<string name="restore_data">Restore Previous Data</string>
+	<string name="restore_confirm_title">Restore previous data?</string>
+	<string name="restore_confirm_message">This will replace all current data with the backup taken before the last import.</string>
+	<string name="restore_success">Data restored successfully</string>
+	<string name="restore_error">Failed to restore data</string>
 </resources>

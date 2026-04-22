@@ -59,6 +59,44 @@ object DataExporter {
 		encodeDefaults = true
 	}
 
+	suspend fun snapshot(database: AppDatabase): ExportData {
+		val categoryDao = database.categoryDao()
+		val exerciseDao = database.exerciseDao()
+		val workoutDao = database.workoutDao()
+		val workoutExerciseDao = database.workoutExerciseDao()
+		val workoutSetDao = database.workoutSetDao()
+
+		val categories = categoryDao.getAllOnce().map { ExportCategory(it.id, it.name) }
+		val exercises = exerciseDao.getAllIncludingDeleted().map {
+			ExportExercise(it.id, it.title, it.notes, it.hasWeight, it.categoryId, it.isDeleted)
+		}
+
+		val workoutEntities = workoutDao.getAllOnce()
+		val exercisesByWorkout = workoutExerciseDao.getAll().groupBy { it.workoutId }
+		val setsByExercise = workoutSetDao.getAll().groupBy { it.workoutExerciseId }
+
+		val workouts = workoutEntities.map { workoutEntity ->
+			val exportExercises = exercisesByWorkout[workoutEntity.id].orEmpty().map { weEntity ->
+				ExportWorkoutExercise(
+					exerciseId = weEntity.exerciseId,
+					orderIndex = weEntity.orderIndex,
+					sets = setsByExercise[weEntity.id].orEmpty().map {
+						ExportWorkoutSet(it.setNumber, it.weightKg, it.reps)
+					}
+				)
+			}
+			ExportWorkout(
+				id = workoutEntity.id,
+				startTime = workoutEntity.startTime,
+				endTime = workoutEntity.endTime,
+				durationSeconds = workoutEntity.durationSeconds,
+				notes = workoutEntity.notes,
+				exercises = exportExercises
+			)
+		}
+		return ExportData(categories, exercises, workouts)
+	}
+
 	suspend fun export(database: AppDatabase, outputStream: OutputStream) {
 		val categoryDao = database.categoryDao()
 		val exerciseDao = database.exerciseDao()

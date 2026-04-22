@@ -18,6 +18,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -32,12 +35,16 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -51,6 +58,7 @@ import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.R
 import net.luis.tracker.data.export.DataExporter
 import net.luis.tracker.data.export.DataImporter
+import net.luis.tracker.data.export.ExportData
 import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.WeightUnit
@@ -60,6 +68,7 @@ import kotlin.math.roundToInt
 @Composable
 fun SettingsScreen(
 	app: FitnessTrackerApp,
+	importUri: String = "",
 	onNavigateBack: () -> Unit
 ) {
 	val factory = remember {
@@ -78,6 +87,18 @@ fun SettingsScreen(
 	val exportErrorMsg = stringResource(R.string.export_error)
 	val importSuccessMsg = stringResource(R.string.import_success)
 	val importErrorMsg = stringResource(R.string.import_error)
+	val restoreSuccessMsg = stringResource(R.string.restore_success)
+	val restoreErrorMsg = stringResource(R.string.restore_error)
+
+	var pendingImportUriState by remember { mutableStateOf<Uri?>(null) }
+	val hasBackup by app.importBackup.collectAsState()
+	var showRestoreDialog by remember { mutableStateOf(false) }
+
+	LaunchedEffect(importUri) {
+		if (importUri.isNotEmpty()) {
+			pendingImportUriState = Uri.parse(importUri)
+		}
+	}
 
 	val exportLauncher = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.CreateDocument("application/json")
@@ -101,20 +122,77 @@ fun SettingsScreen(
 	val importLauncher = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.OpenDocument()
 	) { uri: Uri? ->
-		uri?.let {
-			scope.launch {
-				try {
-					withContext(Dispatchers.IO) {
-						context.contentResolver.openInputStream(it)?.use { inputStream ->
-							DataImporter.`import`(app.database, inputStream)
+		if (uri != null) pendingImportUriState = uri
+	}
+
+	pendingImportUriState?.let { uriToImport ->
+		AlertDialog(
+			onDismissRequest = { pendingImportUriState = null },
+			title = { Text(stringResource(R.string.import_confirm_title)) },
+			text = { Text(stringResource(R.string.import_confirm_message)) },
+			confirmButton = {
+				Button(
+					onClick = {
+						pendingImportUriState = null
+						scope.launch {
+							try {
+								withContext(Dispatchers.IO) {
+									app.importBackup.value = DataExporter.snapshot(app.database)
+									context.contentResolver.openInputStream(uriToImport)?.use { inputStream ->
+										DataImporter.`import`(app.database, inputStream)
+									}
+								}
+								snackbarHostState.showSnackbar(importSuccessMsg)
+							} catch (e: Exception) {
+								app.importBackup.value = null
+								snackbarHostState.showSnackbar(importErrorMsg)
+							}
 						}
 					}
-					snackbarHostState.showSnackbar(importSuccessMsg)
-				} catch (e: Exception) {
-					snackbarHostState.showSnackbar(importErrorMsg)
+				) {
+					Text(stringResource(R.string.import_data))
+				}
+			},
+			dismissButton = {
+				TextButton(onClick = { pendingImportUriState = null }) {
+					Text(stringResource(R.string.cancel))
 				}
 			}
-		}
+		)
+	}
+
+	if (showRestoreDialog) {
+		AlertDialog(
+			onDismissRequest = { showRestoreDialog = false },
+			title = { Text(stringResource(R.string.restore_confirm_title)) },
+			text = { Text(stringResource(R.string.restore_confirm_message)) },
+			confirmButton = {
+				Button(
+					onClick = {
+						showRestoreDialog = false
+						scope.launch {
+							try {
+								withContext(Dispatchers.IO) {
+									val backup = app.importBackup.value ?: return@withContext
+									DataImporter.importFromData(app.database, backup)
+								}
+								app.importBackup.value = null
+								snackbarHostState.showSnackbar(restoreSuccessMsg)
+							} catch (e: Exception) {
+								snackbarHostState.showSnackbar(restoreErrorMsg)
+							}
+						}
+					}
+				) {
+					Text(stringResource(R.string.restore_data))
+				}
+			},
+			dismissButton = {
+				TextButton(onClick = { showRestoreDialog = false }) {
+					Text(stringResource(R.string.cancel))
+				}
+			}
+		)
 	}
 
 	Scaffold(
@@ -306,6 +384,22 @@ fun SettingsScreen(
 					modifier = Modifier.padding(end = 8.dp)
 				)
 				Text(stringResource(R.string.import_data))
+			}
+
+			if (hasBackup != null) {
+				Spacer(modifier = Modifier.height(8.dp))
+
+				FilledTonalButton(
+					onClick = { showRestoreDialog = true },
+					modifier = Modifier.fillMaxWidth()
+				) {
+					Icon(
+						imageVector = Icons.Default.Restore,
+						contentDescription = null,
+						modifier = Modifier.padding(end = 8.dp)
+					)
+					Text(stringResource(R.string.restore_data))
+				}
 			}
 
 			Spacer(modifier = Modifier.height(24.dp))

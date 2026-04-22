@@ -1,5 +1,7 @@
 package net.luis.tracker
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -36,6 +38,12 @@ class MainActivity : ComponentActivity() {
 
 		val app = application as FitnessTrackerApp
 		val settingsRepo = SettingsRepository(applicationContext)
+
+		val pendingImportUri: String? = when (intent.action) {
+			Intent.ACTION_VIEW -> intent.data?.toString()
+			Intent.ACTION_SEND -> intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)?.toString()
+			else -> null
+		}
 
 		setContent {
 			data class AppSettings(
@@ -105,6 +113,7 @@ class MainActivity : ComponentActivity() {
 						weightUnit = settings.weightUnit,
 						restTimerSeconds = settings.restTimerSeconds,
 						weeklyWorkoutGoal = settings.weeklyWorkoutGoal,
+						pendingImportUri = pendingImportUri,
 						modifier = when {
 							isActiveWorkout -> Modifier
 							isBottomNavRoute -> Modifier.padding(bottom = innerPadding.calculateBottomPadding())
