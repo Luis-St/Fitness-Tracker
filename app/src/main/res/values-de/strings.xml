@@ -54,6 +54,9 @@
 	<string name="reps">Wdh.</string>
 	<string name="set_number">#%1$d</string>
 	<string name="add_set">Satz hinzufügen</string>
+	<string name="drop_set">Drop-Satz</string>
+	<string name="drop_weight">Drop-Gewicht</string>
+	<string name="drop_reps">Drop-Wdh.</string>
 	<string name="no_sets_yet">Noch keine Sätze</string>
 	<string name="n_sets">%1$d Sätze</string>
 	<string name="expand">Ausklappen</string>

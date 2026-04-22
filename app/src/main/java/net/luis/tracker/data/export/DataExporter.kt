@@ -49,7 +49,9 @@ data class ExportWorkoutExercise(
 data class ExportWorkoutSet(
 	val setNumber: Int,
 	val weightKg: Double,
-	val reps: Int
+	val reps: Int,
+	val dropWeightKg: Double? = null,
+	val dropReps: Int? = null
 )
 
 object DataExporter {
@@ -81,7 +83,7 @@ object DataExporter {
 					exerciseId = weEntity.exerciseId,
 					orderIndex = weEntity.orderIndex,
 					sets = setsByExercise[weEntity.id].orEmpty().map {
-						ExportWorkoutSet(it.setNumber, it.weightKg, it.reps)
+						ExportWorkoutSet(it.setNumber, it.weightKg, it.reps, it.dropWeightKg, it.dropReps)
 					}
 				)
 			}
@@ -143,7 +145,9 @@ object DataExporter {
 						ExportWorkoutSet(
 							setNumber = setEntity.setNumber,
 							weightKg = setEntity.weightKg,
-							reps = setEntity.reps
+							reps = setEntity.reps,
+							dropWeightKg = setEntity.dropWeightKg,
+							dropReps = setEntity.dropReps
 						)
 					}
 				)

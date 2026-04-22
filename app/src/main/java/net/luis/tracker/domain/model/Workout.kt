@@ -11,7 +11,9 @@ data class Workout(
 ) {
 	val totalVolume: Double
 		get() = exercises.sumOf { exercise ->
-			exercise.sets.sumOf { it.weightKg * it.reps }
+			exercise.sets.sumOf { set ->
+				set.weightKg * set.reps + (set.dropWeightKg ?: 0.0) * (set.dropReps ?: 0)
+			}
 		}
 
 	val exerciseCount: Int

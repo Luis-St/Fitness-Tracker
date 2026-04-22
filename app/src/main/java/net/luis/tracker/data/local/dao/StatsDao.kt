@@ -30,7 +30,9 @@ data class ExerciseSetHistory(
 	val workoutDate: Long,
 	val setNumber: Int,
 	val weightKg: Double,
-	val reps: Int
+	val reps: Int,
+	val dropWeightKg: Double?,
+	val dropReps: Int?
 )
 
 data class WorkoutDateInfo(
@@ -51,8 +53,8 @@ interface StatsDao {
 		"""
 		SELECT w.startTime,
 			MAX(ws.weightKg) as maxWeight,
-			SUM(ws.weightKg * ws.reps) as totalVolume,
-			MAX(ws.reps) as maxReps,
+			SUM(ws.weightKg * ws.reps + COALESCE(ws.dropWeightKg * ws.dropReps, 0)) as totalVolume,
+			MAX(ws.reps + COALESCE(ws.dropReps, 0)) as maxReps,
 			COUNT(ws.id) as setCount
 		FROM workouts w
 		INNER JOIN workout_exercises we ON we.workoutId = w.id
@@ -68,8 +70,8 @@ interface StatsDao {
 		"""
 		SELECT w.startTime,
 			MAX(ws.weightKg) as maxWeight,
-			SUM(ws.weightKg * ws.reps) as totalVolume,
-			MAX(ws.reps) as maxReps,
+			SUM(ws.weightKg * ws.reps + COALESCE(ws.dropWeightKg * ws.dropReps, 0)) as totalVolume,
+			MAX(ws.reps + COALESCE(ws.dropReps, 0)) as maxReps,
 			COUNT(ws.id) as setCount
 		FROM workouts w
 		INNER JOIN workout_exercises we ON we.workoutId = w.id
@@ -89,7 +91,7 @@ interface StatsDao {
 	@Query(
 		"""
 		SELECT MAX(workout_volume) FROM (
-			SELECT SUM(ws.weightKg * ws.reps) as workout_volume
+			SELECT SUM(ws.weightKg * ws.reps + COALESCE(ws.dropWeightKg * ws.dropReps, 0)) as workout_volume
 			FROM workout_sets ws
 			INNER JOIN workout_exercises we ON ws.workoutExerciseId = we.id
 			GROUP BY we.workoutId
@@ -109,8 +111,8 @@ interface StatsDao {
 		SELECT e.id as exerciseId,
 			e.title as exerciseTitle,
 			MAX(ws.weightKg) as maxWeight,
-			MAX(ws.reps) as maxReps,
-			MAX(ws.weightKg * ws.reps) as maxVolume
+			MAX(ws.reps + COALESCE(ws.dropReps, 0)) as maxReps,
+			MAX(ws.weightKg * ws.reps + COALESCE(ws.dropWeightKg * ws.dropReps, 0)) as maxVolume
 		FROM exercises e
 		INNER JOIN workout_exercises we ON we.exerciseId = e.id
 		INNER JOIN workout_sets ws ON ws.workoutExerciseId = we.id
@@ -150,7 +152,9 @@ interface StatsDao {
 			w.startTime as workoutDate,
 			ws.setNumber,
 			ws.weightKg,
-			ws.reps
+			ws.reps,
+			ws.dropWeightKg,
+			ws.dropReps
 		FROM workouts w
 		INNER JOIN workout_exercises we ON we.workoutId = w.id
 		INNER JOIN workout_sets ws ON ws.workoutExerciseId = we.id

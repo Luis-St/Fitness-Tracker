@@ -125,14 +125,21 @@ private fun SetRow(
 		)
 		Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 			if (set.weightKg > 0) {
+				val weightText = if (set.dropWeightKg != null) {
+					weightUnit.formatWeightPair(set.weightKg, set.dropWeightKg)
+				} else {
+					weightUnit.formatWeight(set.weightKg)
+				}
 				Text(
-					text = weightUnit.formatWeight(set.weightKg),
+					text = weightText,
 					style = MaterialTheme.typography.bodyMedium,
 					fontWeight = FontWeight.Medium
 				)
 			}
+			val repsText = if (set.dropReps != null) "${set.reps} / ${set.dropReps} ${stringResource(R.string.reps)}"
+			else "${set.reps} ${stringResource(R.string.reps)}"
 			Text(
-				text = "${set.reps} ${stringResource(R.string.reps)}",
+				text = repsText,
 				style = MaterialTheme.typography.bodyMedium
 			)
 		}

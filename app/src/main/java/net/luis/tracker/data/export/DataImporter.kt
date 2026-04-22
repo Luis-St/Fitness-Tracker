@@ -89,7 +89,9 @@ object DataImporter {
 							workoutExerciseId = newWeId,
 							setNumber = set.setNumber,
 							weightKg = set.weightKg,
-							reps = set.reps
+							reps = set.reps,
+							dropWeightKg = set.dropWeightKg,
+							dropReps = set.dropReps
 						)
 					}
 					workoutSetDao.insertAll(setEntities)

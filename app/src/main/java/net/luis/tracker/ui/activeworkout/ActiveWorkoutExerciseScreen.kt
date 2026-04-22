@@ -17,6 +17,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.Info
@@ -72,6 +74,11 @@ fun ActiveWorkoutExerciseScreen(
 	var repsText by remember { mutableStateOf("") }
 	var weightError by remember { mutableStateOf(false) }
 	var repsError by remember { mutableStateOf(false) }
+	var isDropSet by remember { mutableStateOf(false) }
+	var dropWeightText by remember { mutableStateOf("") }
+	var dropRepsText by remember { mutableStateOf("") }
+	var dropWeightError by remember { mutableStateOf(false) }
+	var dropRepsError by remember { mutableStateOf(false) }
 	var showNotesDialog by remember { mutableStateOf(false) }
 
 	if (showNotesDialog) {
@@ -93,19 +100,38 @@ fun ActiveWorkoutExerciseScreen(
 			val reps = repsText.toIntOrNull() ?: 0
 			val weightValid = !currentEntry.exercise.hasWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
 			val repsValid = reps > 0
-			if (repsValid && weightValid) {
+			val hasDropWeight = isDropSet && currentEntry.exercise.hasWeight && dropWeightText.isNotBlank()
+			val hasDropReps = isDropSet && dropRepsText.isNotBlank()
+			val wantsDropSet = hasDropWeight || hasDropReps
+			val dropWeightValue = dropWeightText.toDoubleOrNull() ?: 0.0
+			val mainWeightValue = weightText.toDoubleOrNull() ?: 0.0
+			val dropWeightValid = !wantsDropSet || !currentEntry.exercise.hasWeight ||
+				(hasDropWeight && dropWeightValue > 0.0 && dropWeightValue < mainWeightValue)
+			val dropRepsValid = !wantsDropSet || (hasDropReps && (dropRepsText.toIntOrNull() ?: 0) > 0)
+			if (repsValid && weightValid && dropWeightValid && dropRepsValid) {
 				val weightKg = if (currentEntry.exercise.hasWeight) {
 					weightUnit.convertToKg(weightText.toDoubleOrNull() ?: 0.0)
 				} else {
 					0.0
 				}
-				viewModel.addSet(entryId, weightKg, reps)
+				val dropWeightKg = if (wantsDropSet && currentEntry.exercise.hasWeight) {
+					weightUnit.convertToKg(dropWeightValue)
+				} else if (wantsDropSet) {
+					0.0
+				} else {
+					null
+				}
+				viewModel.addSet(entryId, weightKg, reps, dropWeightKg, if (wantsDropSet) dropRepsText.toIntOrNull() else null)
 			}
 		}
 		weightText = ""
 		repsText = ""
+		dropWeightText = ""
+		dropRepsText = ""
 		weightError = false
 		repsError = false
+		dropWeightError = false
+		dropRepsError = false
 	}
 
 	Scaffold(
@@ -219,6 +245,8 @@ fun ActiveWorkoutExerciseScreen(
 								hasWeight = hasWeight,
 								weightUnit = weightUnit,
 								showDivider = index < totalRows - 1,
+								dropWeightKg = realSet.dropWeightKg,
+								dropReps = realSet.dropReps,
 								onRemove = { viewModel.removeSet(entryId, index) }
 							)
 						} else if (ghostSet != null) {
@@ -229,6 +257,8 @@ fun ActiveWorkoutExerciseScreen(
 								hasWeight = hasWeight,
 								weightUnit = weightUnit,
 								showDivider = index < totalRows - 1,
+								dropWeightKg = ghostSet.dropWeightKg,
+								dropReps = ghostSet.dropReps,
 								isGhost = true
 							)
 						}
@@ -238,34 +268,94 @@ fun ActiveWorkoutExerciseScreen(
 
 			HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-			// Add set form — full width
 			Text(
 				text = stringResource(R.string.add_set),
 				style = MaterialTheme.typography.titleMedium,
-				modifier = Modifier.padding(bottom = 8.dp)
+				modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
 			)
 
-			if (currentEntry.exercise.hasWeight) {
-				WeightInput(
-					text = weightText,
-					onTextChange = { weightText = it; weightError = false },
-					weightUnit = weightUnit,
-					isError = weightError,
-					modifier = Modifier.fillMaxWidth()
-				)
-
-				Spacer(modifier = Modifier.height(8.dp))
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(IntrinsicSize.Min),
+				horizontalArrangement = Arrangement.spacedBy(12.dp),
+				verticalAlignment = Alignment.Top
+			) {
+				Column(
+					modifier = Modifier.weight(1f),
+					verticalArrangement = Arrangement.spacedBy(8.dp)
+				) {
+					if (currentEntry.exercise.hasWeight) {
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.spacedBy(8.dp)
+						) {
+							WeightInput(
+								text = weightText,
+								onTextChange = { weightText = it; weightError = false },
+								weightUnit = weightUnit,
+								isError = weightError,
+								modifier = Modifier.weight(1f)
+							)
+							if (isDropSet) {
+								WeightInput(
+									text = dropWeightText,
+									onTextChange = { dropWeightText = it; dropWeightError = false },
+									weightUnit = weightUnit,
+									isError = dropWeightError,
+									label = stringResource(R.string.drop_weight),
+									modifier = Modifier.weight(1f)
+								)
+							}
+						}
+					}
+					Row(
+						modifier = Modifier.fillMaxWidth(),
+						horizontalArrangement = Arrangement.spacedBy(8.dp)
+					) {
+						OutlinedTextField(
+							value = repsText,
+							onValueChange = { repsText = it; repsError = false },
+							label = { Text(stringResource(R.string.reps)) },
+							modifier = Modifier.weight(1f),
+							singleLine = true,
+							isError = repsError,
+							keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+						)
+						if (isDropSet) {
+							OutlinedTextField(
+								value = dropRepsText,
+								onValueChange = { dropRepsText = it; dropRepsError = false },
+								label = { Text(stringResource(R.string.drop_reps)) },
+								modifier = Modifier.weight(1f),
+								singleLine = true,
+								isError = dropRepsError,
+								keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+							)
+						}
+					}
+				}
+				FilledTonalButton(
+					onClick = {
+						isDropSet = !isDropSet
+						if (!isDropSet) {
+							dropWeightText = ""
+							dropRepsText = ""
+							dropWeightError = false
+							dropRepsError = false
+						}
+					},
+					modifier = Modifier
+						.fillMaxHeight()
+						.width(40.dp),
+					contentPadding = PaddingValues(0.dp)
+				) {
+					Icon(
+						imageVector = if (isDropSet) Icons.Default.Close else Icons.Default.ArrowDownward,
+						contentDescription = stringResource(R.string.drop_set)
+					)
+				}
 			}
-
-			OutlinedTextField(
-				value = repsText,
-				onValueChange = { repsText = it; repsError = false },
-				label = { Text(stringResource(R.string.reps)) },
-				modifier = Modifier.fillMaxWidth(),
-				singleLine = true,
-				isError = repsError,
-				keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-			)
 
 			Spacer(modifier = Modifier.height(12.dp))
 
@@ -274,17 +364,36 @@ fun ActiveWorkoutExerciseScreen(
 					val reps = repsText.toIntOrNull() ?: 0
 					val weightValid = !currentEntry.exercise.hasWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
 					val repsValid = reps > 0
+					val hasDropWeight = isDropSet && currentEntry.exercise.hasWeight && dropWeightText.isNotBlank()
+					val hasDropReps = isDropSet && dropRepsText.isNotBlank()
+					val wantsDropSet = hasDropWeight || hasDropReps
+					val dropWeightValue = dropWeightText.toDoubleOrNull() ?: 0.0
+					val mainWeightValue = weightText.toDoubleOrNull() ?: 0.0
+					val dropWeightValid = !wantsDropSet || !currentEntry.exercise.hasWeight ||
+						(hasDropWeight && dropWeightValue > 0.0 && dropWeightValue < mainWeightValue)
+					val dropRepsValid = !wantsDropSet || (hasDropReps && (dropRepsText.toIntOrNull() ?: 0) > 0)
 					weightError = !weightValid
 					repsError = !repsValid
-					if (repsValid && weightValid) {
+					dropWeightError = wantsDropSet && !dropWeightValid
+					dropRepsError = wantsDropSet && !dropRepsValid
+					if (repsValid && weightValid && dropWeightValid && dropRepsValid) {
 						val weightKg = if (currentEntry.exercise.hasWeight) {
 							weightUnit.convertToKg(weightText.toDoubleOrNull() ?: 0.0)
 						} else {
 							0.0
 						}
-						viewModel.addSet(entryId, weightKg, reps)
+						val dropWeightKg = if (wantsDropSet && currentEntry.exercise.hasWeight) {
+							weightUnit.convertToKg(dropWeightValue)
+						} else if (wantsDropSet) {
+							0.0
+						} else {
+							null
+						}
+						viewModel.addSet(entryId, weightKg, reps, dropWeightKg, if (wantsDropSet) dropRepsText.toIntOrNull() else null)
 						weightText = ""
 						repsText = ""
+						dropWeightText = ""
+						dropRepsText = ""
 					}
 				},
 				modifier = Modifier.fillMaxWidth()
@@ -310,45 +419,56 @@ private fun SetItem(
 	hasWeight: Boolean,
 	weightUnit: WeightUnit,
 	showDivider: Boolean,
+	dropWeightKg: Double? = null,
+	dropReps: Int? = null,
 	isGhost: Boolean = false,
 	onRemove: (() -> Unit)? = null
 ) {
 	val contentAlpha = if (isGhost) 0.5f else 1f
-	Row(
-		modifier = Modifier
-			.fillMaxWidth()
-			.padding(vertical = 4.dp),
-		verticalAlignment = Alignment.CenterVertically
-	) {
-		Text(
-			text = stringResource(R.string.set_number, setNumber),
-			style = MaterialTheme.typography.bodyLarge,
-			fontWeight = FontWeight.Medium,
-			modifier = Modifier.width(48.dp).alpha(contentAlpha)
-		)
-		if (hasWeight) {
-			Text(
-				text = weightUnit.formatWeight(weightKg),
-				style = MaterialTheme.typography.bodyLarge,
-				modifier = Modifier.weight(1f).alpha(contentAlpha)
-			)
-		} else {
-			Spacer(modifier = Modifier.weight(1f))
-		}
-		Text(
-			text = "$reps ${stringResource(R.string.reps)}",
-			style = MaterialTheme.typography.bodyLarge,
-			modifier = Modifier.alpha(contentAlpha)
-		)
-		IconButton(
-			onClick = onRemove ?: {},
-			enabled = !isGhost
+	Column(modifier = Modifier.fillMaxWidth()) {
+		Row(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(vertical = 4.dp),
+			verticalAlignment = Alignment.CenterVertically
 		) {
-			Icon(
-				imageVector = Icons.Default.Delete,
-				contentDescription = stringResource(R.string.remove),
-				tint = MaterialTheme.colorScheme.error.copy(alpha = if (isGhost) 0.38f else 1f)
+			Text(
+				text = stringResource(R.string.set_number, setNumber),
+				style = MaterialTheme.typography.bodyLarge,
+				fontWeight = FontWeight.Medium,
+				modifier = Modifier.width(48.dp).alpha(contentAlpha)
 			)
+			if (hasWeight) {
+				val weightText = if (dropWeightKg != null) {
+					weightUnit.formatWeightPair(weightKg, dropWeightKg)
+				} else {
+					weightUnit.formatWeight(weightKg)
+				}
+				Text(
+					text = weightText,
+					style = MaterialTheme.typography.bodyLarge,
+					modifier = Modifier.weight(1f).alpha(contentAlpha)
+				)
+			} else {
+				Spacer(modifier = Modifier.weight(1f))
+			}
+			val repsText = if (dropReps != null) "$reps / $dropReps ${stringResource(R.string.reps)}"
+			else "$reps ${stringResource(R.string.reps)}"
+			Text(
+				text = repsText,
+				style = MaterialTheme.typography.bodyLarge,
+				modifier = Modifier.alpha(contentAlpha)
+			)
+			IconButton(
+				onClick = onRemove ?: {},
+				enabled = !isGhost
+			) {
+				Icon(
+					imageVector = Icons.Default.Delete,
+					contentDescription = stringResource(R.string.remove),
+					tint = MaterialTheme.colorScheme.error.copy(alpha = if (isGhost) 0.38f else 1f)
+				)
+			}
 		}
 	}
 	if (showDivider) {

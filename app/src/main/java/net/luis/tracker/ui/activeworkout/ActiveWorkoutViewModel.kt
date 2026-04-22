@@ -160,13 +160,13 @@ class ActiveWorkoutViewModel(
 		saveDraft()
 	}
 
-	fun addSet(entryId: Long, weightKg: Double, reps: Int) {
+	fun addSet(entryId: Long, weightKg: Double, reps: Int, dropWeightKg: Double? = null, dropReps: Int? = null) {
 		_uiState.update { state ->
 			val index = state.exercises.indexOfFirst { it.id == entryId }
 			if (index < 0) return@update state
 
 			val entry = state.exercises[index]
-			val newSet = WorkoutSet(setNumber = entry.sets.size + 1, weightKg = weightKg, reps = reps)
+			val newSet = WorkoutSet(setNumber = entry.sets.size + 1, weightKg = weightKg, reps = reps, dropWeightKg = dropWeightKg, dropReps = dropReps)
 			val updatedEntry = entry.copy(sets = entry.sets + newSet)
 
 			if (!entry.isGhost || entry.sets.isNotEmpty()) {
@@ -314,7 +314,9 @@ class ActiveWorkoutViewModel(
 						DraftWorkoutSet(
 							setNumber = set.setNumber,
 							weightKg = set.weightKg,
-							reps = set.reps
+							reps = set.reps,
+							dropWeightKg = set.dropWeightKg,
+							dropReps = set.dropReps
 						)
 					},
 					isGhost = entry.isGhost,
@@ -324,7 +326,9 @@ class ActiveWorkoutViewModel(
 					DraftWorkoutSet(
 						setNumber = set.setNumber,
 						weightKg = set.weightKg,
-						reps = set.reps
+						reps = set.reps,
+						dropWeightKg = set.dropWeightKg,
+						dropReps = set.dropReps
 					)
 				}
 				)
@@ -357,7 +361,9 @@ class ActiveWorkoutViewModel(
 						WorkoutSet(
 							setNumber = set.setNumber,
 							weightKg = set.weightKg,
-							reps = set.reps
+							reps = set.reps,
+							dropWeightKg = set.dropWeightKg,
+							dropReps = set.dropReps
 						)
 					},
 					isGhost = entry.isGhost,
@@ -367,7 +373,9 @@ class ActiveWorkoutViewModel(
 						WorkoutSet(
 							setNumber = set.setNumber,
 							weightKg = set.weightKg,
-							reps = set.reps
+							reps = set.reps,
+							dropWeightKg = set.dropWeightKg,
+							dropReps = set.dropReps
 						)
 					}
 				)

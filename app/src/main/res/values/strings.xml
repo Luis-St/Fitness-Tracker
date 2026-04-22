@@ -54,6 +54,9 @@
 	<string name="reps">reps</string>
 	<string name="set_number">#%1$d</string>
 	<string name="add_set">Add Set</string>
+	<string name="drop_set">Drop Set</string>
+	<string name="drop_weight">Drop Weight</string>
+	<string name="drop_reps">Drop Reps</string>
 	<string name="no_sets_yet">No sets yet</string>
 	<string name="n_sets">%1$d sets</string>
 	<string name="expand">Expand</string>

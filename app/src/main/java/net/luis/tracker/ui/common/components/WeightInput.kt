@@ -16,7 +16,8 @@ fun WeightInput(
 	onTextChange: (String) -> Unit,
 	weightUnit: WeightUnit,
 	modifier: Modifier = Modifier,
-	isError: Boolean = false
+	isError: Boolean = false,
+	label: String? = null
 ) {
 	OutlinedTextField(
 		value = text,
@@ -26,7 +27,7 @@ fun WeightInput(
 			}
 		},
 		modifier = modifier,
-		label = { Text(stringResource(R.string.weight)) },
+		label = { Text(label ?: stringResource(R.string.weight)) },
 		suffix = { Text(weightUnit.name.lowercase()) },
 		singleLine = true,
 		isError = isError,

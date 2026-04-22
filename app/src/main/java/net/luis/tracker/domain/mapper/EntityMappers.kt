@@ -52,7 +52,9 @@ fun WorkoutSetEntity.toDomain() = WorkoutSet(
 	workoutExerciseId = workoutExerciseId,
 	setNumber = setNumber,
 	weightKg = weightKg,
-	reps = reps
+	reps = reps,
+	dropWeightKg = dropWeightKg,
+	dropReps = dropReps
 )
 
 fun WorkoutSet.toEntity() = WorkoutSetEntity(
@@ -60,7 +62,9 @@ fun WorkoutSet.toEntity() = WorkoutSetEntity(
 	workoutExerciseId = workoutExerciseId,
 	setNumber = setNumber,
 	weightKg = weightKg,
-	reps = reps
+	reps = reps,
+	dropWeightKg = dropWeightKg,
+	dropReps = dropReps
 )
 
 // WorkoutExercise

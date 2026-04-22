@@ -30,5 +30,7 @@ data class DraftExerciseEntry(
 data class DraftWorkoutSet(
 	val setNumber: Int,
 	val weightKg: Double,
-	val reps: Int
+	val reps: Int,
+	val dropWeightKg: Double? = null,
+	val dropReps: Int? = null
 )

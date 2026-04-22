@@ -22,6 +22,11 @@ enum class WeightUnit {
 		}
 	}
 
+	fun formatWeightPair(kg: Double, dropKg: Double): String {
+		fun fmt(v: Double) = if (v == v.toLong().toDouble()) "${v.toLong()}" else "${"%.1f".format(v)}"
+		return "${fmt(convertFromKg(kg))} / ${fmt(convertFromKg(dropKg))} ${name.lowercase()}"
+	}
+
 	fun formatWeightLarge(kg: Double): String {
 		return if (kg >= 1_000.0) {
 			"${"%.1f".format(kg / 1_000.0)} t"

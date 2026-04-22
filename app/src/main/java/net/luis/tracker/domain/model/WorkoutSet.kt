@@ -5,5 +5,9 @@ data class WorkoutSet(
 	val workoutExerciseId: Long = 0,
 	val setNumber: Int,
 	val weightKg: Double = 0.0,
-	val reps: Int
-)
+	val reps: Int,
+	val dropWeightKg: Double? = null,
+	val dropReps: Int? = null
+) {
+	val isDropSet: Boolean get() = dropWeightKg != null && dropReps != null
+}
