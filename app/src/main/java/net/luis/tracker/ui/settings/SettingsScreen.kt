@@ -61,6 +61,7 @@ import net.luis.tracker.data.export.DataImporter
 import net.luis.tracker.data.export.ExportData
 import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.domain.model.ThemeMode
+import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
 import kotlin.math.roundToInt
 
@@ -354,6 +355,34 @@ fun SettingsScreen(
 				steps = 5, // 5 intermediate steps between 1 and 7
 				modifier = Modifier.fillMaxWidth()
 			)
+
+			Spacer(modifier = Modifier.height(16.dp))
+
+			Text(
+				text = stringResource(R.string.timer_on_resume),
+				style = MaterialTheme.typography.bodyLarge
+			)
+			Spacer(modifier = Modifier.height(8.dp))
+
+			val timerResumeModes = TimerResumeMode.entries
+			val timerResumeLabels = listOf(
+				stringResource(R.string.resume),
+				stringResource(R.string.stopped)
+			)
+			SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+				timerResumeModes.forEachIndexed { index, mode ->
+					SegmentedButton(
+						selected = uiState.timerResumeMode == mode,
+						onClick = { viewModel.setTimerResumeMode(mode) },
+						shape = SegmentedButtonDefaults.itemShape(
+							index = index,
+							count = timerResumeModes.size
+						)
+					) {
+						Text(timerResumeLabels[index])
+					}
+				}
+			}
 
 			Spacer(modifier = Modifier.height(24.dp))
 

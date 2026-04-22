@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.domain.model.ThemeMode
+import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
 
 data class SettingsUiState(
@@ -18,7 +19,8 @@ data class SettingsUiState(
 	val dynamicColors: Boolean = true,
 	val weightUnit: WeightUnit = WeightUnit.KG,
 	val restTimerSeconds: Int = 90,
-	val weeklyWorkoutGoal: Int = 2
+	val weeklyWorkoutGoal: Int = 2,
+	val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME
 )
 
 class SettingsViewModel(
@@ -36,15 +38,17 @@ class SettingsViewModel(
 				settingsRepository.weightUnit,
 				combine(
 					settingsRepository.restTimerSeconds,
-					settingsRepository.weeklyWorkoutGoal
-				) { rest, goal -> rest to goal }
-			) { mode, dynamicColors, unit, (seconds, goal) ->
+					settingsRepository.weeklyWorkoutGoal,
+					settingsRepository.timerResumeMode
+				) { rest, goal, timerMode -> Triple(rest, goal, timerMode) }
+			) { mode, dynamicColors, unit, (seconds, goal, timerMode) ->
 				SettingsUiState(
 					themeMode = mode,
 					dynamicColors = dynamicColors,
 					weightUnit = unit,
 					restTimerSeconds = seconds,
-					weeklyWorkoutGoal = goal
+					weeklyWorkoutGoal = goal,
+					timerResumeMode = timerMode
 				)
 			}.collect { state ->
 				_uiState.value = state
@@ -79,6 +83,12 @@ class SettingsViewModel(
 	fun setWeeklyWorkoutGoal(goal: Int) {
 		viewModelScope.launch {
 			settingsRepository.setWeeklyWorkoutGoal(goal)
+		}
+	}
+
+	fun setTimerResumeMode(mode: TimerResumeMode) {
+		viewModelScope.launch {
+			settingsRepository.setTimerResumeMode(mode)
 		}
 	}
 

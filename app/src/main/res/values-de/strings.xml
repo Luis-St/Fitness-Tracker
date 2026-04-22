@@ -135,6 +135,8 @@
 	<string name="default_rest_timer">Standard-Pausenzeit</string>
 	<string name="weekly_workout_goal">Wöchentliches Trainingsziel</string>
 	<string name="weekly_workout_goal_value">%1$d Workouts pro Woche</string>
+	<string name="timer_on_resume">Timer beim Fortsetzen</string>
+	<string name="stopped">Gestoppt</string>
 	<string name="rest_timer_format">%1$d:%2$02d</string>
 	<string name="data">Daten</string>
 	<string name="export_data">Daten exportieren</string>

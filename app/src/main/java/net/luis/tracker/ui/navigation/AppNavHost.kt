@@ -20,6 +20,7 @@ import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.data.repository.ActiveWorkoutDraftRepository
 import net.luis.tracker.data.repository.ExerciseRepository
 import net.luis.tracker.data.repository.WorkoutRepository
+import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.activeworkout.ActiveWorkoutExerciseScreen
 import net.luis.tracker.ui.activeworkout.ActiveWorkoutScreen
@@ -42,13 +43,14 @@ private fun activeWorkoutViewModel(
 	navController: NavHostController,
 	app: FitnessTrackerApp,
 	draftRepository: ActiveWorkoutDraftRepository,
+	timerResumeMode: TimerResumeMode,
 	currentEntry: NavBackStackEntry
 ): ActiveWorkoutViewModel {
 	val parentEntry = remember(currentEntry) {
 		navController.getBackStackEntry<ActiveWorkoutGraphRoute>()
 	}
 	val graphRoute = parentEntry.toRoute<ActiveWorkoutGraphRoute>()
-	val factory = remember(graphRoute.resumeWorkoutId, graphRoute.planWorkoutId) {
+	val factory = remember(graphRoute.resumeWorkoutId, graphRoute.planWorkoutId, timerResumeMode) {
 		ActiveWorkoutViewModel.Factory(
 			ExerciseRepository(app.database.exerciseDao()),
 			WorkoutRepository(
@@ -59,7 +61,8 @@ private fun activeWorkoutViewModel(
 			),
 			draftRepository,
 			resumeWorkoutId = graphRoute.resumeWorkoutId,
-			planWorkoutId = graphRoute.planWorkoutId
+			planWorkoutId = graphRoute.planWorkoutId,
+			timerResumeMode = timerResumeMode
 		)
 	}
 	return viewModel(
@@ -76,6 +79,7 @@ fun AppNavHost(
 	weightUnit: WeightUnit,
 	restTimerSeconds: Int,
 	weeklyWorkoutGoal: Int,
+	timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME,
 	pendingImportUri: String? = null,
 	modifier: Modifier = Modifier
 ) {
@@ -153,7 +157,7 @@ fun AppNavHost(
 		}
 		navigation<ActiveWorkoutGraphRoute>(startDestination = ActiveWorkoutRoute) {
 			composable<ActiveWorkoutRoute> {
-				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, it)
+				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, timerResumeMode, it)
 				ActiveWorkoutScreen(
 					viewModel = sharedViewModel,
 					weightUnit = weightUnit,
@@ -170,7 +174,7 @@ fun AppNavHost(
 				enterTransition = { EnterTransition.None },
 				exitTransition = { ExitTransition.None }
 			) {
-				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, it)
+				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, timerResumeMode, it)
 				SelectExerciseScreen(
 					viewModel = sharedViewModel,
 					onExerciseSelected = { entryId ->
@@ -183,7 +187,7 @@ fun AppNavHost(
 			}
 			composable<ActiveWorkoutExerciseRoute> { backStackEntry ->
 				val route = backStackEntry.toRoute<ActiveWorkoutExerciseRoute>()
-				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, backStackEntry)
+				val sharedViewModel = activeWorkoutViewModel(navController, app, draftRepository, timerResumeMode, backStackEntry)
 				ActiveWorkoutExerciseScreen(
 					viewModel = sharedViewModel,
 					entryId = route.entryId,

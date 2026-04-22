@@ -11,6 +11,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.luis.tracker.domain.model.ThemeMode
+import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -23,6 +24,7 @@ class SettingsRepository(private val context: Context) {
 		val WEIGHT_UNIT = stringPreferencesKey("weight_unit")
 		val REST_TIMER_SECONDS = intPreferencesKey("rest_timer_seconds")
 		val WEEKLY_WORKOUT_GOAL = intPreferencesKey("weekly_workout_goal")
+		val TIMER_RESUME_MODE = stringPreferencesKey("timer_resume_mode")
 	}
 
 	val themeMode: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
@@ -45,6 +47,10 @@ class SettingsRepository(private val context: Context) {
 		prefs[Keys.WEEKLY_WORKOUT_GOAL] ?: 2
 	}
 
+	val timerResumeMode: Flow<TimerResumeMode> = context.dataStore.data.map { prefs ->
+		TimerResumeMode.valueOf(prefs[Keys.TIMER_RESUME_MODE] ?: TimerResumeMode.RESUME.name)
+	}
+
 	suspend fun setThemeMode(mode: ThemeMode) {
 		context.dataStore.edit { it[Keys.THEME_MODE] = mode.name }
 	}
@@ -63,5 +69,9 @@ class SettingsRepository(private val context: Context) {
 
 	suspend fun setWeeklyWorkoutGoal(goal: Int) {
 		context.dataStore.edit { it[Keys.WEEKLY_WORKOUT_GOAL] = goal }
+	}
+
+	suspend fun setTimerResumeMode(mode: TimerResumeMode) {
+		context.dataStore.edit { it[Keys.TIMER_RESUME_MODE] = mode.name }
 	}
 }

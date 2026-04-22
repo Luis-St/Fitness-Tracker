@@ -21,6 +21,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.domain.model.ThemeMode
+import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.navigation.ActiveWorkoutExerciseRoute
 import net.luis.tracker.ui.navigation.ActiveWorkoutRoute
@@ -51,7 +52,8 @@ class MainActivity : ComponentActivity() {
 				val dynamicColors: Boolean = true,
 				val weightUnit: WeightUnit = WeightUnit.KG,
 				val restTimerSeconds: Int = 90,
-				val weeklyWorkoutGoal: Int = 2
+				val weeklyWorkoutGoal: Int = 2,
+				val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME
 			)
 
 			val settingsFlow = remember {
@@ -61,10 +63,11 @@ class MainActivity : ComponentActivity() {
 					settingsRepo.weightUnit,
 					combine(
 						settingsRepo.restTimerSeconds,
-						settingsRepo.weeklyWorkoutGoal
-					) { rest, goal -> rest to goal }
-				) { theme, dynamic, unit, (restTimer, goal) ->
-					AppSettings(theme, dynamic, unit, restTimer, goal)
+						settingsRepo.weeklyWorkoutGoal,
+						settingsRepo.timerResumeMode
+					) { rest, goal, timerMode -> Triple(rest, goal, timerMode) }
+				) { theme, dynamic, unit, (restTimer, goal, timerMode) ->
+					AppSettings(theme, dynamic, unit, restTimer, goal, timerMode)
 				}
 			}
 			val settings by settingsFlow.collectAsState(initial = AppSettings())
@@ -113,6 +116,7 @@ class MainActivity : ComponentActivity() {
 						weightUnit = settings.weightUnit,
 						restTimerSeconds = settings.restTimerSeconds,
 						weeklyWorkoutGoal = settings.weeklyWorkoutGoal,
+						timerResumeMode = settings.timerResumeMode,
 						pendingImportUri = pendingImportUri,
 						modifier = when {
 							isActiveWorkout -> Modifier

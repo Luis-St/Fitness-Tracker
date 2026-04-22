@@ -23,6 +23,7 @@ import net.luis.tracker.data.repository.ExerciseRepository
 import net.luis.tracker.data.repository.WorkoutRepository
 import net.luis.tracker.domain.model.Category
 import net.luis.tracker.domain.model.Exercise
+import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.Workout
 import net.luis.tracker.domain.model.WorkoutExercise
 import net.luis.tracker.domain.model.WorkoutSet
@@ -48,7 +49,8 @@ class ActiveWorkoutViewModel(
 	private val workoutRepository: WorkoutRepository,
 	private val draftRepository: ActiveWorkoutDraftRepository,
 	private val resumeWorkoutId: Long = 0L,
-	private val planWorkoutId: Long = 0L
+	private val planWorkoutId: Long = 0L,
+	private val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME
 ) : ViewModel() {
 
 	private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
@@ -382,11 +384,13 @@ class ActiveWorkoutViewModel(
 			}
 		}
 
+		val autoResume = timerResumeMode == TimerResumeMode.RESUME
 		_uiState.value = ActiveWorkoutUiState(
 			isRunning = true,
-			isPaused = true,
+			isPaused = !autoResume,
 			exercises = exercises
 		)
+		if (autoResume) startTimer()
 	}
 
 	private suspend fun restoreFromWorkout(workoutId: Long) {
@@ -408,11 +412,13 @@ class ActiveWorkoutViewModel(
 		}
 		entryIdCounter = nextEntryId
 
+		val autoResume = timerResumeMode == TimerResumeMode.RESUME
 		_uiState.value = ActiveWorkoutUiState(
 			isRunning = true,
-			isPaused = true,
+			isPaused = !autoResume,
 			exercises = exercises
 		)
+		if (autoResume) startTimer()
 	}
 
 	private suspend fun loadPlan(workoutId: Long) {
@@ -442,11 +448,12 @@ class ActiveWorkoutViewModel(
 		private val workoutRepository: WorkoutRepository,
 		private val draftRepository: ActiveWorkoutDraftRepository,
 		private val resumeWorkoutId: Long = 0L,
-		private val planWorkoutId: Long = 0L
+		private val planWorkoutId: Long = 0L,
+		private val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME
 	) : ViewModelProvider.Factory {
 		@Suppress("UNCHECKED_CAST")
 		override fun <T : ViewModel> create(modelClass: Class<T>): T {
-			return ActiveWorkoutViewModel(exerciseRepository, workoutRepository, draftRepository, resumeWorkoutId, planWorkoutId) as T
+			return ActiveWorkoutViewModel(exerciseRepository, workoutRepository, draftRepository, resumeWorkoutId, planWorkoutId, timerResumeMode) as T
 		}
 	}
 }
