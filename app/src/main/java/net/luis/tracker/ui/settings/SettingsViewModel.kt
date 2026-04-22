@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.luis.tracker.data.repository.SettingsRepository
+import net.luis.tracker.domain.model.AppLanguage
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
@@ -20,7 +21,8 @@ data class SettingsUiState(
 	val weightUnit: WeightUnit = WeightUnit.KG,
 	val restTimerSeconds: Int = 90,
 	val weeklyWorkoutGoal: Int = 2,
-	val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME
+	val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME,
+	val appLanguage: AppLanguage = AppLanguage.SYSTEM
 )
 
 class SettingsViewModel(
@@ -40,15 +42,17 @@ class SettingsViewModel(
 					settingsRepository.restTimerSeconds,
 					settingsRepository.weeklyWorkoutGoal,
 					settingsRepository.timerResumeMode
-				) { rest, goal, timerMode -> Triple(rest, goal, timerMode) }
-			) { mode, dynamicColors, unit, (seconds, goal, timerMode) ->
+				) { rest, goal, timerMode -> Triple(rest, goal, timerMode) },
+				settingsRepository.appLanguage
+			) { mode, dynamicColors, unit, (seconds, goal, timerMode), lang ->
 				SettingsUiState(
 					themeMode = mode,
 					dynamicColors = dynamicColors,
 					weightUnit = unit,
 					restTimerSeconds = seconds,
 					weeklyWorkoutGoal = goal,
-					timerResumeMode = timerMode
+					timerResumeMode = timerMode,
+					appLanguage = lang
 				)
 			}.collect { state ->
 				_uiState.value = state
@@ -89,6 +93,12 @@ class SettingsViewModel(
 	fun setTimerResumeMode(mode: TimerResumeMode) {
 		viewModelScope.launch {
 			settingsRepository.setTimerResumeMode(mode)
+		}
+	}
+
+	fun setAppLanguage(language: AppLanguage) {
+		viewModelScope.launch {
+			settingsRepository.setAppLanguage(language)
 		}
 	}
 

@@ -122,6 +122,7 @@
 	<string name="set_detail_format">Satz %1$d</string>
 
 	<!-- Settings -->
+	<string name="language">Sprache</string>
 	<string name="appearance">Darstellung</string>
 	<string name="theme">Design</string>
 	<string name="light">Hell</string>

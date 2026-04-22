@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import net.luis.tracker.domain.model.AppLanguage
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
@@ -25,6 +26,7 @@ class SettingsRepository(private val context: Context) {
 		val REST_TIMER_SECONDS = intPreferencesKey("rest_timer_seconds")
 		val WEEKLY_WORKOUT_GOAL = intPreferencesKey("weekly_workout_goal")
 		val TIMER_RESUME_MODE = stringPreferencesKey("timer_resume_mode")
+		val APP_LANGUAGE = stringPreferencesKey("app_language")
 	}
 
 	val themeMode: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
@@ -73,5 +75,13 @@ class SettingsRepository(private val context: Context) {
 
 	suspend fun setTimerResumeMode(mode: TimerResumeMode) {
 		context.dataStore.edit { it[Keys.TIMER_RESUME_MODE] = mode.name }
+	}
+
+	val appLanguage: Flow<AppLanguage> = context.dataStore.data.map { prefs ->
+		AppLanguage.valueOf(prefs[Keys.APP_LANGUAGE] ?: AppLanguage.SYSTEM.name)
+	}
+
+	suspend fun setAppLanguage(language: AppLanguage) {
+		context.dataStore.edit { it[Keys.APP_LANGUAGE] = language.name }
 	}
 }

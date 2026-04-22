@@ -60,6 +60,7 @@ import net.luis.tracker.data.export.DataExporter
 import net.luis.tracker.data.export.DataImporter
 import net.luis.tracker.data.export.ExportData
 import net.luis.tracker.data.repository.SettingsRepository
+import net.luis.tracker.domain.model.AppLanguage
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
@@ -245,6 +246,35 @@ fun SettingsScreen(
 						)
 					) {
 						Text(themeLabels[index])
+					}
+				}
+			}
+
+			Spacer(modifier = Modifier.height(16.dp))
+
+			Text(
+				text = stringResource(R.string.language),
+				style = MaterialTheme.typography.bodyLarge
+			)
+			Spacer(modifier = Modifier.height(8.dp))
+
+			val languages = AppLanguage.entries
+			val languageLabels = listOf(
+				stringResource(R.string.system_default),
+				"English",
+				"Deutsch"
+			)
+			SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+				languages.forEachIndexed { index, lang ->
+					SegmentedButton(
+						selected = uiState.appLanguage == lang,
+						onClick = { viewModel.setAppLanguage(lang) },
+						shape = SegmentedButtonDefaults.itemShape(
+							index = index,
+							count = languages.size
+						)
+					) {
+						Text(languageLabels[index])
 					}
 				}
 			}
