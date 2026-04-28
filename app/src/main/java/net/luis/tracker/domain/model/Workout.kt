@@ -7,6 +7,7 @@ data class Workout(
 	val durationSeconds: Long = 0,
 	val notes: String = "",
 	val isFinished: Boolean = true,
+	val planWorkoutId: Long? = null,
 	val exercises: List<WorkoutExercise> = emptyList()
 ) {
 	val totalVolume: Double

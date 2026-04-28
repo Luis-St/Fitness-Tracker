@@ -11,5 +11,6 @@ data class WorkoutEntity(
 	val endTime: Long? = null, // epoch millis
 	val durationSeconds: Long = 0,
 	val notes: String = "",
-	val isFinished: Boolean = true
+	val isFinished: Boolean = true,
+	val planWorkoutId: Long? = null
 )

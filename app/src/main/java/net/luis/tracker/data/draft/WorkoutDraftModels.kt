@@ -7,7 +7,8 @@ data class WorkoutDraft(
 	val startTimeMillis: Long,
 	val elapsedMillis: Long,
 	val entryIdCounter: Long,
-	val exercises: List<DraftExerciseEntry>
+	val exercises: List<DraftExerciseEntry>,
+	val planWorkoutId: Long = 0L
 )
 
 @Serializable

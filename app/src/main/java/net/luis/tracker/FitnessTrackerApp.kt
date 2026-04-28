@@ -16,7 +16,7 @@ class FitnessTrackerApp : Application() {
 			AppDatabase::class.java,
 			"fitness_tracker_db"
 		)
-			.addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3)
+			.addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
 			.build()
 	}
 }

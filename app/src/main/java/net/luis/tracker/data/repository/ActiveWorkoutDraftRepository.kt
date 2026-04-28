@@ -77,7 +77,9 @@ class ActiveWorkoutDraftRepository(private val context: Context) {
 							WorkoutSet(
 								setNumber = set.setNumber,
 								weightKg = set.weightKg,
-								reps = set.reps
+								reps = set.reps,
+								dropWeightKg = set.dropWeightKg,
+								dropReps = set.dropReps
 							)
 						}
 					)
@@ -88,6 +90,7 @@ class ActiveWorkoutDraftRepository(private val context: Context) {
 				endTime = System.currentTimeMillis(),
 				durationSeconds = draft.elapsedMillis / 1000,
 				isFinished = false,
+				planWorkoutId = draft.planWorkoutId.takeIf { it > 0L },
 				exercises = exercises
 			)
 		}

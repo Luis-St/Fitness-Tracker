@@ -75,6 +75,7 @@ class ActiveWorkoutViewModel(
 	private var timerResumedAt: Long = 0L
 	private var entryIdCounter: Long = 0L
 	private var resumedFromWorkoutId: Long = 0L
+	private var sourcePlanWorkoutId: Long = 0L
 
 	init {
 		viewModelScope.launch {
@@ -303,6 +304,7 @@ class ActiveWorkoutViewModel(
 			startTimeMillis = startTimeMillis,
 			elapsedMillis = currentElapsed,
 			entryIdCounter = entryIdCounter,
+			planWorkoutId = sourcePlanWorkoutId,
 			exercises = state.exercises.map { entry ->
 				DraftExerciseEntry(
 					entryId = entry.id,
@@ -342,6 +344,7 @@ class ActiveWorkoutViewModel(
 		startTimeMillis = draft.startTimeMillis
 		timerBaseElapsed = draft.elapsedMillis
 		entryIdCounter = draft.entryIdCounter
+		sourcePlanWorkoutId = draft.planWorkoutId
 		_elapsedMillis.value = draft.elapsedMillis
 
 		val exercises = withContext(Dispatchers.Default) {
@@ -397,19 +400,47 @@ class ActiveWorkoutViewModel(
 		val workout = workoutRepository.getByIdWithExercises(workoutId) ?: return
 
 		resumedFromWorkoutId = workoutId
+		sourcePlanWorkoutId = workout.planWorkoutId ?: 0L
 		startTimeMillis = workout.startTime
 		timerBaseElapsed = workout.durationSeconds * 1000
 		_elapsedMillis.value = timerBaseElapsed
 
+		val templateExercises: Map<Long, WorkoutExercise> = if (workout.planWorkoutId != null) {
+			workoutRepository.getByIdWithExercises(workout.planWorkoutId)
+				?.exercises?.associateBy { it.exercise.id } ?: emptyMap()
+		} else {
+			emptyMap()
+		}
+
 		var nextEntryId = 0L
+		val restoredExerciseIds = mutableSetOf<Long>()
 		val exercises = workout.exercises.map { we ->
 			val entryId = ++nextEntryId
+			restoredExerciseIds.add(we.exercise.id)
 			ActiveExerciseEntry(
 				id = entryId,
 				exercise = we.exercise,
-				sets = we.sets
+				sets = we.sets,
+				planSetsData = templateExercises[we.exercise.id]?.sets ?: emptyList()
 			)
-		}
+		}.toMutableList()
+
+		templateExercises.values
+			.filter { it.exercise.id !in restoredExerciseIds }
+			.forEach { we ->
+				val entryId = ++nextEntryId
+				exercises.add(
+					ActiveExerciseEntry(
+						id = entryId,
+						exercise = we.exercise,
+						isGhost = true,
+						planWeightKg = we.sets.maxOfOrNull { it.weightKg } ?: 0.0,
+						planSets = we.sets.size,
+						planSetsData = we.sets
+					)
+				)
+			}
+
 		entryIdCounter = nextEntryId
 
 		val autoResume = timerResumeMode == TimerResumeMode.RESUME
@@ -423,6 +454,7 @@ class ActiveWorkoutViewModel(
 
 	private suspend fun loadPlan(workoutId: Long) {
 		val workout = workoutRepository.getByIdWithExercises(workoutId) ?: return
+		sourcePlanWorkoutId = workoutId
 
 		var nextEntryId = 0L
 		val exercises = workout.exercises.map { we ->

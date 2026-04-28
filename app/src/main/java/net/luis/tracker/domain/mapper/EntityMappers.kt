@@ -91,6 +91,7 @@ fun WorkoutWithExercises.toDomain() = Workout(
 	durationSeconds = workout.durationSeconds,
 	notes = workout.notes,
 	isFinished = workout.isFinished,
+	planWorkoutId = workout.planWorkoutId,
 	exercises = exercises.map { it.toDomain() }.sortedBy { it.orderIndex }
 )
 
@@ -100,5 +101,6 @@ fun Workout.toEntity() = WorkoutEntity(
 	endTime = endTime,
 	durationSeconds = durationSeconds,
 	notes = notes,
-	isFinished = isFinished
+	isFinished = isFinished,
+	planWorkoutId = planWorkoutId
 )

@@ -350,6 +350,7 @@ fun ActiveWorkoutExerciseScreen(
 						}
 					},
 					modifier = Modifier
+						.padding(top = 8.dp)
 						.fillMaxHeight()
 						.width(40.dp),
 					contentPadding = PaddingValues(0.dp)
