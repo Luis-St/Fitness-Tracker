@@ -339,26 +339,28 @@ fun ActiveWorkoutExerciseScreen(
 						}
 					}
 				}
-				FilledTonalButton(
-					onClick = {
-						isDropSet = !isDropSet
-						if (!isDropSet) {
-							dropWeightText = ""
-							dropRepsText = ""
-							dropWeightError = false
-							dropRepsError = false
-						}
-					},
-					modifier = Modifier
-						.padding(top = 8.dp)
-						.fillMaxHeight()
-						.width(40.dp),
-					contentPadding = PaddingValues(0.dp)
-				) {
-					Icon(
-						imageVector = if (isDropSet) Icons.Default.Close else Icons.Default.ArrowDownward,
-						contentDescription = stringResource(R.string.drop_set)
-					)
+				if (currentEntry.exercise.hasWeight) {
+					FilledTonalButton(
+						onClick = {
+							isDropSet = !isDropSet
+							if (!isDropSet) {
+								dropWeightText = ""
+								dropRepsText = ""
+								dropWeightError = false
+								dropRepsError = false
+							}
+						},
+						modifier = Modifier
+							.padding(top = 8.dp)
+							.fillMaxHeight()
+							.width(40.dp),
+						contentPadding = PaddingValues(0.dp)
+					) {
+						Icon(
+							imageVector = if (isDropSet) Icons.Default.Close else Icons.Default.ArrowDownward,
+							contentDescription = stringResource(R.string.drop_set)
+						)
+					}
 				}
 			}
 
