@@ -26,10 +26,10 @@ class ExerciseRepository(private val exerciseDao: ExerciseDao) {
 		exerciseDao.getById(id)?.toDomain()
 
 	suspend fun insert(exercise: Exercise): Long =
-		exerciseDao.insert(exercise.toEntity())
+		exerciseDao.insertWithCategories(exercise.toEntity(), exercise.categories.map { it.id })
 
 	suspend fun update(exercise: Exercise) =
-		exerciseDao.update(exercise.toEntity())
+		exerciseDao.updateWithCategories(exercise.toEntity(), exercise.categories.map { it.id })
 
 	suspend fun softDelete(id: Long) =
 		exerciseDao.softDelete(id)

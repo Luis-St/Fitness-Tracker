@@ -1,6 +1,8 @@
 package net.luis.tracker.ui.exercises
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,14 +14,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -31,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,7 +46,6 @@ import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.R
 import net.luis.tracker.data.repository.CategoryRepository
 import net.luis.tracker.data.repository.ExerciseRepository
-import net.luis.tracker.domain.model.Category
 import net.luis.tracker.domain.model.Exercise
 import net.luis.tracker.ui.common.components.ConfirmDeleteDialog
 
@@ -68,8 +67,8 @@ fun ExerciseDetailScreen(
 	var title by remember { mutableStateOf("") }
 	var notes by remember { mutableStateOf("") }
 	var hasWeight by remember { mutableStateOf(true) }
-	var selectedCategory by remember { mutableStateOf<Category?>(null) }
-	var categoryExpanded by remember { mutableStateOf(false) }
+	var allowsZeroWeight by remember { mutableStateOf(false) }
+	val selectedCategoryIds = remember { mutableStateMapOf<Long, Boolean>() }
 	var titleError by remember { mutableStateOf(false) }
 	var showDeleteDialog by remember { mutableStateOf(false) }
 	var isLoaded by remember { mutableStateOf(false) }
@@ -84,7 +83,9 @@ fun ExerciseDetailScreen(
 				title = loaded.title
 				notes = loaded.notes
 				hasWeight = loaded.hasWeight
-				selectedCategory = loaded.category
+				allowsZeroWeight = loaded.allowsZeroWeight
+				selectedCategoryIds.clear()
+				loaded.categories.forEach { selectedCategoryIds[it.id] = true }
 			}
 			isLoaded = true
 		}
@@ -119,10 +120,12 @@ fun ExerciseDetailScreen(
 									return@TextButton
 								}
 								val current = exercise ?: return@TextButton
+								val selected = categories.filter { selectedCategoryIds[it.id] == true }
 								val updated = current.copy(
 									title = trimmedTitle,
 									notes = notes.trim(),
-									category = selectedCategory
+									allowsZeroWeight = allowsZeroWeight,
+									categories = selected
 								)
 								scope.launch {
 									exerciseRepository.update(updated)
@@ -227,44 +230,43 @@ fun ExerciseDetailScreen(
 
 				Spacer(modifier = Modifier.height(16.dp))
 
-				// Category dropdown
-				ExposedDropdownMenuBox(
-					expanded = categoryExpanded,
-					onExpandedChange = { if (isEditing) categoryExpanded = it }
+				// Allow zero weight (editable in edit mode)
+				Row(
+					modifier = Modifier.fillMaxWidth(),
+					verticalAlignment = Alignment.CenterVertically
 				) {
-					OutlinedTextField(
-						value = selectedCategory?.name ?: stringResource(R.string.no_category),
-						onValueChange = {},
-						readOnly = true,
-						enabled = isEditing,
-						label = { Text(stringResource(R.string.category)) },
-						trailingIcon = {
-							ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
-						},
-						modifier = Modifier
-							.fillMaxWidth()
-							.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+					Text(
+						text = stringResource(R.string.allow_zero_weight),
+						style = MaterialTheme.typography.bodyLarge,
+						modifier = Modifier.weight(1f)
 					)
-					ExposedDropdownMenu(
-						expanded = categoryExpanded,
-						onDismissRequest = { categoryExpanded = false }
-					) {
-						DropdownMenuItem(
-							text = { Text(stringResource(R.string.no_category)) },
-							onClick = {
-								selectedCategory = null
-								categoryExpanded = false
-							}
+					Switch(
+						checked = allowsZeroWeight,
+						onCheckedChange = { allowsZeroWeight = it },
+						enabled = isEditing
+					)
+				}
+
+				Spacer(modifier = Modifier.height(16.dp))
+
+				// Categories multi-select
+				Text(
+					text = stringResource(R.string.categories),
+					style = MaterialTheme.typography.bodyLarge
+				)
+				Spacer(modifier = Modifier.height(8.dp))
+				FlowRow(
+					modifier = Modifier.fillMaxWidth(),
+					horizontalArrangement = Arrangement.spacedBy(8.dp)
+				) {
+					categories.forEach { category ->
+						val selected = selectedCategoryIds[category.id] == true
+						FilterChip(
+							selected = selected,
+							onClick = { if (isEditing) selectedCategoryIds[category.id] = !selected },
+							enabled = isEditing,
+							label = { Text(category.name) }
 						)
-						categories.forEach { category ->
-							DropdownMenuItem(
-								text = { Text(category.name) },
-								onClick = {
-									selectedCategory = category
-									categoryExpanded = false
-								}
-							)
-						}
 					}
 				}
 

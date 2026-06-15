@@ -3,6 +3,7 @@ package net.luis.tracker.data.export
 import kotlinx.serialization.json.Json
 import net.luis.tracker.data.local.AppDatabase
 import net.luis.tracker.data.local.entity.CategoryEntity
+import net.luis.tracker.data.local.entity.ExerciseCategoryCrossRef
 import net.luis.tracker.data.local.entity.ExerciseEntity
 import net.luis.tracker.data.local.entity.WorkoutEntity
 import net.luis.tracker.data.local.entity.WorkoutExerciseEntity
@@ -47,17 +48,27 @@ object DataImporter {
 
 		// Insert exercises and build ID map
 		for (exercise in exportData.exercises) {
-			val mappedCategoryId = exercise.categoryId?.let { categoryIdMap[it] }
 			val newId = exerciseDao.insert(
 				ExerciseEntity(
 					title = exercise.title,
 					notes = exercise.notes,
 					hasWeight = exercise.hasWeight,
-					categoryId = mappedCategoryId,
+					allowsZeroWeight = exercise.allowsZeroWeight,
 					isDeleted = exercise.isDeleted
 				)
 			)
 			exerciseIdMap[exercise.id] = newId
+
+			// Link categories: prefer the new list, fall back to the legacy single id
+			val sourceCategoryIds = exercise.categoryIds.ifEmpty {
+				listOfNotNull(exercise.categoryId)
+			}
+			val refs = sourceCategoryIds.mapNotNull { oldId ->
+				categoryIdMap[oldId]?.let { ExerciseCategoryCrossRef(exerciseId = newId, categoryId = it) }
+			}
+			if (refs.isNotEmpty()) {
+				exerciseDao.insertCrossRefs(refs)
+			}
 		}
 
 		// Insert workouts with their exercises and sets

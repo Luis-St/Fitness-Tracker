@@ -66,11 +66,8 @@ class ActiveWorkoutDraftRepository(private val context: Context) {
 							title = entry.title,
 							notes = entry.notes,
 							hasWeight = entry.hasWeight,
-							category = if (entry.categoryId != null && entry.categoryName != null) {
-								Category(id = entry.categoryId, name = entry.categoryName)
-							} else {
-								null
-							}
+							allowsZeroWeight = entry.allowsZeroWeight,
+							categories = entry.categories.map { Category(id = it.id, name = it.name) }
 						),
 						orderIndex = index,
 						sets = entry.sets.map { set ->

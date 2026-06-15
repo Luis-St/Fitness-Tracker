@@ -98,8 +98,8 @@ fun SelectExerciseScreen(
 					items(filtered, key = { it.id }) { exercise ->
 						ListItem(
 							headlineContent = { Text(exercise.title) },
-							supportingContent = exercise.category?.let {
-								{ Text(it.name) }
+							supportingContent = exercise.categories.takeIf { it.isNotEmpty() }?.let { cats ->
+								{ Text(cats.joinToString { it.name }) }
 							},
 							modifier = Modifier
 								.fillMaxWidth()

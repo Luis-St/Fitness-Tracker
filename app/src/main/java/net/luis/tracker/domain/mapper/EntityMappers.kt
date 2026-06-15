@@ -5,7 +5,7 @@ import net.luis.tracker.data.local.entity.ExerciseEntity
 import net.luis.tracker.data.local.entity.WorkoutEntity
 import net.luis.tracker.data.local.entity.WorkoutExerciseEntity
 import net.luis.tracker.data.local.entity.WorkoutSetEntity
-import net.luis.tracker.data.local.relation.ExerciseWithCategory
+import net.luis.tracker.data.local.relation.ExerciseWithCategories
 import net.luis.tracker.data.local.relation.WorkoutExerciseWithSets
 import net.luis.tracker.data.local.relation.WorkoutWithExercises
 import net.luis.tracker.domain.model.Category
@@ -19,21 +19,23 @@ fun CategoryEntity.toDomain() = Category(id = id, name = name)
 fun Category.toEntity() = CategoryEntity(id = id, name = name)
 
 // Exercise
-fun ExerciseWithCategory.toDomain() = Exercise(
+fun ExerciseWithCategories.toDomain() = Exercise(
 	id = exercise.id,
 	title = exercise.title,
 	notes = exercise.notes,
 	hasWeight = exercise.hasWeight,
-	category = category?.toDomain(),
+	allowsZeroWeight = exercise.allowsZeroWeight,
+	categories = categories.map { it.toDomain() },
 	isDeleted = exercise.isDeleted
 )
 
-fun ExerciseEntity.toDomain(category: Category? = null) = Exercise(
+fun ExerciseEntity.toDomain(categories: List<Category> = emptyList()) = Exercise(
 	id = id,
 	title = title,
 	notes = notes,
 	hasWeight = hasWeight,
-	category = category,
+	allowsZeroWeight = allowsZeroWeight,
+	categories = categories,
 	isDeleted = isDeleted
 )
 
@@ -42,7 +44,7 @@ fun Exercise.toEntity() = ExerciseEntity(
 	title = title,
 	notes = notes,
 	hasWeight = hasWeight,
-	categoryId = category?.id,
+	allowsZeroWeight = allowsZeroWeight,
 	isDeleted = isDeleted
 )
 

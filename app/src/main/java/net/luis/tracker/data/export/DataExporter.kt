@@ -24,7 +24,9 @@ data class ExportExercise(
 	val title: String,
 	val notes: String,
 	val hasWeight: Boolean,
-	val categoryId: Long?,
+	val categoryId: Long? = null,
+	val categoryIds: List<Long> = emptyList(),
+	val allowsZeroWeight: Boolean = false,
 	val isDeleted: Boolean
 )
 
@@ -69,8 +71,20 @@ object DataExporter {
 		val workoutSetDao = database.workoutSetDao()
 
 		val categories = categoryDao.getAllOnce().map { ExportCategory(it.id, it.name) }
+		val categoryIdsByExercise = exerciseDao.getAllCrossRefs().groupBy(
+			{ it.exerciseId },
+			{ it.categoryId }
+		)
 		val exercises = exerciseDao.getAllIncludingDeleted().map {
-			ExportExercise(it.id, it.title, it.notes, it.hasWeight, it.categoryId, it.isDeleted)
+			ExportExercise(
+				id = it.id,
+				title = it.title,
+				notes = it.notes,
+				hasWeight = it.hasWeight,
+				categoryIds = categoryIdsByExercise[it.id].orEmpty(),
+				allowsZeroWeight = it.allowsZeroWeight,
+				isDeleted = it.isDeleted
+			)
 		}
 
 		val workoutEntities = workoutDao.getAllOnce()
@@ -115,13 +129,18 @@ object DataExporter {
 		}
 
 		// Export all exercises (including soft-deleted)
+		val categoryIdsByExercise = exerciseDao.getAllCrossRefs().groupBy(
+			{ it.exerciseId },
+			{ it.categoryId }
+		)
 		val exercises = exerciseDao.getAllIncludingDeleted().map { entity ->
 			ExportExercise(
 				id = entity.id,
 				title = entity.title,
 				notes = entity.notes,
 				hasWeight = entity.hasWeight,
-				categoryId = entity.categoryId,
+				categoryIds = categoryIdsByExercise[entity.id].orEmpty(),
+				allowsZeroWeight = entity.allowsZeroWeight,
 				isDeleted = entity.isDeleted
 			)
 		}

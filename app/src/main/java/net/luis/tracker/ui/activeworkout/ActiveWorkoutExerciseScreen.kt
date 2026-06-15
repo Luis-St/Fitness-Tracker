@@ -100,7 +100,7 @@ fun ActiveWorkoutExerciseScreen(
 		val currentEntry = entry
 		if (currentEntry != null) {
 			val reps = repsText.toIntOrNull() ?: 0
-			val weightValid = !currentEntry.exercise.hasWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
+			val weightValid = !currentEntry.exercise.hasWeight || currentEntry.exercise.allowsZeroWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
 			val repsValid = reps > 0
 			val hasDropWeight = isDropSet && currentEntry.exercise.hasWeight && dropWeightText.isNotBlank()
 			val hasDropReps = isDropSet && dropRepsText.isNotBlank()
@@ -369,7 +369,7 @@ fun ActiveWorkoutExerciseScreen(
 			Button(
 				onClick = {
 					val reps = repsText.toIntOrNull() ?: 0
-					val weightValid = !currentEntry.exercise.hasWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
+					val weightValid = !currentEntry.exercise.hasWeight || currentEntry.exercise.allowsZeroWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
 					val repsValid = reps > 0
 					val hasDropWeight = isDropSet && currentEntry.exercise.hasWeight && dropWeightText.isNotBlank()
 					val hasDropReps = isDropSet && dropRepsText.isNotBlank()
@@ -445,8 +445,10 @@ private fun SetItem(
 				fontWeight = FontWeight.Medium,
 				modifier = Modifier.width(48.dp).alpha(contentAlpha)
 			)
-			if (hasWeight) {
-				val weightText = if (dropWeightKg != null) {
+			// Zero-weight sets (allowed via allowsZeroWeight) display reps-only
+			val showWeight = hasWeight && weightKg > 0.0
+			if (showWeight) {
+				val weightText = if (dropWeightKg != null && dropWeightKg > 0.0) {
 					weightUnit.formatWeightPair(weightKg, dropWeightKg)
 				} else {
 					weightUnit.formatWeight(weightKg)

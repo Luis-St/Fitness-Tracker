@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -199,17 +200,23 @@ private fun ExerciseItem(
 					text = exercise.title,
 					style = MaterialTheme.typography.titleMedium
 				)
-				if (exercise.category != null) {
+				if (exercise.categories.isNotEmpty()) {
 					Spacer(modifier = Modifier.height(4.dp))
-					SuggestionChip(
-						onClick = {},
-						label = {
-							Text(
-								text = exercise.category.name,
-								style = MaterialTheme.typography.labelSmall
+					FlowRow(
+						horizontalArrangement = Arrangement.spacedBy(8.dp)
+					) {
+						exercise.categories.forEach { category ->
+							SuggestionChip(
+								onClick = {},
+								label = {
+									Text(
+										text = category.name,
+										style = MaterialTheme.typography.labelSmall
+									)
+								}
 							)
 						}
-					)
+					}
 				}
 			}
 		}

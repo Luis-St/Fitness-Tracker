@@ -5,6 +5,7 @@ data class Exercise(
 	val title: String,
 	val notes: String = "",
 	val hasWeight: Boolean = true,
-	val category: Category? = null,
+	val allowsZeroWeight: Boolean = false,
+	val categories: List<Category> = emptyList(),
 	val isDeleted: Boolean = false
 )

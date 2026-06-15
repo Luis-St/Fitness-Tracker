@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.luis.tracker.data.draft.DraftCategory
 import net.luis.tracker.data.draft.DraftExerciseEntry
 import net.luis.tracker.data.draft.DraftWorkoutSet
 import net.luis.tracker.data.draft.WorkoutDraft
@@ -312,8 +313,8 @@ class ActiveWorkoutViewModel(
 					title = entry.exercise.title,
 					notes = entry.exercise.notes,
 					hasWeight = entry.exercise.hasWeight,
-					categoryId = entry.exercise.category?.id,
-					categoryName = entry.exercise.category?.name,
+					allowsZeroWeight = entry.exercise.allowsZeroWeight,
+					categories = entry.exercise.categories.map { DraftCategory(id = it.id, name = it.name) },
 					sets = entry.sets.map { set ->
 						DraftWorkoutSet(
 							setNumber = set.setNumber,
@@ -356,11 +357,8 @@ class ActiveWorkoutViewModel(
 						title = entry.title,
 						notes = entry.notes,
 						hasWeight = entry.hasWeight,
-						category = if (entry.categoryId != null && entry.categoryName != null) {
-							Category(id = entry.categoryId, name = entry.categoryName)
-						} else {
-							null
-						}
+						allowsZeroWeight = entry.allowsZeroWeight,
+						categories = entry.categories.map { Category(id = it.id, name = it.name) }
 					),
 					sets = entry.sets.map { set ->
 						WorkoutSet(

@@ -27,8 +27,10 @@
 	<string name="exercise_detail">Exercise Detail</string>
 	<string name="exercise_not_found">Exercise not found</string>
 	<string name="has_weight">Has weight</string>
+	<string name="allow_zero_weight">Allow zero weight</string>
 	<string name="field_required">This field is required</string>
 	<string name="category">Category</string>
+	<string name="categories">Categories</string>
 	<string name="no_category">No category</string>
 	<string name="all_categories">All</string>
 	<string name="manage_categories">Manage Categories</string>

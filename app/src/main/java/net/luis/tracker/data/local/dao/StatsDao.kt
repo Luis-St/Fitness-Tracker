@@ -129,7 +129,8 @@ interface StatsDao {
 			COUNT(we.id) as count
 		FROM workout_exercises we
 		INNER JOIN exercises e ON we.exerciseId = e.id
-		LEFT JOIN categories c ON e.categoryId = c.id
+		LEFT JOIN exercise_categories ec ON ec.exerciseId = e.id
+		LEFT JOIN categories c ON ec.categoryId = c.id
 		GROUP BY COALESCE(c.name, 'Uncategorized')
 		ORDER BY count DESC
 		"""
