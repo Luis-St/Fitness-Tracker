@@ -29,7 +29,10 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 
+enum class OverviewTab { MONTH, LIFETIME }
+
 data class OverviewUiState(
+	val selectedTab: OverviewTab = OverviewTab.MONTH,
 	val currentMonth: YearMonth = YearMonth.now(),
 	val workoutDays: Set<Int> = emptySet(),
 	val workoutDayMap: Map<Int, List<Long>> = emptyMap(),
@@ -41,6 +44,7 @@ data class OverviewUiState(
 	val selectedExerciseId: Long? = null,
 	val selectedMetric: ChartMetric = ChartMetric.MAX_WEIGHT,
 	val progressData: List<ExerciseProgress> = emptyList(),
+	val monthProgressData: List<ExerciseProgress> = emptyList(),
 	val isLoading: Boolean = true,
 	val totalWorkoutsAllTime: Int = 0,
 	val maxWorkoutVolume: Double = 0.0,
@@ -48,6 +52,7 @@ data class OverviewUiState(
 	val longestWorkoutMinutes: Long = 0,
 	val personalRecords: List<PersonalRecord> = emptyList(),
 	val categoryBreakdown: List<CategoryWorkoutCount> = emptyList(),
+	val monthCategoryBreakdown: List<CategoryWorkoutCount> = emptyList(),
 	val selectedDayWorkouts: List<WorkoutDateInfo> = emptyList(),
 	val showWorkoutPicker: Boolean = false,
 	val navigateToWorkoutId: Long? = null
@@ -76,9 +81,14 @@ class OverviewViewModel(
 		loadProgressData()
 	}
 
+	fun selectTab(tab: OverviewTab) {
+		_uiState.update { it.copy(selectedTab = tab) }
+	}
+
 	fun changeMonth(yearMonth: YearMonth) {
 		_uiState.update { it.copy(currentMonth = yearMonth) }
 		loadMonthData()
+		loadProgressData()
 	}
 
 	fun selectExercise(exerciseId: Long?) {
@@ -164,6 +174,13 @@ class OverviewViewModel(
 		}
 	}
 
+	private fun monthRange(month: YearMonth): Pair<Long, Long> {
+		val zone = ZoneId.systemDefault()
+		val monthStart = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
+		val monthEnd = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
+		return monthStart to monthEnd
+	}
+
 	private fun loadMonthData() {
 		monthDataJob?.cancel()
 		monthDataJob = viewModelScope.launch {
@@ -171,8 +188,7 @@ class OverviewViewModel(
 			val month = _uiState.value.currentMonth
 
 			// Month range
-			val monthStart = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
-			val monthEnd = month.plusMonths(1).atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
+			val (monthStart, monthEnd) = monthRange(month)
 
 			// Week range (Monday to Sunday)
 			val today = LocalDate.now()
@@ -218,6 +234,11 @@ class OverviewViewModel(
 				statsRepository.getWorkoutDatesInRange(streakRangeStart, streakRangeEnd).collect { workoutDates ->
 					val streak = calculateStreak(workoutDates, zone)
 					_uiState.update { it.copy(currentStreak = streak) }
+				}
+			}
+			launch {
+				statsRepository.getCategoryBreakdown(monthStart, monthEnd).collect { breakdown ->
+					_uiState.update { it.copy(monthCategoryBreakdown = breakdown) }
 				}
 			}
 		}
@@ -279,13 +300,30 @@ class OverviewViewModel(
 		progressJob?.cancel()
 		progressJob = viewModelScope.launch {
 			val exerciseId = _uiState.value.selectedExerciseId
-			val progressFlow = if (exerciseId != null) {
-				statsRepository.getExerciseProgress(exerciseId)
-			} else {
-				statsRepository.getAllExerciseProgress()
+			val (monthStart, monthEnd) = monthRange(_uiState.value.currentMonth)
+
+			// All-time progress (Lifetime tab)
+			launch {
+				val progressFlow = if (exerciseId != null) {
+					statsRepository.getExerciseProgress(exerciseId)
+				} else {
+					statsRepository.getAllExerciseProgress()
+				}
+				progressFlow.collect { progressData ->
+					_uiState.update { it.copy(progressData = progressData) }
+				}
 			}
-			progressFlow.collect { progressData ->
-				_uiState.update { it.copy(progressData = progressData) }
+
+			// Month-scoped progress (This Month tab)
+			launch {
+				val monthFlow = if (exerciseId != null) {
+					statsRepository.getExerciseProgress(exerciseId, monthStart, monthEnd)
+				} else {
+					statsRepository.getAllExerciseProgress(monthStart, monthEnd)
+				}
+				monthFlow.collect { progressData ->
+					_uiState.update { it.copy(monthProgressData = progressData) }
+				}
 			}
 		}
 	}

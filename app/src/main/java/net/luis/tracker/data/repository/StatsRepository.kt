@@ -22,6 +22,12 @@ class StatsRepository(private val statsDao: StatsDao) {
 	fun getAllExerciseProgress(): Flow<List<ExerciseProgress>> =
 		statsDao.getAllExerciseProgress()
 
+	fun getExerciseProgress(exerciseId: Long, startMillis: Long, endMillis: Long): Flow<List<ExerciseProgress>> =
+		statsDao.getExerciseProgress(exerciseId, startMillis, endMillis)
+
+	fun getAllExerciseProgress(startMillis: Long, endMillis: Long): Flow<List<ExerciseProgress>> =
+		statsDao.getAllExerciseProgress(startMillis, endMillis)
+
 	fun getWorkoutDatesInRange(startMillis: Long, endMillis: Long): Flow<List<Long>> =
 		statsDao.getWorkoutDatesInRange(startMillis, endMillis)
 
@@ -42,6 +48,9 @@ class StatsRepository(private val statsDao: StatsDao) {
 
 	fun getCategoryBreakdown(): Flow<List<CategoryWorkoutCount>> =
 		statsDao.getCategoryBreakdown()
+
+	fun getCategoryBreakdown(startMillis: Long, endMillis: Long): Flow<List<CategoryWorkoutCount>> =
+		statsDao.getCategoryBreakdown(startMillis, endMillis)
 
 	fun getWorkoutIdsInRange(startMillis: Long, endMillis: Long): Flow<List<WorkoutDateInfo>> =
 		statsDao.getWorkoutIdsInRange(startMillis, endMillis)

@@ -31,6 +31,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,9 +54,11 @@ import net.luis.tracker.domain.model.ChartMetric
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.overview.components.CalendarView
 import net.luis.tracker.ui.overview.components.CategoryBreakdownChart
+import net.luis.tracker.ui.overview.components.LifetimeStatsSummaryCard
+import net.luis.tracker.ui.overview.components.MonthStatsSummaryCard
 import net.luis.tracker.ui.overview.components.PersonalRecordsCard
 import net.luis.tracker.ui.overview.components.ProgressChart
-import net.luis.tracker.ui.overview.components.StatsSummaryCard
+import net.luis.tracker.ui.overview.components.StreakCard
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -176,154 +180,223 @@ fun OverviewScreen(
 					.fillMaxSize()
 					.padding(innerPadding)
 					.verticalScroll(rememberScrollState())
-					.padding(horizontal = 16.dp)
 			) {
-				Spacer(modifier = Modifier.height(8.dp))
-
-				// 1. Calendar with clickable days
-				CalendarView(
-					yearMonth = uiState.currentMonth,
-					workoutDays = uiState.workoutDays,
-					onMonthChange = { viewModel.changeMonth(it) },
-					onDayClick = { viewModel.onDayClick(it) }
-				)
-
-				Spacer(modifier = Modifier.height(16.dp))
-
-				// 2. Stats summary (expanded with 8 metrics)
-				StatsSummaryCard(
-					workoutsThisWeek = uiState.workoutsThisWeek,
-					workoutsThisMonth = uiState.workoutsThisMonth,
-					currentStreak = uiState.currentStreak,
-					averageDuration = uiState.averageDuration,
-					totalWorkoutsAllTime = uiState.totalWorkoutsAllTime,
-					maxWorkoutVolume = uiState.maxWorkoutVolume,
-					avgWorkoutsPerWeek = uiState.avgWorkoutsPerWeek,
-					longestWorkoutMinutes = uiState.longestWorkoutMinutes,
-					weightUnit = weightUnit
-				)
-
-				Spacer(modifier = Modifier.height(24.dp))
-
-				// 3. Progress section
-				Text(
-					text = stringResource(R.string.progress),
-					style = MaterialTheme.typography.titleMedium
-				)
-
-				Spacer(modifier = Modifier.height(8.dp))
-
-				// Metric selector chips (2-column grid)
-				val metrics = ChartMetric.entries
-				metrics.chunked(2).forEach { row ->
-					Row(
-						modifier = Modifier.fillMaxWidth(),
-						horizontalArrangement = Arrangement.spacedBy(8.dp)
-					) {
-						row.forEach { metric ->
-							FilterChip(
-								selected = uiState.selectedMetric == metric,
-								onClick = { viewModel.selectMetric(metric) },
-								modifier = Modifier.weight(1f),
-								label = {
-									Text(
-										text = when (metric) {
-											ChartMetric.MAX_WEIGHT -> stringResource(R.string.metric_max_weight)
-											ChartMetric.TOTAL_VOLUME -> stringResource(R.string.metric_total_volume)
-											ChartMetric.MAX_REPS -> stringResource(R.string.metric_max_reps)
-											ChartMetric.SET_COUNT -> stringResource(R.string.metric_set_count)
-										},
-										maxLines = 1
-									)
-								}
-							)
-						}
-						// Fill remaining space if odd number of items
-						if (row.size < 2) {
-							Spacer(modifier = Modifier.weight(1f))
-						}
-					}
-				}
-
-				Spacer(modifier = Modifier.height(8.dp))
-
-				// Exercise selector dropdown
-				var exerciseDropdownExpanded by remember { mutableStateOf(false) }
-				val selectedExerciseName = if (uiState.selectedExerciseId == null) {
-					stringResource(R.string.all_exercises)
-				} else {
-					uiState.exercises.find { it.id == uiState.selectedExerciseId }?.title
-						?: stringResource(R.string.all_exercises)
-				}
-
-				ExposedDropdownMenuBox(
-					expanded = exerciseDropdownExpanded,
-					onExpandedChange = { exerciseDropdownExpanded = it },
-					modifier = Modifier.fillMaxWidth()
-				) {
-					OutlinedTextField(
-						value = selectedExerciseName,
-						onValueChange = {},
-						readOnly = true,
-						label = { Text(stringResource(R.string.select_exercise)) },
-						trailingIcon = {
-							ExposedDropdownMenuDefaults.TrailingIcon(expanded = exerciseDropdownExpanded)
-						},
-						colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-						modifier = Modifier
-							.fillMaxWidth()
-							.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-					)
-					ExposedDropdownMenu(
-						expanded = exerciseDropdownExpanded,
-						onDismissRequest = { exerciseDropdownExpanded = false }
-					) {
-						DropdownMenuItem(
-							text = { Text(stringResource(R.string.all_exercises)) },
-							onClick = {
-								viewModel.selectExercise(null)
-								exerciseDropdownExpanded = false
+				// Tab selector (above the calendar)
+				val tabs = OverviewTab.entries
+				PrimaryTabRow(selectedTabIndex = tabs.indexOf(uiState.selectedTab)) {
+					tabs.forEach { tab ->
+						Tab(
+							selected = uiState.selectedTab == tab,
+							onClick = { viewModel.selectTab(tab) },
+							text = {
+								Text(
+									text = when (tab) {
+										OverviewTab.MONTH -> stringResource(R.string.overview_tab_month)
+										OverviewTab.LIFETIME -> stringResource(R.string.overview_tab_lifetime)
+									}
+								)
 							}
 						)
-						uiState.exercises.forEach { exercise ->
-							DropdownMenuItem(
-								text = { Text(exercise.title) },
-								onClick = {
-									viewModel.selectExercise(exercise.id)
-									exerciseDropdownExpanded = false
-								}
-							)
-						}
 					}
 				}
 
-				Spacer(modifier = Modifier.height(16.dp))
+				Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+					Spacer(modifier = Modifier.height(8.dp))
 
-				// Progress chart (ComposeCharts LineChart)
-				ProgressChart(
-					progressData = uiState.progressData,
-					metric = uiState.selectedMetric,
-					weightUnit = weightUnit
-				)
+					// Calendar with clickable days (always visible, below the tabs)
+					CalendarView(
+						yearMonth = uiState.currentMonth,
+						workoutDays = uiState.workoutDays,
+						onMonthChange = { viewModel.changeMonth(it) },
+						onDayClick = { viewModel.onDayClick(it) }
+					)
 
-				Spacer(modifier = Modifier.height(24.dp))
+					Spacer(modifier = Modifier.height(16.dp))
 
-				// 4. Personal Records
-				PersonalRecordsCard(
-					personalRecords = uiState.personalRecords,
-					weightUnit = weightUnit,
-					onClick = onViewAllRecords
-				)
+					// Streak — always the first section below the calendar, independent of the selected tab
+					StreakCard(currentStreak = uiState.currentStreak)
 
-				Spacer(modifier = Modifier.height(16.dp))
+					Spacer(modifier = Modifier.height(24.dp))
 
-				// 5. Category Breakdown donut chart
-				CategoryBreakdownChart(
-					categoryBreakdown = uiState.categoryBreakdown
-				)
+					// Tab-scoped data
+					when (uiState.selectedTab) {
+						OverviewTab.MONTH -> {
+							MonthStatsSummaryCard(
+								workoutsThisWeek = uiState.workoutsThisWeek,
+								workoutsThisMonth = uiState.workoutsThisMonth,
+								averageDuration = uiState.averageDuration
+							)
 
-				Spacer(modifier = Modifier.height(16.dp))
+							Spacer(modifier = Modifier.height(24.dp))
+
+							ProgressSection(
+								progressData = uiState.monthProgressData,
+								exercises = uiState.exercises,
+								selectedExerciseId = uiState.selectedExerciseId,
+								selectedMetric = uiState.selectedMetric,
+								weightUnit = weightUnit,
+								onSelectMetric = { viewModel.selectMetric(it) },
+								onSelectExercise = { viewModel.selectExercise(it) }
+							)
+
+							Spacer(modifier = Modifier.height(16.dp))
+
+							CategoryBreakdownChart(
+								categoryBreakdown = uiState.monthCategoryBreakdown
+							)
+						}
+
+						OverviewTab.LIFETIME -> {
+							LifetimeStatsSummaryCard(
+								totalWorkoutsAllTime = uiState.totalWorkoutsAllTime,
+								maxWorkoutVolume = uiState.maxWorkoutVolume,
+								avgWorkoutsPerWeek = uiState.avgWorkoutsPerWeek,
+								longestWorkoutMinutes = uiState.longestWorkoutMinutes,
+								weightUnit = weightUnit
+							)
+
+							Spacer(modifier = Modifier.height(24.dp))
+
+							ProgressSection(
+								progressData = uiState.progressData,
+								exercises = uiState.exercises,
+								selectedExerciseId = uiState.selectedExerciseId,
+								selectedMetric = uiState.selectedMetric,
+								weightUnit = weightUnit,
+								onSelectMetric = { viewModel.selectMetric(it) },
+								onSelectExercise = { viewModel.selectExercise(it) }
+							)
+
+							Spacer(modifier = Modifier.height(24.dp))
+
+							PersonalRecordsCard(
+								personalRecords = uiState.personalRecords,
+								weightUnit = weightUnit,
+								onClick = onViewAllRecords
+							)
+
+							Spacer(modifier = Modifier.height(16.dp))
+
+							CategoryBreakdownChart(
+								categoryBreakdown = uiState.categoryBreakdown
+							)
+						}
+					}
+
+					Spacer(modifier = Modifier.height(16.dp))
+				}
 			}
 		}
 	}
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProgressSection(
+	progressData: List<net.luis.tracker.data.local.dao.ExerciseProgress>,
+	exercises: List<net.luis.tracker.domain.model.Exercise>,
+	selectedExerciseId: Long?,
+	selectedMetric: ChartMetric,
+	weightUnit: WeightUnit,
+	onSelectMetric: (ChartMetric) -> Unit,
+	onSelectExercise: (Long?) -> Unit
+) {
+	Text(
+		text = stringResource(R.string.progress),
+		style = MaterialTheme.typography.titleMedium
+	)
+
+	Spacer(modifier = Modifier.height(8.dp))
+
+	// Metric selector chips (2-column grid)
+	ChartMetric.entries.chunked(2).forEach { row ->
+		Row(
+			modifier = Modifier.fillMaxWidth(),
+			horizontalArrangement = Arrangement.spacedBy(8.dp)
+		) {
+			row.forEach { metric ->
+				FilterChip(
+					selected = selectedMetric == metric,
+					onClick = { onSelectMetric(metric) },
+					modifier = Modifier.weight(1f),
+					label = {
+						Text(
+							text = when (metric) {
+								ChartMetric.MAX_WEIGHT -> stringResource(R.string.metric_max_weight)
+								ChartMetric.TOTAL_VOLUME -> stringResource(R.string.metric_total_volume)
+								ChartMetric.MAX_REPS -> stringResource(R.string.metric_max_reps)
+								ChartMetric.SET_COUNT -> stringResource(R.string.metric_set_count)
+							},
+							maxLines = 1
+						)
+					}
+				)
+			}
+			// Fill remaining space if odd number of items
+			if (row.size < 2) {
+				Spacer(modifier = Modifier.weight(1f))
+			}
+		}
+	}
+
+	Spacer(modifier = Modifier.height(8.dp))
+
+	// Exercise selector dropdown
+	var exerciseDropdownExpanded by remember { mutableStateOf(false) }
+	val selectedExerciseName = if (selectedExerciseId == null) {
+		stringResource(R.string.all_exercises)
+	} else {
+		exercises.find { it.id == selectedExerciseId }?.title
+			?: stringResource(R.string.all_exercises)
+	}
+
+	ExposedDropdownMenuBox(
+		expanded = exerciseDropdownExpanded,
+		onExpandedChange = { exerciseDropdownExpanded = it },
+		modifier = Modifier.fillMaxWidth()
+	) {
+		OutlinedTextField(
+			value = selectedExerciseName,
+			onValueChange = {},
+			readOnly = true,
+			label = { Text(stringResource(R.string.select_exercise)) },
+			trailingIcon = {
+				ExposedDropdownMenuDefaults.TrailingIcon(expanded = exerciseDropdownExpanded)
+			},
+			colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+			modifier = Modifier
+				.fillMaxWidth()
+				.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+		)
+		ExposedDropdownMenu(
+			expanded = exerciseDropdownExpanded,
+			onDismissRequest = { exerciseDropdownExpanded = false }
+		) {
+			DropdownMenuItem(
+				text = { Text(stringResource(R.string.all_exercises)) },
+				onClick = {
+					onSelectExercise(null)
+					exerciseDropdownExpanded = false
+				}
+			)
+			exercises.forEach { exercise ->
+				DropdownMenuItem(
+					text = { Text(exercise.title) },
+					onClick = {
+						onSelectExercise(exercise.id)
+						exerciseDropdownExpanded = false
+					}
+				)
+			}
+		}
+	}
+
+	Spacer(modifier = Modifier.height(16.dp))
+
+	// Progress chart (ComposeCharts LineChart)
+	ProgressChart(
+		progressData = progressData,
+		metric = selectedMetric,
+		weightUnit = weightUnit
+	)
 }

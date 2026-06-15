@@ -91,6 +91,8 @@
 	<string name="use_as_plan">Use as Plan</string>
 
 	<!-- Overview / Statistics -->
+	<string name="overview_tab_month">This Month</string>
+	<string name="overview_tab_lifetime">Lifetime</string>
 	<string name="stats_summary">Summary</string>
 	<string name="this_week">This Week</string>
 	<string name="this_month">This Month</string>

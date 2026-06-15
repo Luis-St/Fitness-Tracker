@@ -82,6 +82,40 @@ interface StatsDao {
 	)
 	fun getAllExerciseProgress(): Flow<List<ExerciseProgress>>
 
+	@Query(
+		"""
+		SELECT w.startTime,
+			MAX(ws.weightKg) as maxWeight,
+			SUM(ws.weightKg * ws.reps + COALESCE(ws.dropWeightKg * ws.dropReps, 0)) as totalVolume,
+			MAX(ws.reps + COALESCE(ws.dropReps, 0)) as maxReps,
+			COUNT(ws.id) as setCount
+		FROM workouts w
+		INNER JOIN workout_exercises we ON we.workoutId = w.id
+		INNER JOIN workout_sets ws ON ws.workoutExerciseId = we.id
+		WHERE we.exerciseId = :exerciseId AND w.startTime >= :startMillis AND w.startTime < :endMillis
+		GROUP BY w.id
+		ORDER BY w.startTime ASC
+		"""
+	)
+	fun getExerciseProgress(exerciseId: Long, startMillis: Long, endMillis: Long): Flow<List<ExerciseProgress>>
+
+	@Query(
+		"""
+		SELECT w.startTime,
+			MAX(ws.weightKg) as maxWeight,
+			SUM(ws.weightKg * ws.reps + COALESCE(ws.dropWeightKg * ws.dropReps, 0)) as totalVolume,
+			MAX(ws.reps + COALESCE(ws.dropReps, 0)) as maxReps,
+			COUNT(ws.id) as setCount
+		FROM workouts w
+		INNER JOIN workout_exercises we ON we.workoutId = w.id
+		INNER JOIN workout_sets ws ON ws.workoutExerciseId = we.id
+		WHERE w.startTime >= :startMillis AND w.startTime < :endMillis
+		GROUP BY w.id
+		ORDER BY w.startTime ASC
+		"""
+	)
+	fun getAllExerciseProgress(startMillis: Long, endMillis: Long): Flow<List<ExerciseProgress>>
+
 	@Query("SELECT DISTINCT startTime FROM workouts WHERE startTime >= :startMillis AND startTime < :endMillis")
 	fun getWorkoutDatesInRange(startMillis: Long, endMillis: Long): Flow<List<Long>>
 
@@ -136,6 +170,22 @@ interface StatsDao {
 		"""
 	)
 	fun getCategoryBreakdown(): Flow<List<CategoryWorkoutCount>>
+
+	@Query(
+		"""
+		SELECT COALESCE(c.name, 'Uncategorized') as categoryName,
+			COUNT(we.id) as count
+		FROM workout_exercises we
+		INNER JOIN workouts w ON we.workoutId = w.id
+		INNER JOIN exercises e ON we.exerciseId = e.id
+		LEFT JOIN exercise_categories ec ON ec.exerciseId = e.id
+		LEFT JOIN categories c ON ec.categoryId = c.id
+		WHERE w.startTime >= :startMillis AND w.startTime < :endMillis
+		GROUP BY COALESCE(c.name, 'Uncategorized')
+		ORDER BY count DESC
+		"""
+	)
+	fun getCategoryBreakdown(startMillis: Long, endMillis: Long): Flow<List<CategoryWorkoutCount>>
 
 	@Query(
 		"""
