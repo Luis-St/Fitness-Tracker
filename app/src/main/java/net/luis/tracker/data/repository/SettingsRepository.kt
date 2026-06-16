@@ -14,9 +14,12 @@ import net.luis.tracker.domain.model.AppLanguage
 import net.luis.tracker.domain.model.OverviewLayout
 import net.luis.tracker.domain.model.OverviewSection
 import net.luis.tracker.domain.model.OverviewSectionState
+import net.luis.tracker.domain.model.StreakException
+import net.luis.tracker.domain.model.StreakExceptionType
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
+import java.time.LocalDate
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -33,6 +36,8 @@ class SettingsRepository(private val context: Context) {
 		val PREFERRED_WEIGHTS_KG = stringPreferencesKey("preferred_weights_kg")
 		val OVERVIEW_LAYOUT_MONTH = stringPreferencesKey("overview_layout_month")
 		val OVERVIEW_LAYOUT_LIFETIME = stringPreferencesKey("overview_layout_lifetime")
+		val STREAK_BASELINE = intPreferencesKey("streak_baseline")
+		val STREAK_EXCEPTIONS = stringPreferencesKey("streak_exceptions")
 	}
 
 	val themeMode: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
@@ -114,6 +119,43 @@ class SettingsRepository(private val context: Context) {
 			prefs[Keys.OVERVIEW_LAYOUT_LIFETIME] = serializeSections(layout.lifetime)
 		}
 	}
+
+	val streakBaseline: Flow<Int> = context.dataStore.data.map { prefs ->
+		prefs[Keys.STREAK_BASELINE] ?: 0
+	}
+
+	suspend fun setStreakBaseline(baseline: Int) {
+		context.dataStore.edit { it[Keys.STREAK_BASELINE] = baseline }
+	}
+
+	val streakExceptions: Flow<List<StreakException>> = context.dataStore.data.map { prefs ->
+		parseStreakExceptions(prefs[Keys.STREAK_EXCEPTIONS])
+	}
+
+	suspend fun setStreakExceptions(exceptions: List<StreakException>) {
+		context.dataStore.edit { it[Keys.STREAK_EXCEPTIONS] = serializeStreakExceptions(exceptions) }
+	}
+
+	private fun parseStreakExceptions(raw: String?): List<StreakException> =
+		raw?.takeIf { it.isNotBlank() }
+			?.split(";")
+			?.mapNotNull { token ->
+				runCatching {
+					val parts = token.split("|")
+					StreakException(
+						id = parts[0],
+						type = StreakExceptionType.valueOf(parts[1]),
+						start = LocalDate.ofEpochDay(parts[2].toLong()),
+						end = LocalDate.ofEpochDay(parts[3].toLong())
+					)
+				}.getOrNull()
+			}
+			?: emptyList()
+
+	private fun serializeStreakExceptions(exceptions: List<StreakException>): String =
+		exceptions.joinToString(";") { e ->
+			"${e.id}|${e.type.name}|${e.start.toEpochDay()}|${e.end.toEpochDay()}"
+		}
 
 	private fun parseSections(raw: String?, allowed: List<OverviewSection>): List<OverviewSectionState> {
 		val stored = raw?.takeIf { it.isNotBlank() }

@@ -34,6 +34,7 @@ import net.luis.tracker.ui.overview.AllPersonalRecordsScreen
 import net.luis.tracker.ui.overview.ExerciseHistoryScreen
 import net.luis.tracker.ui.overview.OverviewScreen
 import net.luis.tracker.ui.settings.SettingsScreen
+import net.luis.tracker.ui.settings.StreakSettingsScreen
 import net.luis.tracker.ui.workouts.EditWorkoutScreen
 import net.luis.tracker.ui.workouts.WorkoutDetailScreen
 import net.luis.tracker.ui.workouts.WorkoutsScreen
@@ -78,7 +79,6 @@ fun AppNavHost(
 	app: FitnessTrackerApp,
 	weightUnit: WeightUnit,
 	restTimerSeconds: Int,
-	weeklyWorkoutGoal: Int,
 	timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME,
 	preferredWeightsKg: List<Double> = emptyList(),
 	pendingImportUri: String? = null,
@@ -113,7 +113,6 @@ fun AppNavHost(
 					1 -> OverviewScreen(
 						app = app,
 						weightUnit = weightUnit,
-						weeklyWorkoutGoal = weeklyWorkoutGoal,
 						onOpenSettings = { navController.navigate(SettingsRoute()) },
 						onNavigateToWorkout = { workoutId ->
 							navController.navigate(WorkoutDetailRoute(workoutId))
@@ -136,6 +135,13 @@ fun AppNavHost(
 			SettingsScreen(
 				app = app,
 				importUri = route.importUri,
+				onNavigateBack = { navController.popBackStack() },
+				onOpenStreakSettings = { navController.navigate(StreakSettingsRoute) }
+			)
+		}
+		composable<StreakSettingsRoute> {
+			StreakSettingsScreen(
+				app = app,
 				onNavigateBack = { navController.popBackStack() }
 			)
 		}

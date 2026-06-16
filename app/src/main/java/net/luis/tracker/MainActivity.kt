@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -102,6 +103,11 @@ class MainActivity : ComponentActivity() {
 					AppLanguage.DEUTSCH -> LocalizedContextWrapper(baseContext, Locale.GERMAN)
 				}
 			}
+			// Material3 components (e.g. the date picker) read their locale from
+			// LocalConfiguration, so override it too — not just LocalContext.
+			val localizedConfiguration = remember(settings.appLanguage) {
+				localizedContext.resources.configuration
+			}
 
 			val darkTheme = when (settings.themeMode) {
 				ThemeMode.LIGHT -> false
@@ -109,7 +115,10 @@ class MainActivity : ComponentActivity() {
 				ThemeMode.SYSTEM -> null
 			}
 
-			CompositionLocalProvider(LocalContext provides localizedContext) {
+			CompositionLocalProvider(
+				LocalContext provides localizedContext,
+				LocalConfiguration provides localizedConfiguration
+			) {
 			FitnessTrackerTheme(
 				darkTheme = darkTheme ?: isSystemInDarkTheme(),
 				dynamicColor = settings.dynamicColors
@@ -147,7 +156,6 @@ class MainActivity : ComponentActivity() {
 						app = app,
 						weightUnit = settings.weightUnit,
 						restTimerSeconds = settings.restTimerSeconds,
-						weeklyWorkoutGoal = settings.weeklyWorkoutGoal,
 						timerResumeMode = settings.timerResumeMode,
 						preferredWeightsKg = settings.preferredWeightsKg,
 						pendingImportUri = pendingImportUri,

@@ -169,4 +169,30 @@
 	<string name="restore_confirm_message">Dadurch werden alle aktuellen Daten durch die Sicherung ersetzt, die vor dem letzten Import erstellt wurde.</string>
 	<string name="restore_success">Daten erfolgreich wiederhergestellt</string>
 	<string name="restore_error">Wiederherstellung der Daten fehlgeschlagen</string>
+
+	<!-- Streak settings -->
+	<string name="streak_settings_title">Serie</string>
+	<string name="streak_settings_desc">Wöchentliches Ziel, Pausen und Wiederherstellung</string>
+	<string name="streak_current_value">%1$d Wochen</string>
+	<string name="streak_start_value">Startwert</string>
+	<string name="streak_start_value_desc">Versatz, der zu deiner berechneten Serie addiert wird – z. B. um eine Serie aus einer anderen App zu übernehmen. Negative Werte sind erlaubt.</string>
+	<string name="streak_pauses_header">Pausen</string>
+	<string name="streak_no_exceptions">Keine Pausen oder wiederhergestellten Wochen</string>
+	<string name="streak_add_pause">Pause hinzufügen</string>
+	<string name="streak_restore_button">Serie wiederherstellen</string>
+	<string name="streak_danger_zone">Kritische Aktionen</string>
+	<string name="streak_restore_dialog_title">Wochen zum Auffüllen auswählen</string>
+	<string name="streak_restore_dialog_empty">Keine Lücken zum Auffüllen – deine Serie ist ununterbrochen.</string>
+	<string name="streak_restore_confirm">Auffüllen</string>
+	<string name="streak_date_range">%1$s bis %2$s</string>
+	<string name="streak_gap_workouts">%1$d Workouts</string>
+	<string name="streak_pick_range">Pausenzeitraum auswählen</string>
+	<string name="streak_no_selection">Kein Zeitraum ausgewählt</string>
+	<string name="streak_quick_select">Schnellauswahl</string>
+	<string name="streak_quick_single_day">Heute</string>
+	<string name="streak_quick_this_week">Diese Woche</string>
+	<string name="streak_quick_last_week">Letzte Woche</string>
+	<string name="streak_quick_custom">Benutzerdefiniert</string>
+	<string name="streak_start_date">Startdatum</string>
+	<string name="streak_end_date">Enddatum</string>
 </resources>

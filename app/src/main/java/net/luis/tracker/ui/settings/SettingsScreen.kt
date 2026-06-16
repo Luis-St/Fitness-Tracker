@@ -13,12 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -87,7 +89,8 @@ import kotlin.math.roundToInt
 fun SettingsScreen(
 	app: FitnessTrackerApp,
 	importUri: String = "",
-	onNavigateBack: () -> Unit
+	onNavigateBack: () -> Unit,
+	onOpenStreakSettings: () -> Unit = {}
 ) {
 	val factory = remember {
 		SettingsViewModel.Factory(
@@ -485,29 +488,33 @@ fun SettingsScreen(
 				modifier = Modifier.fillMaxWidth()
 			)
 
-			Spacer(modifier = Modifier.height(16.dp))
+			Spacer(modifier = Modifier.height(8.dp))
 
-			Text(
-				text = stringResource(R.string.weekly_workout_goal),
-				style = MaterialTheme.typography.bodyLarge
-			)
-			Spacer(modifier = Modifier.height(4.dp))
-
-			Text(
-				text = stringResource(R.string.weekly_workout_goal_value, uiState.weeklyWorkoutGoal),
-				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.onSurfaceVariant
-			)
-
-			Slider(
-				value = uiState.weeklyWorkoutGoal.toFloat(),
-				onValueChange = { value ->
-					viewModel.setWeeklyWorkoutGoal(value.roundToInt())
-				},
-				valueRange = 1f..7f,
-				steps = 5, // 5 intermediate steps between 1 and 7
-				modifier = Modifier.fillMaxWidth()
-			)
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.clickable { onOpenStreakSettings() }
+					.padding(vertical = 12.dp),
+				horizontalArrangement = Arrangement.SpaceBetween,
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				Column(modifier = Modifier.weight(1f)) {
+					Text(
+						text = stringResource(R.string.streak_settings_title),
+						style = MaterialTheme.typography.bodyLarge
+					)
+					Text(
+						text = stringResource(R.string.streak_settings_desc),
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.onSurfaceVariant
+					)
+				}
+				Icon(
+					imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+					contentDescription = null,
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
+				)
+			}
 
 			Spacer(modifier = Modifier.height(16.dp))
 

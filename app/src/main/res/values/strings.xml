@@ -169,4 +169,30 @@
 	<string name="restore_confirm_message">This will replace all current data with the backup taken before the last import.</string>
 	<string name="restore_success">Data restored successfully</string>
 	<string name="restore_error">Failed to restore data</string>
+
+	<!-- Streak settings -->
+	<string name="streak_settings_title">Streak</string>
+	<string name="streak_settings_desc">Weekly goal, pauses and restore</string>
+	<string name="streak_current_value">%1$d weeks</string>
+	<string name="streak_start_value">Start value</string>
+	<string name="streak_start_value_desc">Offset added to your computed streak — e.g. to carry over a streak from another app. Negative values allowed.</string>
+	<string name="streak_pauses_header">Pauses</string>
+	<string name="streak_no_exceptions">No pauses or restored weeks</string>
+	<string name="streak_add_pause">Add pause</string>
+	<string name="streak_restore_button">Restore streak</string>
+	<string name="streak_danger_zone">Critical actions</string>
+	<string name="streak_restore_dialog_title">Select weeks to fill</string>
+	<string name="streak_restore_dialog_empty">No gaps to fill — your streak is unbroken.</string>
+	<string name="streak_restore_confirm">Fill</string>
+	<string name="streak_date_range">%1$s to %2$s</string>
+	<string name="streak_gap_workouts">%1$d workouts</string>
+	<string name="streak_pick_range">Select pause range</string>
+	<string name="streak_no_selection">No range selected</string>
+	<string name="streak_quick_select">Quick select</string>
+	<string name="streak_quick_single_day">Today</string>
+	<string name="streak_quick_this_week">This week</string>
+	<string name="streak_quick_last_week">Last week</string>
+	<string name="streak_quick_custom">Custom</string>
+	<string name="streak_start_date">Start date</string>
+	<string name="streak_end_date">End date</string>
 </resources>
