@@ -18,9 +18,11 @@ import net.luis.tracker.data.local.dao.ExerciseProgress
 import net.luis.tracker.data.local.dao.PersonalRecord
 import net.luis.tracker.data.local.dao.WorkoutDateInfo
 import net.luis.tracker.data.repository.ExerciseRepository
+import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.data.repository.StatsRepository
 import net.luis.tracker.domain.model.ChartMetric
 import net.luis.tracker.domain.model.Exercise
+import net.luis.tracker.domain.model.OverviewLayout
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -55,12 +57,14 @@ data class OverviewUiState(
 	val monthCategoryBreakdown: List<CategoryWorkoutCount> = emptyList(),
 	val selectedDayWorkouts: List<WorkoutDateInfo> = emptyList(),
 	val showWorkoutPicker: Boolean = false,
-	val navigateToWorkoutId: Long? = null
+	val navigateToWorkoutId: Long? = null,
+	val overviewLayout: OverviewLayout = OverviewLayout.DEFAULT
 )
 
 class OverviewViewModel(
 	private val statsRepository: StatsRepository,
 	private val exerciseRepository: ExerciseRepository,
+	private val settingsRepository: SettingsRepository,
 	private val weeklyWorkoutGoal: Int
 ) : ViewModel() {
 
@@ -74,6 +78,11 @@ class OverviewViewModel(
 		viewModelScope.launch {
 			exerciseRepository.getAllActive().collect { exercises ->
 				_uiState.update { it.copy(exercises = exercises) }
+			}
+		}
+		viewModelScope.launch {
+			settingsRepository.overviewLayout.collect { layout ->
+				_uiState.update { it.copy(overviewLayout = layout) }
 			}
 		}
 		loadGlobalStats()
@@ -331,11 +340,12 @@ class OverviewViewModel(
 	class Factory(
 		private val statsRepository: StatsRepository,
 		private val exerciseRepository: ExerciseRepository,
+		private val settingsRepository: SettingsRepository,
 		private val weeklyWorkoutGoal: Int
 	) : ViewModelProvider.Factory {
 		@Suppress("UNCHECKED_CAST")
 		override fun <T : ViewModel> create(modelClass: Class<T>): T {
-			return OverviewViewModel(statsRepository, exerciseRepository, weeklyWorkoutGoal) as T
+			return OverviewViewModel(statsRepository, exerciseRepository, settingsRepository, weeklyWorkoutGoal) as T
 		}
 	}
 }

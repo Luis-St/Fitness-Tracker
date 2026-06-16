@@ -11,6 +11,9 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import net.luis.tracker.domain.model.AppLanguage
+import net.luis.tracker.domain.model.OverviewLayout
+import net.luis.tracker.domain.model.OverviewSection
+import net.luis.tracker.domain.model.OverviewSectionState
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
@@ -28,6 +31,8 @@ class SettingsRepository(private val context: Context) {
 		val TIMER_RESUME_MODE = stringPreferencesKey("timer_resume_mode")
 		val APP_LANGUAGE = stringPreferencesKey("app_language")
 		val PREFERRED_WEIGHTS_KG = stringPreferencesKey("preferred_weights_kg")
+		val OVERVIEW_LAYOUT_MONTH = stringPreferencesKey("overview_layout_month")
+		val OVERVIEW_LAYOUT_LIFETIME = stringPreferencesKey("overview_layout_lifetime")
 	}
 
 	val themeMode: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
@@ -95,4 +100,35 @@ class SettingsRepository(private val context: Context) {
 	suspend fun setPreferredWeightsKg(weights: List<Double>) {
 		context.dataStore.edit { it[Keys.PREFERRED_WEIGHTS_KG] = weights.joinToString(",") }
 	}
+
+	val overviewLayout: Flow<OverviewLayout> = context.dataStore.data.map { prefs ->
+		OverviewLayout(
+			month = parseSections(prefs[Keys.OVERVIEW_LAYOUT_MONTH], OverviewLayout.MONTH_SECTIONS),
+			lifetime = parseSections(prefs[Keys.OVERVIEW_LAYOUT_LIFETIME], OverviewLayout.LIFETIME_SECTIONS)
+		)
+	}
+
+	suspend fun setOverviewLayout(layout: OverviewLayout) {
+		context.dataStore.edit { prefs ->
+			prefs[Keys.OVERVIEW_LAYOUT_MONTH] = serializeSections(layout.month)
+			prefs[Keys.OVERVIEW_LAYOUT_LIFETIME] = serializeSections(layout.lifetime)
+		}
+	}
+
+	private fun parseSections(raw: String?, allowed: List<OverviewSection>): List<OverviewSectionState> {
+		val stored = raw?.takeIf { it.isNotBlank() }
+			?.split(",")
+			?.mapNotNull { token ->
+				val parts = token.split(":")
+				val section = parts.getOrNull(0)
+					?.let { name -> runCatching { OverviewSection.valueOf(name) }.getOrNull() }
+					?: return@mapNotNull null
+				OverviewSectionState(section, visible = parts.getOrNull(1) != "0")
+			}
+			?: emptyList()
+		return OverviewLayout.normalize(stored, allowed)
+	}
+
+	private fun serializeSections(sections: List<OverviewSectionState>): String =
+		sections.joinToString(",") { "${it.section.name}:${if (it.visible) 1 else 0}" }
 }

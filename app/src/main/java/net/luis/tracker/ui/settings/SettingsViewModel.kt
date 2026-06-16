@@ -11,9 +11,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.domain.model.AppLanguage
+import net.luis.tracker.domain.model.OverviewLayout
+import net.luis.tracker.domain.model.OverviewSection
+import net.luis.tracker.domain.model.OverviewSectionState
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
+import net.luis.tracker.ui.overview.OverviewTab
 
 data class SettingsUiState(
 	val themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -23,7 +27,8 @@ data class SettingsUiState(
 	val weeklyWorkoutGoal: Int = 2,
 	val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME,
 	val appLanguage: AppLanguage = AppLanguage.SYSTEM,
-	val preferredWeightsKg: List<Double> = emptyList()
+	val preferredWeightsKg: List<Double> = emptyList(),
+	val overviewLayout: OverviewLayout = OverviewLayout.DEFAULT
 )
 
 class SettingsViewModel(
@@ -45,8 +50,11 @@ class SettingsViewModel(
 					settingsRepository.timerResumeMode,
 					settingsRepository.preferredWeightsKg
 				) { rest, goal, timerMode, weights -> Triple(rest, goal, timerMode) to weights },
-				settingsRepository.appLanguage
-			) { mode, dynamicColors, unit, (workoutSettings, weights), lang ->
+				combine(
+					settingsRepository.appLanguage,
+					settingsRepository.overviewLayout
+				) { lang, layout -> lang to layout }
+			) { mode, dynamicColors, unit, (workoutSettings, weights), (lang, layout) ->
 				val (seconds, goal, timerMode) = workoutSettings
 				SettingsUiState(
 					themeMode = mode,
@@ -56,7 +64,8 @@ class SettingsViewModel(
 					weeklyWorkoutGoal = goal,
 					timerResumeMode = timerMode,
 					appLanguage = lang,
-					preferredWeightsKg = weights
+					preferredWeightsKg = weights,
+					overviewLayout = layout
 				)
 			}.collect { state ->
 				_uiState.value = state
@@ -109,6 +118,37 @@ class SettingsViewModel(
 	fun setPreferredWeightsKg(weights: List<Double>) {
 		viewModelScope.launch {
 			settingsRepository.setPreferredWeightsKg(weights)
+		}
+	}
+
+	fun toggleOverviewSection(tab: OverviewTab, section: OverviewSection) {
+		updateOverviewLayout(tab) { sections ->
+			sections.map { if (it.section == section) it.copy(visible = !it.visible) else it }
+		}
+	}
+
+	fun moveOverviewSection(tab: OverviewTab, index: Int, direction: Int) {
+		updateOverviewLayout(tab) { sections ->
+			val target = index + direction
+			if (index !in sections.indices || target !in sections.indices) {
+				sections
+			} else {
+				sections.toMutableList().also { java.util.Collections.swap(it, index, target) }
+			}
+		}
+	}
+
+	private fun updateOverviewLayout(
+		tab: OverviewTab,
+		transform: (List<OverviewSectionState>) -> List<OverviewSectionState>
+	) {
+		val current = _uiState.value.overviewLayout
+		val updated = when (tab) {
+			OverviewTab.MONTH -> current.copy(month = transform(current.month))
+			OverviewTab.LIFETIME -> current.copy(lifetime = transform(current.lifetime))
+		}
+		viewModelScope.launch {
+			settingsRepository.setOverviewLayout(updated)
 		}
 	}
 

@@ -25,7 +25,11 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -71,9 +75,11 @@ import net.luis.tracker.data.export.DataImporter
 import net.luis.tracker.data.export.ExportData
 import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.domain.model.AppLanguage
+import net.luis.tracker.domain.model.OverviewSection
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
+import net.luis.tracker.ui.overview.OverviewTab
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -533,6 +539,101 @@ fun SettingsScreen(
 
 			Spacer(modifier = Modifier.height(24.dp))
 
+			// --- Overview Sections ---
+			SectionHeader(text = stringResource(R.string.overview_sections))
+
+			Text(
+				text = stringResource(R.string.overview_sections_desc),
+				style = MaterialTheme.typography.bodySmall,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				modifier = Modifier.padding(bottom = 12.dp)
+			)
+
+			var selectedOverviewTab by remember { mutableStateOf(OverviewTab.MONTH) }
+			val overviewTabs = OverviewTab.entries
+			SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+				overviewTabs.forEachIndexed { index, tab ->
+					SegmentedButton(
+						selected = selectedOverviewTab == tab,
+						onClick = { selectedOverviewTab = tab },
+						shape = SegmentedButtonDefaults.itemShape(index = index, count = overviewTabs.size)
+					) {
+						Text(
+							when (tab) {
+								OverviewTab.MONTH -> stringResource(R.string.overview_tab_month)
+								OverviewTab.LIFETIME -> stringResource(R.string.overview_tab_lifetime)
+							}
+						)
+					}
+				}
+			}
+
+			Spacer(modifier = Modifier.height(8.dp))
+
+			val overviewSections = when (selectedOverviewTab) {
+				OverviewTab.MONTH -> uiState.overviewLayout.month
+				OverviewTab.LIFETIME -> uiState.overviewLayout.lifetime
+			}
+			overviewSections.forEachIndexed { index, sectionState ->
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(vertical = 4.dp),
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					Text(
+						text = stringResource(overviewSectionLabel(sectionState.section)),
+						style = MaterialTheme.typography.bodyLarge,
+						color = if (sectionState.visible) {
+							MaterialTheme.colorScheme.onSurface
+						} else {
+							MaterialTheme.colorScheme.onSurfaceVariant
+						},
+						modifier = Modifier.weight(1f)
+					)
+					IconButton(onClick = {
+						viewModel.toggleOverviewSection(selectedOverviewTab, sectionState.section)
+					}) {
+						Icon(
+							imageVector = if (sectionState.visible) {
+								Icons.Default.Visibility
+							} else {
+								Icons.Default.VisibilityOff
+							},
+							contentDescription = stringResource(
+								if (sectionState.visible) R.string.hide_section else R.string.show_section
+							),
+							tint = if (sectionState.visible) {
+								MaterialTheme.colorScheme.primary
+							} else {
+								MaterialTheme.colorScheme.onSurfaceVariant
+							}
+						)
+					}
+					IconButton(
+						onClick = { viewModel.moveOverviewSection(selectedOverviewTab, index, -1) },
+						enabled = index > 0
+					) {
+						Icon(
+							imageVector = Icons.Default.KeyboardArrowUp,
+							contentDescription = stringResource(R.string.move_up)
+						)
+					}
+					IconButton(
+						onClick = { viewModel.moveOverviewSection(selectedOverviewTab, index, 1) },
+						enabled = index < overviewSections.lastIndex
+					) {
+						Icon(
+							imageVector = Icons.Default.KeyboardArrowDown,
+							contentDescription = stringResource(R.string.move_down)
+						)
+					}
+				}
+				if (index < overviewSections.lastIndex) HorizontalDivider()
+			}
+
+			Spacer(modifier = Modifier.height(24.dp))
+
 			// --- Data Section ---
 			SectionHeader(text = stringResource(R.string.data))
 
@@ -601,6 +702,14 @@ fun SettingsScreen(
 			Spacer(modifier = Modifier.height(24.dp))
 		}
 	}
+}
+
+private fun overviewSectionLabel(section: OverviewSection): Int = when (section) {
+	OverviewSection.STREAK -> R.string.current_streak
+	OverviewSection.SUMMARY -> R.string.stats_summary
+	OverviewSection.PROGRESS -> R.string.progress
+	OverviewSection.RECORDS -> R.string.personal_records
+	OverviewSection.CATEGORY -> R.string.category_breakdown
 }
 
 @Composable

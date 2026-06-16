@@ -147,6 +147,12 @@
 	<string name="timer_on_resume">Timer on Resume</string>
 	<string name="stopped">Stopped</string>
 	<string name="rest_timer_format">%1$d:%2$02d</string>
+	<string name="overview_sections">Overview Sections</string>
+	<string name="overview_sections_desc">Choose which sections appear on the overview and in what order, per tab.</string>
+	<string name="show_section">Show section</string>
+	<string name="hide_section">Hide section</string>
+	<string name="move_up">Move up</string>
+	<string name="move_down">Move down</string>
 	<string name="data">Data</string>
 	<string name="export_data">Export Data</string>
 	<string name="import_data">Import Data</string>

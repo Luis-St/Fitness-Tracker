@@ -147,6 +147,12 @@
 	<string name="timer_on_resume">Timer beim Fortsetzen</string>
 	<string name="stopped">Gestoppt</string>
 	<string name="rest_timer_format">%1$d:%2$02d</string>
+	<string name="overview_sections">Übersichtsbereiche</string>
+	<string name="overview_sections_desc">Lege pro Tab fest, welche Bereiche in der Übersicht erscheinen und in welcher Reihenfolge.</string>
+	<string name="show_section">Bereich einblenden</string>
+	<string name="hide_section">Bereich ausblenden</string>
+	<string name="move_up">Nach oben</string>
+	<string name="move_down">Nach unten</string>
 	<string name="data">Daten</string>
 	<string name="export_data">Daten exportieren</string>
 	<string name="import_data">Daten importieren</string>

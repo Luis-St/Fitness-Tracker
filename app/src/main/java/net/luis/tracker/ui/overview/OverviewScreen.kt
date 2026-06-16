@@ -49,8 +49,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.R
 import net.luis.tracker.data.repository.ExerciseRepository
+import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.data.repository.StatsRepository
 import net.luis.tracker.domain.model.ChartMetric
+import net.luis.tracker.domain.model.OverviewSection
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.overview.components.CalendarView
 import net.luis.tracker.ui.overview.components.CategoryBreakdownChart
@@ -78,6 +80,7 @@ fun OverviewScreen(
 		OverviewViewModel.Factory(
 			statsRepository = StatsRepository(app.database.statsDao()),
 			exerciseRepository = ExerciseRepository(app.database.exerciseDao()),
+			settingsRepository = SettingsRepository(app),
 			weeklyWorkoutGoal = weeklyWorkoutGoal
 		)
 	}
@@ -213,80 +216,79 @@ fun OverviewScreen(
 
 					Spacer(modifier = Modifier.height(16.dp))
 
-					// Streak — always the first section below the calendar, independent of the selected tab
-					StreakCard(currentStreak = uiState.currentStreak)
-
-					Spacer(modifier = Modifier.height(24.dp))
-
-					// Tab-scoped data
-					when (uiState.selectedTab) {
-						OverviewTab.MONTH -> {
-							MonthStatsSummaryCard(
-								workoutsThisWeek = uiState.workoutsThisWeek,
-								workoutsThisMonth = uiState.workoutsThisMonth,
-								averageDuration = uiState.averageDuration
-							)
-
-							Spacer(modifier = Modifier.height(24.dp))
-
-							ProgressSection(
-								progressData = uiState.monthProgressData,
-								exercises = uiState.exercises,
-								selectedExerciseId = uiState.selectedExerciseId,
-								selectedMetric = uiState.selectedMetric,
-								weightUnit = weightUnit,
-								onSelectMetric = { viewModel.selectMetric(it) },
-								onSelectExercise = { viewModel.selectExercise(it) }
-							)
-
-							Spacer(modifier = Modifier.height(16.dp))
-
-							CategoryBreakdownChart(
-								categoryBreakdown = uiState.monthCategoryBreakdown
-							)
-						}
-
-						OverviewTab.LIFETIME -> {
-							LifetimeStatsSummaryCard(
-								totalWorkoutsAllTime = uiState.totalWorkoutsAllTime,
-								maxWorkoutVolume = uiState.maxWorkoutVolume,
-								avgWorkoutsPerWeek = uiState.avgWorkoutsPerWeek,
-								longestWorkoutMinutes = uiState.longestWorkoutMinutes,
-								weightUnit = weightUnit
-							)
-
-							Spacer(modifier = Modifier.height(24.dp))
-
-							ProgressSection(
-								progressData = uiState.progressData,
-								exercises = uiState.exercises,
-								selectedExerciseId = uiState.selectedExerciseId,
-								selectedMetric = uiState.selectedMetric,
-								weightUnit = weightUnit,
-								onSelectMetric = { viewModel.selectMetric(it) },
-								onSelectExercise = { viewModel.selectExercise(it) }
-							)
-
-							Spacer(modifier = Modifier.height(24.dp))
-
-							PersonalRecordsCard(
-								personalRecords = uiState.personalRecords,
-								weightUnit = weightUnit,
-								onClick = onViewAllRecords
-							)
-
-							Spacer(modifier = Modifier.height(16.dp))
-
-							CategoryBreakdownChart(
-								categoryBreakdown = uiState.categoryBreakdown
-							)
-						}
+					// Configurable, tab-scoped sections (order & visibility set in Settings)
+					val sections = when (uiState.selectedTab) {
+						OverviewTab.MONTH -> uiState.overviewLayout.month
+						OverviewTab.LIFETIME -> uiState.overviewLayout.lifetime
 					}
+					sections.filter { it.visible }.forEach { sectionState ->
+						OverviewSectionContent(
+							section = sectionState.section,
+							tab = uiState.selectedTab,
+							uiState = uiState,
+							weightUnit = weightUnit,
+							onSelectMetric = { viewModel.selectMetric(it) },
+							onSelectExercise = { viewModel.selectExercise(it) },
+							onViewAllRecords = onViewAllRecords
+						)
 
-					Spacer(modifier = Modifier.height(16.dp))
+						Spacer(modifier = Modifier.height(24.dp))
+					}
 				}
 			}
 		}
+	}
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OverviewSectionContent(
+	section: OverviewSection,
+	tab: OverviewTab,
+	uiState: OverviewUiState,
+	weightUnit: WeightUnit,
+	onSelectMetric: (ChartMetric) -> Unit,
+	onSelectExercise: (Long?) -> Unit,
+	onViewAllRecords: () -> Unit
+) {
+	when (section) {
+		OverviewSection.STREAK -> StreakCard(currentStreak = uiState.currentStreak)
+
+		OverviewSection.SUMMARY -> when (tab) {
+			OverviewTab.MONTH -> MonthStatsSummaryCard(
+				workoutsThisWeek = uiState.workoutsThisWeek,
+				workoutsThisMonth = uiState.workoutsThisMonth,
+				averageDuration = uiState.averageDuration
+			)
+
+			OverviewTab.LIFETIME -> LifetimeStatsSummaryCard(
+				totalWorkoutsAllTime = uiState.totalWorkoutsAllTime,
+				maxWorkoutVolume = uiState.maxWorkoutVolume,
+				avgWorkoutsPerWeek = uiState.avgWorkoutsPerWeek,
+				longestWorkoutMinutes = uiState.longestWorkoutMinutes,
+				weightUnit = weightUnit
+			)
+		}
+
+		OverviewSection.PROGRESS -> ProgressSection(
+			progressData = if (tab == OverviewTab.MONTH) uiState.monthProgressData else uiState.progressData,
+			exercises = uiState.exercises,
+			selectedExerciseId = uiState.selectedExerciseId,
+			selectedMetric = uiState.selectedMetric,
+			weightUnit = weightUnit,
+			onSelectMetric = onSelectMetric,
+			onSelectExercise = onSelectExercise
+		)
+
+		OverviewSection.RECORDS -> PersonalRecordsCard(
+			personalRecords = uiState.personalRecords,
+			weightUnit = weightUnit,
+			onClick = onViewAllRecords
+		)
+
+		OverviewSection.CATEGORY -> CategoryBreakdownChart(
+			categoryBreakdown = if (tab == OverviewTab.MONTH) uiState.monthCategoryBreakdown else uiState.categoryBreakdown
+		)
 	}
 }
 
