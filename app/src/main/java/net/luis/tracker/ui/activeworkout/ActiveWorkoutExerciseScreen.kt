@@ -298,6 +298,7 @@ fun ActiveWorkoutExerciseScreen(
 								weightUnit = weightUnit,
 								preferredWeightsKg = preferredWeightsKg,
 								isError = weightError,
+								allowsZeroWeight = currentEntry.exercise.allowsZeroWeight,
 								modifier = Modifier.weight(1f)
 							)
 							if (isDropSet) {
@@ -308,6 +309,7 @@ fun ActiveWorkoutExerciseScreen(
 									preferredWeightsKg = preferredWeightsKg,
 									isError = dropWeightError,
 									label = stringResource(R.string.drop_weight),
+									allowsZeroWeight = currentEntry.exercise.allowsZeroWeight,
 									modifier = Modifier.weight(1f)
 								)
 							}

@@ -32,7 +32,8 @@ fun WeightDropdown(
 	preferredWeightsKg: List<Double>,
 	modifier: Modifier = Modifier,
 	isError: Boolean = false,
-	label: String? = null
+	label: String? = null,
+	allowsZeroWeight: Boolean = false
 ) {
 	if (preferredWeightsKg.isEmpty()) {
 		WeightInput(text, onTextChange, weightUnit, modifier, isError, label)
@@ -68,7 +69,10 @@ fun WeightDropdown(
 		return
 	}
 
-	val sortedWeightsKg = remember(preferredWeightsKg) { preferredWeightsKg.sorted() }
+	val sortedWeightsKg = remember(preferredWeightsKg, allowsZeroWeight) {
+		val weights = if (allowsZeroWeight) preferredWeightsKg + 0.0 else preferredWeightsKg
+		weights.distinct().sorted()
+	}
 
 	ExposedDropdownMenuBox(
 		expanded = expanded,
