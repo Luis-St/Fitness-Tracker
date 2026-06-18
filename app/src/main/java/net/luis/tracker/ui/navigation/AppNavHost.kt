@@ -6,6 +6,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
@@ -19,7 +21,9 @@ import androidx.navigation.toRoute
 import net.luis.tracker.FitnessTrackerApp
 import net.luis.tracker.data.repository.ActiveWorkoutDraftRepository
 import net.luis.tracker.data.repository.ExerciseRepository
+import net.luis.tracker.data.repository.SettingsRepository
 import net.luis.tracker.data.repository.WorkoutRepository
+import net.luis.tracker.domain.model.SetComparisonSettings
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.activeworkout.ActiveWorkoutExerciseScreen
@@ -86,6 +90,8 @@ fun AppNavHost(
 ) {
 	val context = LocalContext.current
 	val draftRepository = remember { ActiveWorkoutDraftRepository(context.applicationContext) }
+	val settingsRepository = remember { SettingsRepository(context.applicationContext) }
+	val setComparison by settingsRepository.setComparison.collectAsState(initial = SetComparisonSettings())
 
 	LaunchedEffect(pendingImportUri) {
 		if (!pendingImportUri.isNullOrEmpty()) {
@@ -200,6 +206,7 @@ fun AppNavHost(
 					entryId = route.entryId,
 					weightUnit = weightUnit,
 					preferredWeightsKg = preferredWeightsKg,
+					comparisonSettings = setComparison,
 					onNavigateBack = {
 						sharedViewModel.removeExerciseIfEmpty(route.entryId)
 						navController.popBackStack()

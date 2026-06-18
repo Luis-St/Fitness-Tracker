@@ -36,7 +36,9 @@ data class ActiveExerciseEntry(
 	val isGhost: Boolean = false,
 	val planWeightKg: Double = 0.0,
 	val planSets: Int = 0,
-	val planSetsData: List<WorkoutSet> = emptyList()
+	val planSetsData: List<WorkoutSet> = emptyList(),
+	/** Sets from the last logged workout of this exercise, used as the comparison baseline. */
+	val lastPerformanceSets: List<WorkoutSet> = emptyList()
 )
 
 data class ActiveWorkoutUiState(
@@ -142,8 +144,38 @@ class ActiveWorkoutViewModel(
 			exercise = exercise
 		)
 		_uiState.update { it.copy(exercises = it.exercises + newEntry) }
+		loadLastPerformance(newId, exercise.id)
 		saveDraft()
 		return newId
+	}
+
+	/**
+	 * Asynchronously loads the last logged performance for an exercise entry and stores it as the
+	 * comparison baseline. The workout being resumed/edited is excluded so we never compare a set
+	 * against itself.
+	 */
+	private fun loadLastPerformance(entryId: Long, exerciseId: Long) {
+		viewModelScope.launch {
+			val sets = workoutRepository.getLastPerformanceSets(exerciseId, resumedFromWorkoutId)
+			if (sets.isEmpty()) return@launch
+			_uiState.update { state ->
+				state.copy(
+					exercises = state.exercises.map { entry ->
+						if (entry.id == entryId) entry.copy(lastPerformanceSets = sets) else entry
+					}
+				)
+			}
+		}
+	}
+
+	/** Full history of a given set number for an exercise, for the tap-a-badge history dialog. */
+	suspend fun getSetHistory(exerciseId: Long, setNumber: Int) =
+		workoutRepository.getSetHistory(exerciseId, setNumber)
+
+	private fun loadLastPerformanceForAll() {
+		_uiState.value.exercises.forEach { entry ->
+			loadLastPerformance(entry.id, entry.exercise.id)
+		}
 	}
 
 	fun removeExerciseIfEmpty(entryId: Long) {
@@ -392,6 +424,7 @@ class ActiveWorkoutViewModel(
 			exercises = exercises
 		)
 		if (autoResume) startTimer()
+		loadLastPerformanceForAll()
 	}
 
 	private suspend fun restoreFromWorkout(workoutId: Long) {
@@ -448,6 +481,7 @@ class ActiveWorkoutViewModel(
 			exercises = exercises
 		)
 		if (autoResume) startTimer()
+		loadLastPerformanceForAll()
 	}
 
 	private suspend fun loadPlan(workoutId: Long) {
@@ -471,6 +505,7 @@ class ActiveWorkoutViewModel(
 		entryIdCounter = nextEntryId
 
 		_uiState.value = ActiveWorkoutUiState(exercises = exercises)
+		loadLastPerformanceForAll()
 	}
 
 	class Factory(

@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -62,6 +66,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -81,6 +87,7 @@ import net.luis.tracker.domain.model.OverviewSection
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
+import net.luis.tracker.ui.common.components.ColorPickerDialog
 import net.luis.tracker.ui.overview.OverviewTab
 import kotlin.math.roundToInt
 
@@ -213,6 +220,32 @@ fun SettingsScreen(
 					Text(stringResource(R.string.cancel))
 				}
 			}
+		)
+	}
+
+	var colorPickerRole by remember { mutableStateOf<SetComparisonColorRole?>(null) }
+	colorPickerRole?.let { role ->
+		val comparison = uiState.setComparison
+		val initial = when (role) {
+			SetComparisonColorRole.BETTER -> comparison.betterColor
+			SetComparisonColorRole.SAME -> comparison.sameColor
+			SetComparisonColorRole.WORSE -> comparison.worseColor
+			SetComparisonColorRole.NEUTRAL -> comparison.neutralColor
+		}
+		ColorPickerDialog(
+			title = stringResource(role.labelRes),
+			initialColor = Color(initial),
+			onConfirm = { chosen ->
+				val argb = chosen.toArgb()
+				viewModel.setSetComparisonColors(
+					betterColor = if (role == SetComparisonColorRole.BETTER) argb else comparison.betterColor,
+					sameColor = if (role == SetComparisonColorRole.SAME) argb else comparison.sameColor,
+					worseColor = if (role == SetComparisonColorRole.WORSE) argb else comparison.worseColor,
+					neutralColor = if (role == SetComparisonColorRole.NEUTRAL) argb else comparison.neutralColor
+				)
+				colorPickerRole = null
+			},
+			onDismiss = { colorPickerRole = null }
 		)
 	}
 
@@ -546,6 +579,57 @@ fun SettingsScreen(
 
 			Spacer(modifier = Modifier.height(24.dp))
 
+			// --- Set Comparison Section ---
+			SectionHeader(text = stringResource(R.string.set_comparison_title))
+
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.SpaceBetween,
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				Column(modifier = Modifier.weight(1f)) {
+					Text(
+						text = stringResource(R.string.set_comparison_enable),
+						style = MaterialTheme.typography.bodyLarge
+					)
+					Text(
+						text = stringResource(R.string.set_comparison_desc),
+						style = MaterialTheme.typography.bodySmall,
+						color = MaterialTheme.colorScheme.onSurfaceVariant
+					)
+				}
+				Switch(
+					checked = uiState.setComparison.enabled,
+					onCheckedChange = { viewModel.setSetComparisonEnabled(it) }
+				)
+			}
+
+			if (uiState.setComparison.enabled) {
+				Spacer(modifier = Modifier.height(8.dp))
+				SetComparisonColorRow(
+					label = stringResource(R.string.set_comparison_better),
+					color = Color(uiState.setComparison.betterColor),
+					onClick = { colorPickerRole = SetComparisonColorRole.BETTER }
+				)
+				SetComparisonColorRow(
+					label = stringResource(R.string.set_comparison_same),
+					color = Color(uiState.setComparison.sameColor),
+					onClick = { colorPickerRole = SetComparisonColorRole.SAME }
+				)
+				SetComparisonColorRow(
+					label = stringResource(R.string.set_comparison_worse),
+					color = Color(uiState.setComparison.worseColor),
+					onClick = { colorPickerRole = SetComparisonColorRole.WORSE }
+				)
+				SetComparisonColorRow(
+					label = stringResource(R.string.set_comparison_neutral),
+					color = Color(uiState.setComparison.neutralColor),
+					onClick = { colorPickerRole = SetComparisonColorRole.NEUTRAL }
+				)
+			}
+
+			Spacer(modifier = Modifier.height(24.dp))
+
 			// --- Overview Sections ---
 			SectionHeader(text = stringResource(R.string.overview_sections))
 
@@ -717,6 +801,41 @@ private fun overviewSectionLabel(section: OverviewSection): Int = when (section)
 	OverviewSection.PROGRESS -> R.string.progress
 	OverviewSection.RECORDS -> R.string.personal_records
 	OverviewSection.CATEGORY -> R.string.category_breakdown
+}
+
+private enum class SetComparisonColorRole(val labelRes: Int) {
+	BETTER(R.string.set_comparison_better),
+	SAME(R.string.set_comparison_same),
+	WORSE(R.string.set_comparison_worse),
+	NEUTRAL(R.string.set_comparison_neutral)
+}
+
+@Composable
+private fun SetComparisonColorRow(
+	label: String,
+	color: Color,
+	onClick: () -> Unit
+) {
+	Row(
+		modifier = Modifier
+			.fillMaxWidth()
+			.clickable(onClick = onClick)
+			.padding(vertical = 8.dp),
+		horizontalArrangement = Arrangement.SpaceBetween,
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		Text(
+			text = label,
+			style = MaterialTheme.typography.bodyLarge,
+			modifier = Modifier.weight(1f)
+		)
+		Spacer(
+			modifier = Modifier
+				.size(28.dp)
+				.background(color, CircleShape)
+				.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+		)
+	}
 }
 
 @Composable

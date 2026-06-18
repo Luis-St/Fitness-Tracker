@@ -147,6 +147,15 @@
 	<string name="timer_on_resume">Timer beim Fortsetzen</string>
 	<string name="stopped">Gestoppt</string>
 	<string name="rest_timer_format">%1$d:%2$02d</string>
+	<string name="set_comparison_title">Satz-Vergleich</string>
+	<string name="set_comparison_enable">Mit letzter Leistung vergleichen</string>
+	<string name="set_comparison_desc">Neue Sätze anhand deiner letzten Ausführung dieser Übung hervorheben.</string>
+	<string name="set_comparison_better">Verbesserung</string>
+	<string name="set_comparison_same">Gleich oder einzelner Rückgang</string>
+	<string name="set_comparison_worse">Verschlechterung</string>
+	<string name="set_comparison_neutral">Kompromiss / neutral</string>
+	<string name="set_history_title">Verlauf von Satz %1$d</string>
+	<string name="set_history_empty">Noch kein Verlauf.</string>
 	<string name="overview_sections">Übersichtsbereiche</string>
 	<string name="overview_sections_desc">Lege pro Tab fest, welche Bereiche in der Übersicht erscheinen und in welcher Reihenfolge.</string>
 	<string name="show_section">Bereich einblenden</string>

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import net.luis.tracker.data.local.AppDatabase
+import net.luis.tracker.data.local.dao.SetHistoryEntry
 import net.luis.tracker.data.local.dao.WorkoutDao
 import net.luis.tracker.data.local.dao.WorkoutExerciseDao
 import net.luis.tracker.data.local.dao.WorkoutSetDao
@@ -75,6 +76,22 @@ class WorkoutRepository(
 
 	suspend fun addExerciseToWorkout(workoutExercise: WorkoutExercise): Long =
 		workoutExerciseDao.insert(workoutExercise.toEntity())
+
+	/**
+	 * Sets from the most recent previously-logged workout containing [exerciseId], used as the
+	 * baseline for the active-workout set comparison. [excludeWorkoutId] skips the workout being
+	 * resumed/edited. Empty when the exercise has never been logged before.
+	 */
+	suspend fun getLastPerformanceSets(exerciseId: Long, excludeWorkoutId: Long = 0L): List<WorkoutSet> =
+		withContext(Dispatchers.IO) {
+			workoutSetDao.getLastPerformanceSets(exerciseId, excludeWorkoutId).map { it.toDomain() }
+		}
+
+	/** Full history of a specific set number for an exercise, newest workout first. */
+	suspend fun getSetHistory(exerciseId: Long, setNumber: Int): List<SetHistoryEntry> =
+		withContext(Dispatchers.IO) {
+			workoutSetDao.getSetHistory(exerciseId, setNumber)
+		}
 
 	suspend fun addSetToExercise(set: WorkoutSet): Long =
 		workoutSetDao.insert(set.toEntity())
