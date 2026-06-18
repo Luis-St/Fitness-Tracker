@@ -14,6 +14,7 @@ import net.luis.tracker.domain.model.AppLanguage
 import net.luis.tracker.domain.model.OverviewLayout
 import net.luis.tracker.domain.model.OverviewSection
 import net.luis.tracker.domain.model.OverviewSectionState
+import net.luis.tracker.domain.model.SetComparisonSettings
 import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
@@ -28,7 +29,8 @@ data class SettingsUiState(
 	val timerResumeMode: TimerResumeMode = TimerResumeMode.RESUME,
 	val appLanguage: AppLanguage = AppLanguage.SYSTEM,
 	val preferredWeightsKg: List<Double> = emptyList(),
-	val overviewLayout: OverviewLayout = OverviewLayout.DEFAULT
+	val overviewLayout: OverviewLayout = OverviewLayout.DEFAULT,
+	val setComparison: SetComparisonSettings = SetComparisonSettings()
 )
 
 class SettingsViewModel(
@@ -52,9 +54,10 @@ class SettingsViewModel(
 				) { rest, goal, timerMode, weights -> Triple(rest, goal, timerMode) to weights },
 				combine(
 					settingsRepository.appLanguage,
-					settingsRepository.overviewLayout
-				) { lang, layout -> lang to layout }
-			) { mode, dynamicColors, unit, (workoutSettings, weights), (lang, layout) ->
+					settingsRepository.overviewLayout,
+					settingsRepository.setComparison
+				) { lang, layout, setComparison -> Triple(lang, layout, setComparison) }
+			) { mode, dynamicColors, unit, (workoutSettings, weights), (lang, layout, setComparison) ->
 				val (seconds, goal, timerMode) = workoutSettings
 				SettingsUiState(
 					themeMode = mode,
@@ -65,7 +68,8 @@ class SettingsViewModel(
 					timerResumeMode = timerMode,
 					appLanguage = lang,
 					preferredWeightsKg = weights,
-					overviewLayout = layout
+					overviewLayout = layout,
+					setComparison = setComparison
 				)
 			}.collect { state ->
 				_uiState.value = state
@@ -118,6 +122,24 @@ class SettingsViewModel(
 	fun setPreferredWeightsKg(weights: List<Double>) {
 		viewModelScope.launch {
 			settingsRepository.setPreferredWeightsKg(weights)
+		}
+	}
+
+	fun setSetComparisonEnabled(enabled: Boolean) {
+		viewModelScope.launch {
+			settingsRepository.setSetComparisonEnabled(enabled)
+		}
+	}
+
+	fun setSetComparisonBrightenDark(enabled: Boolean) {
+		viewModelScope.launch {
+			settingsRepository.setSetComparisonBrightenDark(enabled)
+		}
+	}
+
+	fun setSetComparisonColors(betterColor: Int, singleDropColor: Int, worseColor: Int, neutralColor: Int) {
+		viewModelScope.launch {
+			settingsRepository.setSetComparisonColors(betterColor, singleDropColor, worseColor, neutralColor)
 		}
 	}
 

@@ -1,6 +1,9 @@
 package net.luis.tracker.ui.activeworkout
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,6 +16,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -25,6 +30,7 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
@@ -36,6 +42,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -46,12 +53,24 @@ import kotlinx.coroutines.flow.map
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import net.luis.tracker.R
+import net.luis.tracker.data.local.dao.SetHistoryEntry
+import net.luis.tracker.domain.SetComparison
+import net.luis.tracker.domain.compareSet
+import net.luis.tracker.domain.model.SetComparisonSettings
 import net.luis.tracker.domain.model.WeightUnit
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import net.luis.tracker.ui.common.components.WeightDropdown
 import net.luis.tracker.ui.common.components.WeightInput
 
@@ -62,6 +81,7 @@ fun ActiveWorkoutExerciseScreen(
 	entryId: Long,
 	weightUnit: WeightUnit,
 	preferredWeightsKg: List<Double> = emptyList(),
+	comparisonSettings: SetComparisonSettings = SetComparisonSettings(),
 	onNavigateBack: () -> Unit,
 	onRest: () -> Unit,
 	onFinishWithTimer: () -> Unit
@@ -82,6 +102,20 @@ fun ActiveWorkoutExerciseScreen(
 	var dropWeightError by remember { mutableStateOf(false) }
 	var dropRepsError by remember { mutableStateOf(false) }
 	var showNotesDialog by remember { mutableStateOf(false) }
+	var historySet by remember { mutableStateOf<Int?>(null) }
+
+	historySet?.let { setNumber ->
+		entry?.let { e ->
+			SetHistoryDialog(
+				exerciseTitle = e.exercise.title,
+				setNumber = setNumber,
+				hasWeight = e.exercise.hasWeight,
+				weightUnit = weightUnit,
+				loadHistory = { viewModel.getSetHistory(e.exercise.id, setNumber) },
+				onDismiss = { historySet = null }
+			)
+		}
+	}
 
 	if (showNotesDialog) {
 		AlertDialog(
@@ -219,6 +253,15 @@ fun ActiveWorkoutExerciseScreen(
 		) {
 			// Sets list
 			val realSets = currentEntry.sets
+			val lastPerformance = currentEntry.lastPerformanceSets
+			val priorPerformance = currentEntry.priorPerformanceSets
+			val comparisonActive = comparisonSettings.enabled && lastPerformance.isNotEmpty()
+			// Badges are a low-alpha tint of the configured color. Under a dark theme the tint
+			// reads as dim/muted, so (when enabled) make it more opaque to let the color show.
+			val brightenBadges = comparisonSettings.brightenInDark &&
+				MaterialTheme.colorScheme.surface.luminance() < 0.5f
+			val badgeAlpha = if (brightenBadges) BADGE_ALPHA_BRIGHT else BADGE_ALPHA_DEFAULT
+			// Ghost/reference rows only ever come from a template, never from logged history.
 			val ghostSets = currentEntry.planSetsData
 			val totalRows = maxOf(realSets.size, ghostSets.size)
 
@@ -240,6 +283,23 @@ fun ActiveWorkoutExerciseScreen(
 						val realSet = realSets.getOrNull(index)
 						val ghostSet = ghostSets.getOrNull(index)
 						if (realSet != null) {
+							val badges = if (comparisonActive) {
+								compareSet(
+									realSet,
+									lastPerformance.getOrNull(index),
+									priorPerformance.getOrNull(index),
+									hasWeight
+								)
+							} else {
+								null
+							}
+							// When the feature is on, every entered value carries a badge — the
+							// neutral color is the fallback when there's nothing to compare against.
+							val neutralBadge = if (comparisonSettings.enabled) {
+								Color(comparisonSettings.neutralColor)
+							} else {
+								null
+							}
 							SetItem(
 								setNumber = realSet.setNumber,
 								weightKg = realSet.weightKg,
@@ -249,6 +309,9 @@ fun ActiveWorkoutExerciseScreen(
 								showDivider = index < totalRows - 1,
 								dropWeightKg = realSet.dropWeightKg,
 								dropReps = realSet.dropReps,
+								weightBadgeColor = (badges?.weight.toBadgeColor(comparisonSettings) ?: neutralBadge)?.copy(alpha = badgeAlpha),
+								repsBadgeColor = (badges?.reps.toBadgeColor(comparisonSettings) ?: neutralBadge)?.copy(alpha = badgeAlpha),
+								onValueClick = { historySet = realSet.setNumber },
 								onRemove = { viewModel.removeSet(entryId, index) }
 							)
 						} else if (ghostSet != null) {
@@ -431,6 +494,9 @@ private fun SetItem(
 	dropWeightKg: Double? = null,
 	dropReps: Int? = null,
 	isGhost: Boolean = false,
+	weightBadgeColor: Color? = null,
+	repsBadgeColor: Color? = null,
+	onValueClick: (() -> Unit)? = null,
 	onRemove: (() -> Unit)? = null
 ) {
 	val contentAlpha = if (isGhost) 0.5f else 1f
@@ -455,20 +521,24 @@ private fun SetItem(
 				} else {
 					weightUnit.formatWeight(weightKg)
 				}
-				Text(
-					text = weightText,
-					style = MaterialTheme.typography.bodyLarge,
-					modifier = Modifier.weight(1f).alpha(contentAlpha)
-				)
+				Row(modifier = Modifier.weight(1f)) {
+					BadgeText(
+						text = weightText,
+						badgeColor = weightBadgeColor,
+						contentAlpha = contentAlpha,
+						onClick = if (isGhost) null else onValueClick
+					)
+				}
 			} else {
 				Spacer(modifier = Modifier.weight(1f))
 			}
 			val repsText = if (dropReps != null) "$reps / $dropReps ${stringResource(R.string.reps)}"
 			else "$reps ${stringResource(R.string.reps)}"
-			Text(
+			BadgeText(
 				text = repsText,
-				style = MaterialTheme.typography.bodyLarge,
-				modifier = Modifier.alpha(contentAlpha)
+				badgeColor = repsBadgeColor,
+				contentAlpha = contentAlpha,
+				onClick = if (isGhost) null else onValueClick
 			)
 			IconButton(
 				onClick = onRemove ?: {},
@@ -485,4 +555,146 @@ private fun SetItem(
 	if (showDivider) {
 		HorizontalDivider()
 	}
+}
+
+/** Resolves a per-field [SetComparison] to its configured badge color, or null for no badge. */
+private fun SetComparison?.toBadgeColor(settings: SetComparisonSettings): Color? = when (this) {
+	SetComparison.BETTER -> Color(settings.betterColor)
+	SetComparison.SAME -> Color(settings.neutralColor)
+	SetComparison.SINGLE_DROP -> Color(settings.singleDropColor)
+	SetComparison.WORSE -> Color(settings.worseColor)
+	SetComparison.TRADEOFF -> Color(settings.neutralColor)
+	SetComparison.NEUTRAL, null -> null
+}
+
+/** Default badge tint opacity — subtle, so the value isn't pulled into full focus. */
+private const val BADGE_ALPHA_DEFAULT = 0.18f
+
+/** Stronger badge tint opacity for dark themes, letting the saturated color read more vividly. */
+private const val BADGE_ALPHA_BRIGHT = 0.55f
+
+/**
+ * A set value (weight or reps). When [badgeColor] is non-null the value gets a subtle, lightly
+ * tinted rounded mark in that color; otherwise it renders as plain text honoring [contentAlpha]
+ * (used to fade ghost/reference rows). [onClick] opens the set's full history.
+ */
+@Composable
+private fun BadgeText(
+	text: String,
+	badgeColor: Color?,
+	contentAlpha: Float,
+	onClick: (() -> Unit)? = null
+) {
+	val shape = RoundedCornerShape(6.dp)
+	val base = Modifier
+		.clip(shape)
+		.then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+	if (badgeColor != null) {
+		Text(
+			text = text,
+			style = MaterialTheme.typography.bodyLarge,
+			modifier = base
+				.background(badgeColor)
+				.padding(horizontal = 6.dp, vertical = 2.dp)
+		)
+	} else {
+		Text(
+			text = text,
+			style = MaterialTheme.typography.bodyLarge,
+			modifier = base
+				.padding(horizontal = 6.dp, vertical = 2.dp)
+				.alpha(contentAlpha)
+		)
+	}
+}
+
+@Composable
+private fun SetHistoryDialog(
+	exerciseTitle: String,
+	setNumber: Int,
+	hasWeight: Boolean,
+	weightUnit: WeightUnit,
+	loadHistory: suspend () -> List<SetHistoryEntry>,
+	onDismiss: () -> Unit
+) {
+	var history by remember(setNumber) { mutableStateOf<List<SetHistoryEntry>?>(null) }
+	LaunchedEffect(setNumber) {
+		history = loadHistory()
+	}
+	val dateFormatter = remember { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM) }
+
+	AlertDialog(
+		onDismissRequest = onDismiss,
+		title = { Text("$exerciseTitle: ${stringResource(R.string.set_history_title, setNumber)}") },
+		text = {
+			val entries = history
+			// Fixed dialog body height of 3/5 of the screen, so the list scrolls instead of the
+			// popup growing/shrinking with the number of logged sets.
+			val bodyHeight = (LocalConfiguration.current.screenHeightDp * 3 / 5).dp
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(bodyHeight),
+				contentAlignment = Alignment.Center
+			) {
+				when {
+					entries == null -> CircularProgressIndicator()
+					entries.isEmpty() -> Text(stringResource(R.string.set_history_empty))
+					else -> LazyColumn(
+						modifier = Modifier.fillMaxSize(),
+						verticalArrangement = Arrangement.spacedBy(8.dp)
+					) {
+					items(entries) { item ->
+						val date = Instant.ofEpochMilli(item.workoutDate)
+							.atZone(ZoneId.systemDefault())
+							.toLocalDate()
+							.format(dateFormatter)
+						val weightText = if (hasWeight && item.weightKg > 0.0) {
+							if (item.dropWeightKg != null && item.dropWeightKg > 0.0) {
+								weightUnit.formatWeightPair(item.weightKg, item.dropWeightKg)
+							} else {
+								weightUnit.formatWeight(item.weightKg)
+							}
+						} else {
+							null
+						}
+						val repsText = if (item.dropReps != null) {
+							"${item.reps} / ${item.dropReps} ${stringResource(R.string.reps)}"
+						} else {
+							"${item.reps} ${stringResource(R.string.reps)}"
+						}
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.spacedBy(12.dp),
+							verticalAlignment = Alignment.CenterVertically
+						) {
+							Text(
+								text = date,
+								style = MaterialTheme.typography.bodyMedium,
+								color = MaterialTheme.colorScheme.onSurfaceVariant,
+								modifier = Modifier.weight(1f)
+							)
+							if (weightText != null) {
+								Text(
+									text = weightText,
+									style = MaterialTheme.typography.bodyMedium,
+									fontWeight = FontWeight.Medium
+								)
+							}
+							Text(
+								text = repsText,
+								style = MaterialTheme.typography.bodyMedium
+							)
+						}
+					}
+				}
+			}
+			}
+		},
+		confirmButton = {
+			Button(onClick = onDismiss) {
+				Text(stringResource(R.string.close))
+			}
+		}
+	)
 }

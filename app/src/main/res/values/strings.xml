@@ -147,6 +147,17 @@
 	<string name="timer_on_resume">Timer on Resume</string>
 	<string name="stopped">Stopped</string>
 	<string name="rest_timer_format">%1$d:%2$02d</string>
+	<string name="set_comparison_title">Set Comparison</string>
+	<string name="set_comparison_enable">Compare with last performance</string>
+	<string name="set_comparison_desc">Highlight new sets based on your last time doing this exercise.</string>
+	<string name="set_comparison_better">Improvement</string>
+	<string name="set_comparison_single_drop">Single drop</string>
+	<string name="set_comparison_worse">Regression</string>
+	<string name="set_comparison_neutral">Unchanged / trade-off</string>
+	<string name="set_comparison_brighten_dark">Brighter badges in dark mode</string>
+	<string name="set_comparison_brighten_dark_desc">Make badge colors more vivid when a dark theme is active so they stand out more.</string>
+	<string name="set_history_title">Set %1$d history</string>
+	<string name="set_history_empty">No history yet.</string>
 	<string name="overview_sections">Overview Sections</string>
 	<string name="overview_sections_desc">Choose which sections appear on the overview and in what order, per tab.</string>
 	<string name="show_section">Show section</string>

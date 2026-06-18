@@ -14,6 +14,7 @@ import net.luis.tracker.domain.model.AppLanguage
 import net.luis.tracker.domain.model.OverviewLayout
 import net.luis.tracker.domain.model.OverviewSection
 import net.luis.tracker.domain.model.OverviewSectionState
+import net.luis.tracker.domain.model.SetComparisonSettings
 import net.luis.tracker.domain.model.StreakException
 import net.luis.tracker.domain.model.StreakExceptionType
 import net.luis.tracker.domain.model.ThemeMode
@@ -38,6 +39,12 @@ class SettingsRepository(private val context: Context) {
 		val OVERVIEW_LAYOUT_LIFETIME = stringPreferencesKey("overview_layout_lifetime")
 		val STREAK_BASELINE = intPreferencesKey("streak_baseline")
 		val STREAK_EXCEPTIONS = stringPreferencesKey("streak_exceptions")
+		val SET_COMPARISON_ENABLED = booleanPreferencesKey("set_comparison_enabled")
+		val SET_COMPARISON_COLOR_BETTER = intPreferencesKey("set_comparison_color_better")
+		val SET_COMPARISON_COLOR_SINGLE_DROP = intPreferencesKey("set_comparison_color_single_drop")
+		val SET_COMPARISON_COLOR_WORSE = intPreferencesKey("set_comparison_color_worse")
+		val SET_COMPARISON_COLOR_NEUTRAL = intPreferencesKey("set_comparison_color_neutral")
+		val SET_COMPARISON_BRIGHTEN_DARK = booleanPreferencesKey("set_comparison_brighten_dark")
 	}
 
 	val themeMode: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
@@ -126,6 +133,34 @@ class SettingsRepository(private val context: Context) {
 
 	suspend fun setStreakBaseline(baseline: Int) {
 		context.dataStore.edit { it[Keys.STREAK_BASELINE] = baseline }
+	}
+
+	val setComparison: Flow<SetComparisonSettings> = context.dataStore.data.map { prefs ->
+		SetComparisonSettings(
+			enabled = prefs[Keys.SET_COMPARISON_ENABLED] ?: true,
+			betterColor = prefs[Keys.SET_COMPARISON_COLOR_BETTER] ?: SetComparisonSettings.DEFAULT_BETTER,
+			singleDropColor = prefs[Keys.SET_COMPARISON_COLOR_SINGLE_DROP] ?: SetComparisonSettings.DEFAULT_SINGLE_DROP,
+			worseColor = prefs[Keys.SET_COMPARISON_COLOR_WORSE] ?: SetComparisonSettings.DEFAULT_WORSE,
+			neutralColor = prefs[Keys.SET_COMPARISON_COLOR_NEUTRAL] ?: SetComparisonSettings.DEFAULT_NEUTRAL,
+			brightenInDark = prefs[Keys.SET_COMPARISON_BRIGHTEN_DARK] ?: true
+		)
+	}
+
+	suspend fun setSetComparisonEnabled(enabled: Boolean) {
+		context.dataStore.edit { it[Keys.SET_COMPARISON_ENABLED] = enabled }
+	}
+
+	suspend fun setSetComparisonBrightenDark(enabled: Boolean) {
+		context.dataStore.edit { it[Keys.SET_COMPARISON_BRIGHTEN_DARK] = enabled }
+	}
+
+	suspend fun setSetComparisonColors(betterColor: Int, singleDropColor: Int, worseColor: Int, neutralColor: Int) {
+		context.dataStore.edit {
+			it[Keys.SET_COMPARISON_COLOR_BETTER] = betterColor
+			it[Keys.SET_COMPARISON_COLOR_SINGLE_DROP] = singleDropColor
+			it[Keys.SET_COMPARISON_COLOR_WORSE] = worseColor
+			it[Keys.SET_COMPARISON_COLOR_NEUTRAL] = neutralColor
+		}
 	}
 
 	val streakExceptions: Flow<List<StreakException>> = context.dataStore.data.map { prefs ->
