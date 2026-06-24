@@ -131,9 +131,15 @@ class SettingsViewModel(
 		}
 	}
 
-	fun setSetComparisonColors(betterColor: Int, sameColor: Int, worseColor: Int, neutralColor: Int) {
+	fun setSetComparisonBrightenDark(enabled: Boolean) {
 		viewModelScope.launch {
-			settingsRepository.setSetComparisonColors(betterColor, sameColor, worseColor, neutralColor)
+			settingsRepository.setSetComparisonBrightenDark(enabled)
+		}
+	}
+
+	fun setSetComparisonColors(betterColor: Int, singleDropColor: Int, worseColor: Int, neutralColor: Int) {
+		viewModelScope.launch {
+			settingsRepository.setSetComparisonColors(betterColor, singleDropColor, worseColor, neutralColor)
 		}
 	}
 

@@ -38,7 +38,9 @@ data class ActiveExerciseEntry(
 	val planSets: Int = 0,
 	val planSetsData: List<WorkoutSet> = emptyList(),
 	/** Sets from the last logged workout of this exercise, used as the comparison baseline. */
-	val lastPerformanceSets: List<WorkoutSet> = emptyList()
+	val lastPerformanceSets: List<WorkoutSet> = emptyList(),
+	/** Sets from the workout before [lastPerformanceSets], to tell a one-off drop from a regression. */
+	val priorPerformanceSets: List<WorkoutSet> = emptyList()
 )
 
 data class ActiveWorkoutUiState(
@@ -158,10 +160,15 @@ class ActiveWorkoutViewModel(
 		viewModelScope.launch {
 			val sets = workoutRepository.getLastPerformanceSets(exerciseId, resumedFromWorkoutId)
 			if (sets.isEmpty()) return@launch
+			val priorSets = workoutRepository.getPreviousPerformanceSets(exerciseId, resumedFromWorkoutId)
 			_uiState.update { state ->
 				state.copy(
 					exercises = state.exercises.map { entry ->
-						if (entry.id == entryId) entry.copy(lastPerformanceSets = sets) else entry
+						if (entry.id == entryId) {
+							entry.copy(lastPerformanceSets = sets, priorPerformanceSets = priorSets)
+						} else {
+							entry
+						}
 					}
 				)
 			}

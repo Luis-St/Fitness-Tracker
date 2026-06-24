@@ -228,7 +228,7 @@ fun SettingsScreen(
 		val comparison = uiState.setComparison
 		val initial = when (role) {
 			SetComparisonColorRole.BETTER -> comparison.betterColor
-			SetComparisonColorRole.SAME -> comparison.sameColor
+			SetComparisonColorRole.SINGLE_DROP -> comparison.singleDropColor
 			SetComparisonColorRole.WORSE -> comparison.worseColor
 			SetComparisonColorRole.NEUTRAL -> comparison.neutralColor
 		}
@@ -239,7 +239,7 @@ fun SettingsScreen(
 				val argb = chosen.toArgb()
 				viewModel.setSetComparisonColors(
 					betterColor = if (role == SetComparisonColorRole.BETTER) argb else comparison.betterColor,
-					sameColor = if (role == SetComparisonColorRole.SAME) argb else comparison.sameColor,
+					singleDropColor = if (role == SetComparisonColorRole.SINGLE_DROP) argb else comparison.singleDropColor,
 					worseColor = if (role == SetComparisonColorRole.WORSE) argb else comparison.worseColor,
 					neutralColor = if (role == SetComparisonColorRole.NEUTRAL) argb else comparison.neutralColor
 				)
@@ -612,9 +612,9 @@ fun SettingsScreen(
 					onClick = { colorPickerRole = SetComparisonColorRole.BETTER }
 				)
 				SetComparisonColorRow(
-					label = stringResource(R.string.set_comparison_same),
-					color = Color(uiState.setComparison.sameColor),
-					onClick = { colorPickerRole = SetComparisonColorRole.SAME }
+					label = stringResource(R.string.set_comparison_single_drop),
+					color = Color(uiState.setComparison.singleDropColor),
+					onClick = { colorPickerRole = SetComparisonColorRole.SINGLE_DROP }
 				)
 				SetComparisonColorRow(
 					label = stringResource(R.string.set_comparison_worse),
@@ -626,6 +626,30 @@ fun SettingsScreen(
 					color = Color(uiState.setComparison.neutralColor),
 					onClick = { colorPickerRole = SetComparisonColorRole.NEUTRAL }
 				)
+
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(top = 8.dp),
+					horizontalArrangement = Arrangement.SpaceBetween,
+					verticalAlignment = Alignment.CenterVertically
+				) {
+					Column(modifier = Modifier.weight(1f)) {
+						Text(
+							text = stringResource(R.string.set_comparison_brighten_dark),
+							style = MaterialTheme.typography.bodyLarge
+						)
+						Text(
+							text = stringResource(R.string.set_comparison_brighten_dark_desc),
+							style = MaterialTheme.typography.bodySmall,
+							color = MaterialTheme.colorScheme.onSurfaceVariant
+						)
+					}
+					Switch(
+						checked = uiState.setComparison.brightenInDark,
+						onCheckedChange = { viewModel.setSetComparisonBrightenDark(it) }
+					)
+				}
 			}
 
 			Spacer(modifier = Modifier.height(24.dp))
@@ -805,7 +829,7 @@ private fun overviewSectionLabel(section: OverviewSection): Int = when (section)
 
 private enum class SetComparisonColorRole(val labelRes: Int) {
 	BETTER(R.string.set_comparison_better),
-	SAME(R.string.set_comparison_same),
+	SINGLE_DROP(R.string.set_comparison_single_drop),
 	WORSE(R.string.set_comparison_worse),
 	NEUTRAL(R.string.set_comparison_neutral)
 }

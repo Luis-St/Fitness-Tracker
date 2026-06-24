@@ -87,6 +87,16 @@ class WorkoutRepository(
 			workoutSetDao.getLastPerformanceSets(exerciseId, excludeWorkoutId).map { it.toDomain() }
 		}
 
+	/**
+	 * Sets of the second most recent logged workout containing the exercise, used to distinguish a
+	 * one-off drop from an ongoing regression. [excludeWorkoutId] skips the workout being
+	 * resumed/edited. Empty when the exercise has fewer than two prior workouts.
+	 */
+	suspend fun getPreviousPerformanceSets(exerciseId: Long, excludeWorkoutId: Long = 0L): List<WorkoutSet> =
+		withContext(Dispatchers.IO) {
+			workoutSetDao.getPreviousPerformanceSets(exerciseId, excludeWorkoutId).map { it.toDomain() }
+		}
+
 	/** Full history of a specific set number for an exercise, newest workout first. */
 	suspend fun getSetHistory(exerciseId: Long, setNumber: Int): List<SetHistoryEntry> =
 		withContext(Dispatchers.IO) {

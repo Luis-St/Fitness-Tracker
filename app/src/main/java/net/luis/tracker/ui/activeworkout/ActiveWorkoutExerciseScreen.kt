@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -56,6 +55,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -253,7 +254,13 @@ fun ActiveWorkoutExerciseScreen(
 			// Sets list
 			val realSets = currentEntry.sets
 			val lastPerformance = currentEntry.lastPerformanceSets
+			val priorPerformance = currentEntry.priorPerformanceSets
 			val comparisonActive = comparisonSettings.enabled && lastPerformance.isNotEmpty()
+			// Badges are a low-alpha tint of the configured color. Under a dark theme the tint
+			// reads as dim/muted, so (when enabled) make it more opaque to let the color show.
+			val brightenBadges = comparisonSettings.brightenInDark &&
+				MaterialTheme.colorScheme.surface.luminance() < 0.5f
+			val badgeAlpha = if (brightenBadges) BADGE_ALPHA_BRIGHT else BADGE_ALPHA_DEFAULT
 			// Ghost/reference rows only ever come from a template, never from logged history.
 			val ghostSets = currentEntry.planSetsData
 			val totalRows = maxOf(realSets.size, ghostSets.size)
@@ -277,7 +284,12 @@ fun ActiveWorkoutExerciseScreen(
 						val ghostSet = ghostSets.getOrNull(index)
 						if (realSet != null) {
 							val badges = if (comparisonActive) {
-								compareSet(realSet, lastPerformance.getOrNull(index), hasWeight)
+								compareSet(
+									realSet,
+									lastPerformance.getOrNull(index),
+									priorPerformance.getOrNull(index),
+									hasWeight
+								)
 							} else {
 								null
 							}
@@ -297,8 +309,8 @@ fun ActiveWorkoutExerciseScreen(
 								showDivider = index < totalRows - 1,
 								dropWeightKg = realSet.dropWeightKg,
 								dropReps = realSet.dropReps,
-								weightBadgeColor = badges?.weight.toBadgeColor(comparisonSettings) ?: neutralBadge,
-								repsBadgeColor = badges?.reps.toBadgeColor(comparisonSettings) ?: neutralBadge,
+								weightBadgeColor = (badges?.weight.toBadgeColor(comparisonSettings) ?: neutralBadge)?.copy(alpha = badgeAlpha),
+								repsBadgeColor = (badges?.reps.toBadgeColor(comparisonSettings) ?: neutralBadge)?.copy(alpha = badgeAlpha),
 								onValueClick = { historySet = realSet.setNumber },
 								onRemove = { viewModel.removeSet(entryId, index) }
 							)
@@ -548,11 +560,18 @@ private fun SetItem(
 /** Resolves a per-field [SetComparison] to its configured badge color, or null for no badge. */
 private fun SetComparison?.toBadgeColor(settings: SetComparisonSettings): Color? = when (this) {
 	SetComparison.BETTER -> Color(settings.betterColor)
-	SetComparison.SAME -> Color(settings.sameColor)
+	SetComparison.SAME -> Color(settings.neutralColor)
+	SetComparison.SINGLE_DROP -> Color(settings.singleDropColor)
 	SetComparison.WORSE -> Color(settings.worseColor)
 	SetComparison.TRADEOFF -> Color(settings.neutralColor)
 	SetComparison.NEUTRAL, null -> null
 }
+
+/** Default badge tint opacity — subtle, so the value isn't pulled into full focus. */
+private const val BADGE_ALPHA_DEFAULT = 0.18f
+
+/** Stronger badge tint opacity for dark themes, letting the saturated color read more vividly. */
+private const val BADGE_ALPHA_BRIGHT = 0.55f
 
 /**
  * A set value (weight or reps). When [badgeColor] is non-null the value gets a subtle, lightly
@@ -575,7 +594,7 @@ private fun BadgeText(
 			text = text,
 			style = MaterialTheme.typography.bodyLarge,
 			modifier = base
-				.background(badgeColor.copy(alpha = 0.18f))
+				.background(badgeColor)
 				.padding(horizontal = 6.dp, vertical = 2.dp)
 		)
 	} else {
@@ -606,21 +625,25 @@ private fun SetHistoryDialog(
 
 	AlertDialog(
 		onDismissRequest = onDismiss,
-		title = { Text("$exerciseTitle — ${stringResource(R.string.set_history_title, setNumber)}") },
+		title = { Text("$exerciseTitle: ${stringResource(R.string.set_history_title, setNumber)}") },
 		text = {
 			val entries = history
-			when {
-				entries == null -> Box(
-					modifier = Modifier.fillMaxWidth(),
-					contentAlignment = Alignment.Center
-				) {
-					CircularProgressIndicator()
-				}
-				entries.isEmpty() -> Text(stringResource(R.string.set_history_empty))
-				else -> LazyColumn(
-					modifier = Modifier.heightIn(max = 360.dp),
-					verticalArrangement = Arrangement.spacedBy(8.dp)
-				) {
+			// Fixed dialog body height of 3/5 of the screen, so the list scrolls instead of the
+			// popup growing/shrinking with the number of logged sets.
+			val bodyHeight = (LocalConfiguration.current.screenHeightDp * 3 / 5).dp
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(bodyHeight),
+				contentAlignment = Alignment.Center
+			) {
+				when {
+					entries == null -> CircularProgressIndicator()
+					entries.isEmpty() -> Text(stringResource(R.string.set_history_empty))
+					else -> LazyColumn(
+						modifier = Modifier.fillMaxSize(),
+						verticalArrangement = Arrangement.spacedBy(8.dp)
+					) {
 					items(entries) { item ->
 						val date = Instant.ofEpochMilli(item.workoutDate)
 							.atZone(ZoneId.systemDefault())
@@ -665,6 +688,7 @@ private fun SetHistoryDialog(
 						}
 					}
 				}
+			}
 			}
 		},
 		confirmButton = {

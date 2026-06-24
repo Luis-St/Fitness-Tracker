@@ -151,9 +151,11 @@
 	<string name="set_comparison_enable">Compare with last performance</string>
 	<string name="set_comparison_desc">Highlight new sets based on your last time doing this exercise.</string>
 	<string name="set_comparison_better">Improvement</string>
-	<string name="set_comparison_same">Equal or single drop</string>
+	<string name="set_comparison_single_drop">Single drop</string>
 	<string name="set_comparison_worse">Regression</string>
-	<string name="set_comparison_neutral">Trade-off / neutral</string>
+	<string name="set_comparison_neutral">Unchanged / trade-off</string>
+	<string name="set_comparison_brighten_dark">Brighter badges in dark mode</string>
+	<string name="set_comparison_brighten_dark_desc">Make badge colors more vivid when a dark theme is active so they stand out more.</string>
 	<string name="set_history_title">Set %1$d history</string>
 	<string name="set_history_empty">No history yet.</string>
 	<string name="overview_sections">Overview Sections</string>

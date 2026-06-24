@@ -55,6 +55,28 @@ interface WorkoutSetDao {
 	)
 	suspend fun getLastPerformanceSets(exerciseId: Long, excludeWorkoutId: Long): List<WorkoutSetEntity>
 
+	/**
+	 * Like [getLastPerformanceSets] but for the workout *before* the most recent one (the second
+	 * most recent performance). Used to tell a one-off drop from an ongoing regression. Empty when
+	 * the exercise has fewer than two prior workouts.
+	 */
+	@Query(
+		"""
+		SELECT ws.* FROM workout_sets ws
+		INNER JOIN workout_exercises we ON ws.workoutExerciseId = we.id
+		WHERE we.exerciseId = :exerciseId
+			AND we.workoutId = (
+				SELECT w.id FROM workouts w
+				INNER JOIN workout_exercises we2 ON we2.workoutId = w.id
+				WHERE we2.exerciseId = :exerciseId AND w.id != :excludeWorkoutId
+				ORDER BY w.startTime DESC
+				LIMIT 1 OFFSET 1
+			)
+		ORDER BY ws.setNumber ASC
+		"""
+	)
+	suspend fun getPreviousPerformanceSets(exerciseId: Long, excludeWorkoutId: Long): List<WorkoutSetEntity>
+
 	/** Every logged occurrence of a given set number for an exercise, newest workout first. */
 	@Query(
 		"""

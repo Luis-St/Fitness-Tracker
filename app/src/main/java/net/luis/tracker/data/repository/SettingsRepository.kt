@@ -41,9 +41,10 @@ class SettingsRepository(private val context: Context) {
 		val STREAK_EXCEPTIONS = stringPreferencesKey("streak_exceptions")
 		val SET_COMPARISON_ENABLED = booleanPreferencesKey("set_comparison_enabled")
 		val SET_COMPARISON_COLOR_BETTER = intPreferencesKey("set_comparison_color_better")
-		val SET_COMPARISON_COLOR_SAME = intPreferencesKey("set_comparison_color_same")
+		val SET_COMPARISON_COLOR_SINGLE_DROP = intPreferencesKey("set_comparison_color_single_drop")
 		val SET_COMPARISON_COLOR_WORSE = intPreferencesKey("set_comparison_color_worse")
 		val SET_COMPARISON_COLOR_NEUTRAL = intPreferencesKey("set_comparison_color_neutral")
+		val SET_COMPARISON_BRIGHTEN_DARK = booleanPreferencesKey("set_comparison_brighten_dark")
 	}
 
 	val themeMode: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
@@ -138,9 +139,10 @@ class SettingsRepository(private val context: Context) {
 		SetComparisonSettings(
 			enabled = prefs[Keys.SET_COMPARISON_ENABLED] ?: true,
 			betterColor = prefs[Keys.SET_COMPARISON_COLOR_BETTER] ?: SetComparisonSettings.DEFAULT_BETTER,
-			sameColor = prefs[Keys.SET_COMPARISON_COLOR_SAME] ?: SetComparisonSettings.DEFAULT_SAME,
+			singleDropColor = prefs[Keys.SET_COMPARISON_COLOR_SINGLE_DROP] ?: SetComparisonSettings.DEFAULT_SINGLE_DROP,
 			worseColor = prefs[Keys.SET_COMPARISON_COLOR_WORSE] ?: SetComparisonSettings.DEFAULT_WORSE,
-			neutralColor = prefs[Keys.SET_COMPARISON_COLOR_NEUTRAL] ?: SetComparisonSettings.DEFAULT_NEUTRAL
+			neutralColor = prefs[Keys.SET_COMPARISON_COLOR_NEUTRAL] ?: SetComparisonSettings.DEFAULT_NEUTRAL,
+			brightenInDark = prefs[Keys.SET_COMPARISON_BRIGHTEN_DARK] ?: true
 		)
 	}
 
@@ -148,10 +150,14 @@ class SettingsRepository(private val context: Context) {
 		context.dataStore.edit { it[Keys.SET_COMPARISON_ENABLED] = enabled }
 	}
 
-	suspend fun setSetComparisonColors(betterColor: Int, sameColor: Int, worseColor: Int, neutralColor: Int) {
+	suspend fun setSetComparisonBrightenDark(enabled: Boolean) {
+		context.dataStore.edit { it[Keys.SET_COMPARISON_BRIGHTEN_DARK] = enabled }
+	}
+
+	suspend fun setSetComparisonColors(betterColor: Int, singleDropColor: Int, worseColor: Int, neutralColor: Int) {
 		context.dataStore.edit {
 			it[Keys.SET_COMPARISON_COLOR_BETTER] = betterColor
-			it[Keys.SET_COMPARISON_COLOR_SAME] = sameColor
+			it[Keys.SET_COMPARISON_COLOR_SINGLE_DROP] = singleDropColor
 			it[Keys.SET_COMPARISON_COLOR_WORSE] = worseColor
 			it[Keys.SET_COMPARISON_COLOR_NEUTRAL] = neutralColor
 		}
