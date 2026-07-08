@@ -192,7 +192,7 @@ class SettingsRepository(private val context: Context) {
 			"${e.id}|${e.type.name}|${e.start.toEpochDay()}|${e.end.toEpochDay()}"
 		}
 
-	private fun parseSections(raw: String?, allowed: List<OverviewSection>): List<OverviewSectionState> {
+	private fun parseSections(raw: String?, defaults: List<OverviewSectionState>): List<OverviewSectionState> {
 		val stored = raw?.takeIf { it.isNotBlank() }
 			?.split(",")
 			?.mapNotNull { token ->
@@ -203,7 +203,7 @@ class SettingsRepository(private val context: Context) {
 				OverviewSectionState(section, visible = parts.getOrNull(1) != "0")
 			}
 			?: emptyList()
-		return OverviewLayout.normalize(stored, allowed)
+		return OverviewLayout.normalize(stored, defaults)
 	}
 
 	private fun serializeSections(sections: List<OverviewSectionState>): String =

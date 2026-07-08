@@ -40,6 +40,19 @@ data class WorkoutDateInfo(
 	val startTime: Long
 )
 
+data class RecentWorkout(
+	val workoutId: Long,
+	val startTime: Long,
+	val durationSeconds: Long
+)
+
+data class TopExercise(
+	val exerciseId: Long,
+	val exerciseTitle: String,
+	val workoutCount: Int,
+	val totalVolume: Double
+)
+
 @Dao
 interface StatsDao {
 
@@ -121,6 +134,45 @@ interface StatsDao {
 
 	@Query("SELECT COUNT(*) FROM workouts")
 	fun getTotalWorkoutCount(): Flow<Int>
+
+	@Query("SELECT COUNT(*) FROM workout_sets")
+	fun getTotalSetCount(): Flow<Int>
+
+	@Query("SELECT COALESCE(SUM(reps + COALESCE(dropReps, 0)), 0) FROM workout_sets")
+	fun getTotalReps(): Flow<Long>
+
+	@Query("SELECT COALESCE(SUM(durationSeconds), 0) FROM workouts")
+	fun getTotalDurationSeconds(): Flow<Long>
+
+	@Query("SELECT startTime FROM workouts ORDER BY startTime ASC")
+	fun getAllWorkoutStartTimes(): Flow<List<Long>>
+
+	@Query(
+		"""
+		SELECT id as workoutId, startTime, durationSeconds
+		FROM workouts
+		ORDER BY startTime DESC
+		LIMIT :limit
+		"""
+	)
+	fun getRecentWorkouts(limit: Int): Flow<List<RecentWorkout>>
+
+	@Query(
+		"""
+		SELECT e.id as exerciseId,
+			e.title as exerciseTitle,
+			COUNT(DISTINCT we.workoutId) as workoutCount,
+			SUM(ws.weightKg * ws.reps + COALESCE(ws.dropWeightKg * ws.dropReps, 0)) as totalVolume
+		FROM exercises e
+		INNER JOIN workout_exercises we ON we.exerciseId = e.id
+		INNER JOIN workout_sets ws ON ws.workoutExerciseId = we.id
+		WHERE e.isDeleted = 0
+		GROUP BY e.id
+		ORDER BY workoutCount DESC, totalVolume DESC
+		LIMIT :limit
+		"""
+	)
+	fun getTopExercises(limit: Int): Flow<List<TopExercise>>
 
 	@Query(
 		"""

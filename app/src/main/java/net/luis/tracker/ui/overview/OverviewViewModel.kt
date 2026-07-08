@@ -17,6 +17,8 @@ import kotlinx.coroutines.launch
 import net.luis.tracker.data.local.dao.CategoryWorkoutCount
 import net.luis.tracker.data.local.dao.ExerciseProgress
 import net.luis.tracker.data.local.dao.PersonalRecord
+import net.luis.tracker.data.local.dao.RecentWorkout
+import net.luis.tracker.data.local.dao.TopExercise
 import net.luis.tracker.data.local.dao.WorkoutDateInfo
 import net.luis.tracker.data.repository.ExerciseRepository
 import net.luis.tracker.data.repository.SettingsRepository
@@ -54,6 +56,15 @@ data class OverviewUiState(
 	val maxWorkoutVolume: Double = 0.0,
 	val avgWorkoutsPerWeek: Double = 0.0,
 	val longestWorkoutMinutes: Long = 0,
+	val totalSets: Int = 0,
+	val totalReps: Long = 0,
+	val totalTimeSeconds: Long = 0,
+	val recentWorkouts: List<RecentWorkout> = emptyList(),
+	val topExercises: List<TopExercise> = emptyList(),
+	val avgWorkoutGapDays: Double? = null,
+	val longestWorkoutGapDays: Int = 0,
+	val mostActiveWeekday: DayOfWeek? = null,
+	val workoutCountByDay: Map<LocalDate, Int> = emptyMap(),
 	val personalRecords: List<PersonalRecord> = emptyList(),
 	val categoryBreakdown: List<CategoryWorkoutCount> = emptyList(),
 	val monthCategoryBreakdown: List<CategoryWorkoutCount> = emptyList(),
@@ -184,6 +195,56 @@ class OverviewViewModel(
 			}
 		}
 		viewModelScope.launch {
+			statsRepository.getTotalSetCount().collect { count ->
+				_uiState.update { it.copy(totalSets = count) }
+			}
+		}
+		viewModelScope.launch {
+			statsRepository.getTotalReps().collect { reps ->
+				_uiState.update { it.copy(totalReps = reps) }
+			}
+		}
+		viewModelScope.launch {
+			statsRepository.getTotalDurationSeconds().collect { seconds ->
+				_uiState.update { it.copy(totalTimeSeconds = seconds) }
+			}
+		}
+		viewModelScope.launch {
+			statsRepository.getRecentWorkouts(RECENT_WORKOUTS_LIMIT).collect { workouts ->
+				_uiState.update { it.copy(recentWorkouts = workouts) }
+			}
+		}
+		viewModelScope.launch {
+			statsRepository.getTopExercises(TOP_EXERCISES_LIMIT).collect { exercises ->
+				_uiState.update { it.copy(topExercises = exercises) }
+			}
+		}
+		viewModelScope.launch {
+			statsRepository.getAllWorkoutStartTimes().collect { startTimes ->
+				val zone = ZoneId.systemDefault()
+				val countByDay = startTimes.groupingBy {
+					Instant.ofEpochMilli(it).atZone(zone).toLocalDate()
+				}.eachCount()
+				val distinctDays = countByDay.keys.sorted()
+				val gaps = distinctDays.zipWithNext { a, b -> ChronoUnit.DAYS.between(a, b) }
+				val avgGap = if (gaps.isNotEmpty()) gaps.average() else null
+				val longestGap = (gaps.maxOrNull() ?: 0L).toInt()
+				val mostActive = distinctDays
+					.groupingBy { it.dayOfWeek }
+					.eachCount()
+					.maxByOrNull { it.value }
+					?.key
+				_uiState.update {
+					it.copy(
+						workoutCountByDay = countByDay,
+						avgWorkoutGapDays = avgGap,
+						longestWorkoutGapDays = longestGap,
+						mostActiveWeekday = mostActive
+					)
+				}
+			}
+		}
+		viewModelScope.launch {
 			@OptIn(ExperimentalCoroutinesApi::class)
 			statsRepository.getFirstWorkoutDate()
 				.flatMapLatest { firstDate ->
@@ -306,5 +367,10 @@ class OverviewViewModel(
 		override fun <T : ViewModel> create(modelClass: Class<T>): T {
 			return OverviewViewModel(statsRepository, exerciseRepository, settingsRepository) as T
 		}
+	}
+
+	companion object {
+		private const val RECENT_WORKOUTS_LIMIT = 5
+		private const val TOP_EXERCISES_LIMIT = 5
 	}
 }

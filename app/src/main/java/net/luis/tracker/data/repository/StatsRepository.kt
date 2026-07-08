@@ -5,7 +5,9 @@ import net.luis.tracker.data.local.dao.CategoryWorkoutCount
 import net.luis.tracker.data.local.dao.ExerciseProgress
 import net.luis.tracker.data.local.dao.ExerciseSetHistory
 import net.luis.tracker.data.local.dao.PersonalRecord
+import net.luis.tracker.data.local.dao.RecentWorkout
 import net.luis.tracker.data.local.dao.StatsDao
+import net.luis.tracker.data.local.dao.TopExercise
 import net.luis.tracker.data.local.dao.WorkoutDateInfo
 
 class StatsRepository(private val statsDao: StatsDao) {
@@ -33,6 +35,24 @@ class StatsRepository(private val statsDao: StatsDao) {
 
 	fun getTotalWorkoutCount(): Flow<Int> =
 		statsDao.getTotalWorkoutCount()
+
+	fun getTotalSetCount(): Flow<Int> =
+		statsDao.getTotalSetCount()
+
+	fun getTotalReps(): Flow<Long> =
+		statsDao.getTotalReps()
+
+	fun getTotalDurationSeconds(): Flow<Long> =
+		statsDao.getTotalDurationSeconds()
+
+	fun getAllWorkoutStartTimes(): Flow<List<Long>> =
+		statsDao.getAllWorkoutStartTimes()
+
+	fun getRecentWorkouts(limit: Int): Flow<List<RecentWorkout>> =
+		statsDao.getRecentWorkouts(limit)
+
+	fun getTopExercises(limit: Int): Flow<List<TopExercise>> =
+		statsDao.getTopExercises(limit)
 
 	fun getMaxWorkoutVolume(): Flow<Double?> =
 		statsDao.getMaxWorkoutVolume()

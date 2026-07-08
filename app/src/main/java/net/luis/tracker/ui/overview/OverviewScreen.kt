@@ -54,13 +54,18 @@ import net.luis.tracker.data.repository.StatsRepository
 import net.luis.tracker.domain.model.ChartMetric
 import net.luis.tracker.domain.model.OverviewSection
 import net.luis.tracker.domain.model.WeightUnit
+import net.luis.tracker.ui.overview.components.ActivityHeatmapCard
 import net.luis.tracker.ui.overview.components.CalendarView
 import net.luis.tracker.ui.overview.components.CategoryBreakdownChart
+import net.luis.tracker.ui.overview.components.ConsistencyCard
 import net.luis.tracker.ui.overview.components.LifetimeStatsSummaryCard
+import net.luis.tracker.ui.overview.components.LifetimeTotalsCard
 import net.luis.tracker.ui.overview.components.MonthStatsSummaryCard
 import net.luis.tracker.ui.overview.components.PersonalRecordsCard
 import net.luis.tracker.ui.overview.components.ProgressChart
+import net.luis.tracker.ui.overview.components.RecentWorkoutsCard
 import net.luis.tracker.ui.overview.components.StreakCard
+import net.luis.tracker.ui.overview.components.TopExercisesCard
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -227,7 +232,8 @@ fun OverviewScreen(
 							weightUnit = weightUnit,
 							onSelectMetric = { viewModel.selectMetric(it) },
 							onSelectExercise = { viewModel.selectExercise(it) },
-							onViewAllRecords = onViewAllRecords
+							onViewAllRecords = onViewAllRecords,
+							onNavigateToWorkout = onNavigateToWorkout
 						)
 
 						Spacer(modifier = Modifier.height(24.dp))
@@ -247,7 +253,8 @@ private fun OverviewSectionContent(
 	weightUnit: WeightUnit,
 	onSelectMetric: (ChartMetric) -> Unit,
 	onSelectExercise: (Long?) -> Unit,
-	onViewAllRecords: () -> Unit
+	onViewAllRecords: () -> Unit,
+	onNavigateToWorkout: (Long) -> Unit
 ) {
 	when (section) {
 		OverviewSection.STREAK -> StreakCard(currentStreak = uiState.currentStreak)
@@ -286,6 +293,31 @@ private fun OverviewSectionContent(
 
 		OverviewSection.CATEGORY -> CategoryBreakdownChart(
 			categoryBreakdown = if (tab == OverviewTab.MONTH) uiState.monthCategoryBreakdown else uiState.categoryBreakdown
+		)
+
+		OverviewSection.TOTALS -> LifetimeTotalsCard(
+			totalSets = uiState.totalSets,
+			totalReps = uiState.totalReps,
+			totalTimeSeconds = uiState.totalTimeSeconds
+		)
+
+		OverviewSection.RECENT_WORKOUTS -> RecentWorkoutsCard(
+			workouts = uiState.recentWorkouts,
+			onWorkoutClick = onNavigateToWorkout
+		)
+
+		OverviewSection.CONSISTENCY -> ConsistencyCard(
+			avgGapDays = uiState.avgWorkoutGapDays,
+			longestGapDays = uiState.longestWorkoutGapDays,
+			mostActiveWeekday = uiState.mostActiveWeekday
+		)
+
+		OverviewSection.TOP_EXERCISES -> TopExercisesCard(
+			exercises = uiState.topExercises
+		)
+
+		OverviewSection.HEATMAP -> ActivityHeatmapCard(
+			countByDay = uiState.workoutCountByDay
 		)
 	}
 }

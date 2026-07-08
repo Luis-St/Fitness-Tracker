@@ -10,7 +10,12 @@ enum class OverviewSection {
 	SUMMARY,
 	PROGRESS,
 	RECORDS,
-	CATEGORY
+	CATEGORY,
+	TOTALS,
+	RECENT_WORKOUTS,
+	CONSISTENCY,
+	TOP_EXERCISES,
+	HEATMAP
 }
 
 /** A single section together with its current visibility. */
@@ -29,42 +34,54 @@ data class OverviewLayout(
 	val lifetime: List<OverviewSectionState>
 ) {
 	companion object {
-		/** Sections available on the "This Month" tab, in their default order. */
+		/**
+		 * Sections available on the "This Month" tab, in their default order and default
+		 * visibility. Newly introduced sections should default to hidden so existing users aren't
+		 * surprised by extra cards appearing on their overview.
+		 */
 		val MONTH_SECTIONS = listOf(
-			OverviewSection.STREAK,
-			OverviewSection.SUMMARY,
-			OverviewSection.PROGRESS,
-			OverviewSection.CATEGORY
+			OverviewSectionState(OverviewSection.STREAK),
+			OverviewSectionState(OverviewSection.SUMMARY),
+			OverviewSectionState(OverviewSection.PROGRESS),
+			OverviewSectionState(OverviewSection.CATEGORY),
+			OverviewSectionState(OverviewSection.RECENT_WORKOUTS, visible = false),
+			OverviewSectionState(OverviewSection.TOP_EXERCISES, visible = false)
 		)
 
-		/** Sections available on the "Lifetime" tab, in their default order. */
+		/** Sections available on the "Lifetime" tab, in their default order and default visibility. */
 		val LIFETIME_SECTIONS = listOf(
-			OverviewSection.STREAK,
-			OverviewSection.SUMMARY,
-			OverviewSection.PROGRESS,
-			OverviewSection.RECORDS,
-			OverviewSection.CATEGORY
+			OverviewSectionState(OverviewSection.STREAK),
+			OverviewSectionState(OverviewSection.SUMMARY),
+			OverviewSectionState(OverviewSection.PROGRESS),
+			OverviewSectionState(OverviewSection.RECORDS),
+			OverviewSectionState(OverviewSection.CATEGORY),
+			OverviewSectionState(OverviewSection.TOTALS, visible = false),
+			OverviewSectionState(OverviewSection.RECENT_WORKOUTS, visible = false),
+			OverviewSectionState(OverviewSection.CONSISTENCY, visible = false),
+			OverviewSectionState(OverviewSection.TOP_EXERCISES, visible = false),
+			OverviewSectionState(OverviewSection.HEATMAP, visible = false)
 		)
 
 		val DEFAULT = OverviewLayout(
-			month = MONTH_SECTIONS.map { OverviewSectionState(it) },
-			lifetime = LIFETIME_SECTIONS.map { OverviewSectionState(it) }
+			month = MONTH_SECTIONS,
+			lifetime = LIFETIME_SECTIONS
 		)
 
 		/**
-		 * Reconciles a (possibly stale or partial) stored list against the sections allowed for a
+		 * Reconciles a (possibly stale or partial) stored list against the [defaults] allowed for a
 		 * tab: keeps stored order and visibility for valid sections, drops unknown/duplicate ones,
-		 * and appends any missing allowed sections at the end (visible by default). This keeps
-		 * persisted configs forward-compatible when sections are added or removed.
+		 * and appends any missing sections using their default visibility (so newly added,
+		 * default-hidden sections stay hidden for existing users). This keeps persisted configs
+		 * forward-compatible when sections are added or removed.
 		 */
 		fun normalize(
 			stored: List<OverviewSectionState>,
-			allowed: List<OverviewSection>
+			defaults: List<OverviewSectionState>
 		): List<OverviewSectionState> {
-			val allowedSet = allowed.toSet()
-			val kept = stored.filter { it.section in allowedSet }.distinctBy { it.section }
+			val allowed = defaults.map { it.section }.toSet()
+			val kept = stored.filter { it.section in allowed }.distinctBy { it.section }
 			val present = kept.map { it.section }.toSet()
-			val missing = allowed.filter { it !in present }.map { OverviewSectionState(it) }
+			val missing = defaults.filter { it.section !in present }
 			return kept + missing
 		}
 	}

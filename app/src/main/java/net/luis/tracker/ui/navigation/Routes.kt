@@ -21,6 +21,9 @@ data class SettingsRoute(val importUri: String = "")
 object StreakSettingsRoute
 
 @Serializable
+object OverviewSettingsRoute
+
+@Serializable
 object AddExerciseRoute
 
 @Serializable
