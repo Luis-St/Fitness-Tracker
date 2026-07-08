@@ -9,6 +9,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import net.luis.tracker.R
 import net.luis.tracker.domain.model.WeightUnit
+import net.luis.tracker.util.isAcceptableWeightInput
+import net.luis.tracker.util.toWeightDoubleOrNull
 
 @Composable
 fun WeightInput(
@@ -22,7 +24,7 @@ fun WeightInput(
 	OutlinedTextField(
 		value = text,
 		onValueChange = { input ->
-			if (input.isEmpty() || input.toDoubleOrNull()?.let { it >= 0 } == true) {
+			if (isAcceptableWeightInput(input) && (input.toWeightDoubleOrNull()?.let { it >= 0 } != false)) {
 				onTextChange(input)
 			}
 		},

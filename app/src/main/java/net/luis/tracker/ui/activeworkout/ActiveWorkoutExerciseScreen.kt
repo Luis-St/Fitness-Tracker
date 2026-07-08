@@ -73,6 +73,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import net.luis.tracker.ui.common.components.WeightDropdown
 import net.luis.tracker.ui.common.components.WeightInput
+import net.luis.tracker.util.toWeightDoubleOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -134,19 +135,19 @@ fun ActiveWorkoutExerciseScreen(
 		val currentEntry = entry
 		if (currentEntry != null) {
 			val reps = repsText.toIntOrNull() ?: 0
-			val weightValid = !currentEntry.exercise.hasWeight || currentEntry.exercise.allowsZeroWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
+			val weightValid = !currentEntry.exercise.hasWeight || currentEntry.exercise.allowsZeroWeight || (weightText.toWeightDoubleOrNull() ?: 0.0) > 0.0
 			val repsValid = reps > 0
 			val hasDropWeight = isDropSet && currentEntry.exercise.hasWeight && dropWeightText.isNotBlank()
 			val hasDropReps = isDropSet && dropRepsText.isNotBlank()
 			val wantsDropSet = hasDropWeight || hasDropReps
-			val dropWeightValue = dropWeightText.toDoubleOrNull() ?: 0.0
-			val mainWeightValue = weightText.toDoubleOrNull() ?: 0.0
+			val dropWeightValue = dropWeightText.toWeightDoubleOrNull() ?: 0.0
+			val mainWeightValue = weightText.toWeightDoubleOrNull() ?: 0.0
 			val dropWeightValid = !wantsDropSet || !currentEntry.exercise.hasWeight ||
 				(hasDropWeight && dropWeightValue > 0.0 && dropWeightValue < mainWeightValue)
 			val dropRepsValid = !wantsDropSet || (hasDropReps && (dropRepsText.toIntOrNull() ?: 0) > 0)
 			if (repsValid && weightValid && dropWeightValid && dropRepsValid) {
 				val weightKg = if (currentEntry.exercise.hasWeight) {
-					weightUnit.convertToKg(weightText.toDoubleOrNull() ?: 0.0)
+					weightUnit.convertToKg(weightText.toWeightDoubleOrNull() ?: 0.0)
 				} else {
 					0.0
 				}
@@ -434,13 +435,13 @@ fun ActiveWorkoutExerciseScreen(
 			Button(
 				onClick = {
 					val reps = repsText.toIntOrNull() ?: 0
-					val weightValid = !currentEntry.exercise.hasWeight || currentEntry.exercise.allowsZeroWeight || (weightText.toDoubleOrNull() ?: 0.0) > 0.0
+					val weightValid = !currentEntry.exercise.hasWeight || currentEntry.exercise.allowsZeroWeight || (weightText.toWeightDoubleOrNull() ?: 0.0) > 0.0
 					val repsValid = reps > 0
 					val hasDropWeight = isDropSet && currentEntry.exercise.hasWeight && dropWeightText.isNotBlank()
 					val hasDropReps = isDropSet && dropRepsText.isNotBlank()
 					val wantsDropSet = hasDropWeight || hasDropReps
-					val dropWeightValue = dropWeightText.toDoubleOrNull() ?: 0.0
-					val mainWeightValue = weightText.toDoubleOrNull() ?: 0.0
+					val dropWeightValue = dropWeightText.toWeightDoubleOrNull() ?: 0.0
+					val mainWeightValue = weightText.toWeightDoubleOrNull() ?: 0.0
 					val dropWeightValid = !wantsDropSet || !currentEntry.exercise.hasWeight ||
 						(hasDropWeight && dropWeightValue > 0.0 && dropWeightValue < mainWeightValue)
 					val dropRepsValid = !wantsDropSet || (hasDropReps && (dropRepsText.toIntOrNull() ?: 0) > 0)
@@ -450,7 +451,7 @@ fun ActiveWorkoutExerciseScreen(
 					dropRepsError = wantsDropSet && !dropRepsValid
 					if (repsValid && weightValid && dropWeightValid && dropRepsValid) {
 						val weightKg = if (currentEntry.exercise.hasWeight) {
-							weightUnit.convertToKg(weightText.toDoubleOrNull() ?: 0.0)
+							weightUnit.convertToKg(weightText.toWeightDoubleOrNull() ?: 0.0)
 						} else {
 							0.0
 						}

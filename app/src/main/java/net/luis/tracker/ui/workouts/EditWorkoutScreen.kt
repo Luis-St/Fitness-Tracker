@@ -71,6 +71,7 @@ import net.luis.tracker.domain.model.Workout
 import net.luis.tracker.domain.model.WorkoutExercise
 import net.luis.tracker.domain.model.WorkoutSet
 import net.luis.tracker.ui.common.components.WeightInput
+import net.luis.tracker.util.toWeightDoubleOrNull
 
 private data class EditExerciseEntry(
 	val id: Long,
@@ -445,7 +446,7 @@ private fun EditExerciseCard(
 					IconButton(
 						onClick = {
 							if (newReps > 0) {
-								val weightKg = weightUnit.convertToKg(weightText.toDoubleOrNull() ?: 0.0)
+								val weightKg = weightUnit.convertToKg(weightText.toWeightDoubleOrNull() ?: 0.0)
 								onAddSet(weightKg, newReps)
 								weightText = ""
 								newReps = 0

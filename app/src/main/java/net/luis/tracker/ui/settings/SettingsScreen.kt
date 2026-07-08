@@ -88,6 +88,8 @@ import net.luis.tracker.domain.model.ThemeMode
 import net.luis.tracker.domain.model.TimerResumeMode
 import net.luis.tracker.domain.model.WeightUnit
 import net.luis.tracker.ui.common.components.ColorPickerDialog
+import net.luis.tracker.util.isAcceptableWeightInput
+import net.luis.tracker.util.toWeightDoubleOrNull
 import net.luis.tracker.ui.overview.OverviewTab
 import kotlin.math.roundToInt
 
@@ -435,7 +437,7 @@ fun SettingsScreen(
 					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
 					val confirmAdd = {
-						val value = addWeightText.toDoubleOrNull()
+						val value = addWeightText.toWeightDoubleOrNull()
 						if (value != null && value > 0) {
 							val weightKg = uiState.weightUnit.convertToKg(value)
 							if (uiState.preferredWeightsKg.none { kotlin.math.abs(it - weightKg) < 0.001 }) {
@@ -448,7 +450,7 @@ fun SettingsScreen(
 					OutlinedTextField(
 						value = addWeightText,
 						onValueChange = { input ->
-							if (input.isEmpty() || input.toDoubleOrNull()?.let { it > 0 } == true) {
+							if (isAcceptableWeightInput(input) && (input.toWeightDoubleOrNull()?.let { it > 0 } != false)) {
 								addWeightText = input
 							}
 						},
