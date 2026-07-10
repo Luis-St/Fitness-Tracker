@@ -143,6 +143,11 @@
 	<string name="set_detail_format">Satz %1$d</string>
 
 	<!-- Settings -->
+	<string name="settings_category_appearance_desc">Design, Sprache und Farben</string>
+	<string name="settings_category_units_desc">Gewichtseinheit und bevorzugte Gewichte</string>
+	<string name="settings_category_workout_desc">Pausen-Timer, Streak und Fortsetzen</string>
+	<string name="settings_category_set_comparison_desc">Sätze mit deiner letzten Leistung vergleichen</string>
+	<string name="settings_category_data_desc">Daten exportieren, importieren und wiederherstellen</string>
 	<string name="language">Sprache</string>
 	<string name="appearance">Darstellung</string>
 	<string name="theme">Design</string>

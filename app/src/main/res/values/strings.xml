@@ -143,6 +143,11 @@
 	<string name="set_detail_format">Set %1$d</string>
 
 	<!-- Settings -->
+	<string name="settings_category_appearance_desc">Theme, language and colors</string>
+	<string name="settings_category_units_desc">Weight unit and preferred weights</string>
+	<string name="settings_category_workout_desc">Rest timer, streak and resume behavior</string>
+	<string name="settings_category_set_comparison_desc">Highlight sets vs. your last performance</string>
+	<string name="settings_category_data_desc">Export, import and restore your data</string>
 	<string name="language">Language</string>
 	<string name="appearance">Appearance</string>
 	<string name="theme">Theme</string>

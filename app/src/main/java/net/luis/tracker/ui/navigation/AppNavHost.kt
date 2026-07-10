@@ -37,9 +37,14 @@ import net.luis.tracker.ui.exercises.ExercisesScreen
 import net.luis.tracker.ui.overview.AllPersonalRecordsScreen
 import net.luis.tracker.ui.overview.ExerciseHistoryScreen
 import net.luis.tracker.ui.overview.OverviewScreen
+import net.luis.tracker.ui.settings.AppearanceSettingsScreen
+import net.luis.tracker.ui.settings.DataSettingsScreen
 import net.luis.tracker.ui.settings.SettingsScreen
 import net.luis.tracker.ui.settings.OverviewSettingsScreen
+import net.luis.tracker.ui.settings.SetComparisonSettingsScreen
 import net.luis.tracker.ui.settings.StreakSettingsScreen
+import net.luis.tracker.ui.settings.UnitsSettingsScreen
+import net.luis.tracker.ui.settings.WorkoutSettingsScreen
 import net.luis.tracker.ui.workouts.EditWorkoutScreen
 import net.luis.tracker.ui.workouts.WorkoutDetailScreen
 import net.luis.tracker.ui.workouts.WorkoutsScreen
@@ -96,7 +101,7 @@ fun AppNavHost(
 
 	LaunchedEffect(pendingImportUri) {
 		if (!pendingImportUri.isNullOrEmpty()) {
-			navController.navigate(SettingsRoute(importUri = pendingImportUri))
+			navController.navigate(DataSettingsRoute(importUri = pendingImportUri))
 		}
 	}
 
@@ -115,12 +120,12 @@ fun AppNavHost(
 						app = app,
 						onAddExercise = { navController.navigate(AddExerciseRoute) },
 						onExerciseClick = { id -> navController.navigate(ExerciseDetailRoute(id)) },
-						onOpenSettings = { navController.navigate(SettingsRoute()) }
+						onOpenSettings = { navController.navigate(SettingsRoute) }
 					)
 					1 -> OverviewScreen(
 						app = app,
 						weightUnit = weightUnit,
-						onOpenSettings = { navController.navigate(SettingsRoute()) },
+						onOpenSettings = { navController.navigate(SettingsRoute) },
 						onNavigateToWorkout = { workoutId ->
 							navController.navigate(WorkoutDetailRoute(workoutId))
 						},
@@ -132,19 +137,53 @@ fun AppNavHost(
 						draftRepository = draftRepository,
 						onStartWorkout = { navController.navigate(ActiveWorkoutGraphRoute()) },
 						onWorkoutClick = { id -> navController.navigate(WorkoutDetailRoute(id)) },
-						onOpenSettings = { navController.navigate(SettingsRoute()) }
+						onOpenSettings = { navController.navigate(SettingsRoute) }
 					)
 				}
 			}
 		}
-		composable<SettingsRoute> { backStackEntry ->
-			val route = backStackEntry.toRoute<SettingsRoute>()
+		composable<SettingsRoute> {
 			SettingsScreen(
+				onNavigateBack = { navController.popBackStack() },
+				onOpenAppearance = { navController.navigate(AppearanceSettingsRoute) },
+				onOpenUnits = { navController.navigate(UnitsSettingsRoute) },
+				onOpenWorkout = { navController.navigate(WorkoutSettingsRoute) },
+				onOpenSetComparison = { navController.navigate(SetComparisonSettingsRoute) },
+				onOpenOverviewSettings = { navController.navigate(OverviewSettingsRoute) },
+				onOpenData = { navController.navigate(DataSettingsRoute()) }
+			)
+		}
+		composable<AppearanceSettingsRoute> {
+			AppearanceSettingsScreen(
+				app = app,
+				onNavigateBack = { navController.popBackStack() }
+			)
+		}
+		composable<UnitsSettingsRoute> {
+			UnitsSettingsScreen(
+				app = app,
+				onNavigateBack = { navController.popBackStack() }
+			)
+		}
+		composable<WorkoutSettingsRoute> {
+			WorkoutSettingsScreen(
+				app = app,
+				onNavigateBack = { navController.popBackStack() },
+				onOpenStreakSettings = { navController.navigate(StreakSettingsRoute) }
+			)
+		}
+		composable<SetComparisonSettingsRoute> {
+			SetComparisonSettingsScreen(
+				app = app,
+				onNavigateBack = { navController.popBackStack() }
+			)
+		}
+		composable<DataSettingsRoute> { backStackEntry ->
+			val route = backStackEntry.toRoute<DataSettingsRoute>()
+			DataSettingsScreen(
 				app = app,
 				importUri = route.importUri,
-				onNavigateBack = { navController.popBackStack() },
-				onOpenStreakSettings = { navController.navigate(StreakSettingsRoute) },
-				onOpenOverviewSettings = { navController.navigate(OverviewSettingsRoute) }
+				onNavigateBack = { navController.popBackStack() }
 			)
 		}
 		composable<StreakSettingsRoute> {
