@@ -138,8 +138,41 @@ interface StatsDao {
 	@Query("SELECT COUNT(*) FROM workout_sets")
 	fun getTotalSetCount(): Flow<Int>
 
+	@Query(
+		"""
+		SELECT COUNT(ws.id)
+		FROM workout_sets ws
+		INNER JOIN workout_exercises we ON ws.workoutExerciseId = we.id
+		INNER JOIN workouts w ON we.workoutId = w.id
+		WHERE w.startTime >= :startMillis AND w.startTime < :endMillis
+		"""
+	)
+	fun getTotalSetCount(startMillis: Long, endMillis: Long): Flow<Int>
+
 	@Query("SELECT COALESCE(SUM(reps + COALESCE(dropReps, 0)), 0) FROM workout_sets")
 	fun getTotalReps(): Flow<Long>
+
+	@Query(
+		"""
+		SELECT COALESCE(SUM(ws.reps + COALESCE(ws.dropReps, 0)), 0)
+		FROM workout_sets ws
+		INNER JOIN workout_exercises we ON ws.workoutExerciseId = we.id
+		INNER JOIN workouts w ON we.workoutId = w.id
+		WHERE w.startTime >= :startMillis AND w.startTime < :endMillis
+		"""
+	)
+	fun getTotalReps(startMillis: Long, endMillis: Long): Flow<Long>
+
+	@Query(
+		"""
+		SELECT COALESCE(SUM(ws.weightKg * ws.reps + COALESCE(ws.dropWeightKg * ws.dropReps, 0)), 0)
+		FROM workout_sets ws
+		INNER JOIN workout_exercises we ON ws.workoutExerciseId = we.id
+		INNER JOIN workouts w ON we.workoutId = w.id
+		WHERE w.startTime >= :startMillis AND w.startTime < :endMillis
+		"""
+	)
+	fun getTotalVolume(startMillis: Long, endMillis: Long): Flow<Double>
 
 	@Query("SELECT COALESCE(SUM(durationSeconds), 0) FROM workouts")
 	fun getTotalDurationSeconds(): Flow<Long>

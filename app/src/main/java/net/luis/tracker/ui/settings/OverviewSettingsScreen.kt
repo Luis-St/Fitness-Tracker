@@ -179,6 +179,7 @@ fun OverviewSettingsScreen(
 internal fun overviewSectionLabel(section: OverviewSection): Int = when (section) {
 	OverviewSection.STREAK -> R.string.current_streak
 	OverviewSection.SUMMARY -> R.string.stats_summary
+	OverviewSection.MONTH_COMPARISON -> R.string.month_comparison_title
 	OverviewSection.PROGRESS -> R.string.progress
 	OverviewSection.RECORDS -> R.string.personal_records
 	OverviewSection.CATEGORY -> R.string.category_breakdown

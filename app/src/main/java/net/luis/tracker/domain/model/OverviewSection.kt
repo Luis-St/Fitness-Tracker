@@ -8,6 +8,7 @@ package net.luis.tracker.domain.model
 enum class OverviewSection {
 	STREAK,
 	SUMMARY,
+	MONTH_COMPARISON,
 	PROGRESS,
 	RECORDS,
 	CATEGORY,
@@ -42,8 +43,11 @@ data class OverviewLayout(
 		val MONTH_SECTIONS = listOf(
 			OverviewSectionState(OverviewSection.STREAK),
 			OverviewSectionState(OverviewSection.SUMMARY),
+			OverviewSectionState(OverviewSection.MONTH_COMPARISON, visible = false),
+			OverviewSectionState(OverviewSection.TOTALS, visible = false),
 			OverviewSectionState(OverviewSection.PROGRESS),
 			OverviewSectionState(OverviewSection.CATEGORY),
+			OverviewSectionState(OverviewSection.CONSISTENCY, visible = false),
 			OverviewSectionState(OverviewSection.RECENT_WORKOUTS, visible = false),
 			OverviewSectionState(OverviewSection.TOP_EXERCISES, visible = false)
 		)

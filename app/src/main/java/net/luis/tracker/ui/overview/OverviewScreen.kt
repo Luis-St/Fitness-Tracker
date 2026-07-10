@@ -60,7 +60,9 @@ import net.luis.tracker.ui.overview.components.CategoryBreakdownChart
 import net.luis.tracker.ui.overview.components.ConsistencyCard
 import net.luis.tracker.ui.overview.components.LifetimeStatsSummaryCard
 import net.luis.tracker.ui.overview.components.LifetimeTotalsCard
+import net.luis.tracker.ui.overview.components.MonthComparisonCard
 import net.luis.tracker.ui.overview.components.MonthStatsSummaryCard
+import net.luis.tracker.ui.overview.components.MonthTotalsCard
 import net.luis.tracker.ui.overview.components.PersonalRecordsCard
 import net.luis.tracker.ui.overview.components.ProgressChart
 import net.luis.tracker.ui.overview.components.RecentWorkoutsCard
@@ -291,26 +293,54 @@ private fun OverviewSectionContent(
 			onClick = onViewAllRecords
 		)
 
+		OverviewSection.MONTH_COMPARISON -> MonthComparisonCard(
+			workoutsThisMonth = uiState.workoutsThisMonth,
+			prevWorkouts = uiState.prevMonthWorkouts,
+			volumeThisMonth = uiState.monthTotalVolume,
+			prevVolume = uiState.prevMonthVolume,
+			setsThisMonth = uiState.monthTotalSets,
+			prevSets = uiState.prevMonthSets,
+			weightUnit = weightUnit
+		)
+
 		OverviewSection.CATEGORY -> CategoryBreakdownChart(
 			categoryBreakdown = if (tab == OverviewTab.MONTH) uiState.monthCategoryBreakdown else uiState.categoryBreakdown
 		)
 
-		OverviewSection.TOTALS -> LifetimeTotalsCard(
-			totalSets = uiState.totalSets,
-			totalReps = uiState.totalReps,
-			totalTimeSeconds = uiState.totalTimeSeconds
-		)
+		OverviewSection.TOTALS -> when (tab) {
+			OverviewTab.MONTH -> MonthTotalsCard(
+				totalVolume = uiState.monthTotalVolume,
+				totalSets = uiState.monthTotalSets,
+				totalReps = uiState.monthTotalReps,
+				activeDays = uiState.workoutDays.size,
+				weightUnit = weightUnit
+			)
+
+			OverviewTab.LIFETIME -> LifetimeTotalsCard(
+				totalSets = uiState.totalSets,
+				totalReps = uiState.totalReps,
+				totalTimeSeconds = uiState.totalTimeSeconds
+			)
+		}
 
 		OverviewSection.RECENT_WORKOUTS -> RecentWorkoutsCard(
 			workouts = uiState.recentWorkouts,
 			onWorkoutClick = onNavigateToWorkout
 		)
 
-		OverviewSection.CONSISTENCY -> ConsistencyCard(
-			avgGapDays = uiState.avgWorkoutGapDays,
-			longestGapDays = uiState.longestWorkoutGapDays,
-			mostActiveWeekday = uiState.mostActiveWeekday
-		)
+		OverviewSection.CONSISTENCY -> when (tab) {
+			OverviewTab.MONTH -> ConsistencyCard(
+				avgGapDays = uiState.monthAvgGapDays,
+				longestGapDays = uiState.monthLongestGapDays,
+				mostActiveWeekday = uiState.monthMostActiveWeekday
+			)
+
+			OverviewTab.LIFETIME -> ConsistencyCard(
+				avgGapDays = uiState.avgWorkoutGapDays,
+				longestGapDays = uiState.longestWorkoutGapDays,
+				mostActiveWeekday = uiState.mostActiveWeekday
+			)
+		}
 
 		OverviewSection.TOP_EXERCISES -> TopExercisesCard(
 			exercises = uiState.topExercises

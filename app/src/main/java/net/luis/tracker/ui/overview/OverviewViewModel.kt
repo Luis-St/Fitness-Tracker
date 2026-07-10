@@ -68,6 +68,18 @@ data class OverviewUiState(
 	val personalRecords: List<PersonalRecord> = emptyList(),
 	val categoryBreakdown: List<CategoryWorkoutCount> = emptyList(),
 	val monthCategoryBreakdown: List<CategoryWorkoutCount> = emptyList(),
+	// Current-month totals (This Month tab)
+	val monthTotalVolume: Double = 0.0,
+	val monthTotalSets: Int = 0,
+	val monthTotalReps: Long = 0,
+	// Previous month, for the "vs. last month" comparison
+	val prevMonthWorkouts: Int = 0,
+	val prevMonthVolume: Double = 0.0,
+	val prevMonthSets: Int = 0,
+	// Month-scoped consistency
+	val monthAvgGapDays: Double? = null,
+	val monthLongestGapDays: Int = 0,
+	val monthMostActiveWeekday: DayOfWeek? = null,
 	val selectedDayWorkouts: List<WorkoutDateInfo> = emptyList(),
 	val showWorkoutPicker: Boolean = false,
 	val navigateToWorkoutId: Long? = null,
@@ -294,10 +306,28 @@ class OverviewViewModel(
 					val workoutDayMap = workoutInfoList.groupBy { info ->
 						Instant.ofEpochMilli(info.startTime).atZone(zone).toLocalDate().dayOfMonth
 					}.mapValues { entry -> entry.value.map { it.workoutId } }
+
+					// Month-scoped consistency: gaps between distinct active days within the month.
+					val distinctDays = workoutInfoList
+						.map { Instant.ofEpochMilli(it.startTime).atZone(zone).toLocalDate() }
+						.distinct()
+						.sorted()
+					val gaps = distinctDays.zipWithNext { a, b -> ChronoUnit.DAYS.between(a, b) }
+					val avgGap = if (gaps.isNotEmpty()) gaps.average() else null
+					val longestGap = (gaps.maxOrNull() ?: 0L).toInt()
+					val mostActive = distinctDays
+						.groupingBy { it.dayOfWeek }
+						.eachCount()
+						.maxByOrNull { it.value }
+						?.key
+
 					_uiState.update {
 						it.copy(
 							workoutDays = workoutDayMap.keys,
 							workoutDayMap = workoutDayMap,
+							monthAvgGapDays = avgGap,
+							monthLongestGapDays = longestGap,
+							monthMostActiveWeekday = mostActive,
 							isLoading = false
 						)
 					}
@@ -321,6 +351,41 @@ class OverviewViewModel(
 			launch {
 				statsRepository.getCategoryBreakdown(monthStart, monthEnd).collect { breakdown ->
 					_uiState.update { it.copy(monthCategoryBreakdown = breakdown) }
+				}
+			}
+
+			// Current-month totals
+			launch {
+				statsRepository.getTotalVolume(monthStart, monthEnd).collect { volume ->
+					_uiState.update { it.copy(monthTotalVolume = volume) }
+				}
+			}
+			launch {
+				statsRepository.getTotalSetCount(monthStart, monthEnd).collect { sets ->
+					_uiState.update { it.copy(monthTotalSets = sets) }
+				}
+			}
+			launch {
+				statsRepository.getTotalReps(monthStart, monthEnd).collect { reps ->
+					_uiState.update { it.copy(monthTotalReps = reps) }
+				}
+			}
+
+			// Previous month, for the "vs. last month" comparison
+			val (prevStart, prevEnd) = monthRange(month.minusMonths(1))
+			launch {
+				statsRepository.getWorkoutCount(prevStart, prevEnd).collect { count ->
+					_uiState.update { it.copy(prevMonthWorkouts = count) }
+				}
+			}
+			launch {
+				statsRepository.getTotalVolume(prevStart, prevEnd).collect { volume ->
+					_uiState.update { it.copy(prevMonthVolume = volume) }
+				}
+			}
+			launch {
+				statsRepository.getTotalSetCount(prevStart, prevEnd).collect { sets ->
+					_uiState.update { it.copy(prevMonthSets = sets) }
 				}
 			}
 		}

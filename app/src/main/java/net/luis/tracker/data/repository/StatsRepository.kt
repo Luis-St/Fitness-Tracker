@@ -39,8 +39,17 @@ class StatsRepository(private val statsDao: StatsDao) {
 	fun getTotalSetCount(): Flow<Int> =
 		statsDao.getTotalSetCount()
 
+	fun getTotalSetCount(startMillis: Long, endMillis: Long): Flow<Int> =
+		statsDao.getTotalSetCount(startMillis, endMillis)
+
 	fun getTotalReps(): Flow<Long> =
 		statsDao.getTotalReps()
+
+	fun getTotalReps(startMillis: Long, endMillis: Long): Flow<Long> =
+		statsDao.getTotalReps(startMillis, endMillis)
+
+	fun getTotalVolume(startMillis: Long, endMillis: Long): Flow<Double> =
+		statsDao.getTotalVolume(startMillis, endMillis)
 
 	fun getTotalDurationSeconds(): Flow<Long> =
 		statsDao.getTotalDurationSeconds()

@@ -117,6 +117,12 @@
 	<string name="total_sets">Sätze gesamt</string>
 	<string name="total_reps">Wdh. gesamt</string>
 	<string name="total_time">Gesamtzeit</string>
+	<string name="month_totals_title">Monatssummen</string>
+	<string name="month_comparison_title">ggü. Vormonat</string>
+	<string name="stat_volume">Volumen</string>
+	<string name="stat_sets">Sätze</string>
+	<string name="stat_reps">Wdh.</string>
+	<string name="active_days">Aktive Tage</string>
 	<string name="unit_day_short">d</string>
 	<string name="unit_hour_short">h</string>
 	<string name="unit_minute_short">m</string>
